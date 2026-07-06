@@ -3,9 +3,18 @@
 This is the Chapter Management Platform.
 
 - **`docs/PLAN.md` is the active implementation plan — read it before making changes.**
+  Its §0 session protocol (git rules, escalation rules, progress ledger) is binding.
+- `docs/DEV.md` is the environment runbook: hosted dev database, test users,
+  schema-change recipe, how to verify in the running app.
 - `docs/SPEC.md` is the long-term product vision, NOT the build order. Where they
   conflict, PLAN.md wins.
 - Schema ground truth is the generated `lib/supabase/types.ts`.
+
+## Environment
+- Windows 11; the repo path contains a space (`Git Clones`) — always quote paths.
+- Default shell PowerShell 5.1: `&&` does not chain; use `;` or npm scripts.
+- The database is a hosted Supabase dev project (no local Docker DB) — see
+  `docs/DEV.md` before running `supabase db push` or `npm run types:db`.
 
 ## Stack
 - Next.js 16 (App Router) + React 19

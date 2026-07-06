@@ -4,16 +4,39 @@
 long-term product vision and is intentionally NOT the build order. Where they conflict,
 this document wins.
 
+## Progress
+
+- **Next task:** 0.1
+- **Completed:** (none yet)
+- **Blocked/notes:** dev Supabase project is paused/unreachable — restore it per
+  `docs/DEV.md` before the first session.
+
+Update this block as the final step of every task, inside the task's commit. This
+block is the ONLY part of PLAN.md the implementing model may edit; scope, task text,
+and decisions change only when the user says so.
+
 ---
 
 ## 0. How to use this document (instructions for the implementing model)
 
+- Read `docs/DEV.md` first — it documents the environment (hosted dev database, test
+  users, schema-change recipe, how to verify in the running app).
 - Work **one task at a time**, in order, unless the user says otherwise. Tasks are sized
   to fit in a single session.
 - Every task lists a **pattern file** — an existing file that already does the same kind
   of thing correctly. Read it and match its style exactly. Do not invent new patterns.
 - After every task: `npm run check` must pass (Biome + tsgo + Vitest). After any schema
   change: `supabase db push`, then `npm run types:db`, then confirm the app still builds.
+- **Git protocol:** never start a task on a dirty tree. One commit per task, message
+  `task 1.2: <what it did>`, with the Progress ledger update included in that commit.
+  Never amend or force-push, never `--no-verify`, never edit an already-pushed
+  migration.
+- **Stop and ask the user** (do not improvise) when any of these happen:
+  - the task seems to need a schema change that §4 doesn't describe;
+  - `npm run check` still fails after three fix attempts;
+  - the pattern file contradicts this plan or CLAUDE.md;
+  - the fix requires touching files clearly outside the task's area;
+  - anything tempts you to alter the tenancy model, auth flow, or RLS helpers.
 - **Ground truth for the schema is `lib/supabase/types.ts`** (generated). Do not trust
   `supabase/schema-reference.sql` until task 0.3 regenerates it.
 - Do not start SPEC.md features that are not in this plan (rush, budgets, meetings,
@@ -230,6 +253,17 @@ task-assignment status pending→submitted/complete.
   `app/(app)/[parent]/[org]/[group]/subgroups/[slug]/page.tsx`. Pattern:
   `components/members/invite-member-dialog.tsx`. Accept: can add/remove members from a
   subgroup in the UI.
+- **0.9 Rewrite the dev seed script for v3.** `scripts/seed-dev.ts` predates the v3
+  schema — it writes to dropped tables (`fraternities`, `orgs`, `membership_types`,
+  `org_memberships`) and fails. Rewrite it idempotently (upserts) against the current
+  schema: parent org → organization → two groups (chapter + housing corp with a
+  `group_relationships` row), role types/status definitions if the base migrations
+  don't seed them, a current term, and the three verification personas from
+  `docs/DEV.md` (full-access officer, plain member, outsider with no membership in the
+  chapter). Run with `npx tsx --env-file=.env.local scripts/seed-dev.ts`. Pattern:
+  the old script's structure + `lib/supabase/types.ts` for column truth. Accept: runs
+  clean twice in a row against a fresh database; all three personas can log in and see
+  exactly what DEV.md says they should.
 
 ## 6. Phase 1 — Requirements engine core
 
@@ -439,8 +473,11 @@ Keep the mechanism national-org-generic; only the seed data is Sigma Nu-specific
 - Keep every feature group-generic: no behavior keyed on `group_type === 'chapter'`.
 - New UI: shadcn components from `components/ui/`, permission-gate with
   `useOrg()`/`getGroupContext` like `members/page.tsx` does.
-- Finish line for every task: `npm run check` green; schema tasks also need
-  `supabase db push` + `npm run types:db` + updated `supabase/schema-reference.sql`.
+- Finish line for every task: `npm run check` green AND the task's accept criterion
+  exercised in the running app (see `docs/DEV.md` — a green typecheck is not "done");
+  schema tasks also need `supabase db push` + `npm run types:db` + updated
+  `supabase/schema-reference.sql`. Then commit (one commit per task, ledger included)
+  and update the Progress block at the top of this file.
 
 ### Do NOT store (liability guardrails — apply to every feature, present and future)
 
