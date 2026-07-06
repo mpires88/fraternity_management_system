@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# real member data — never commit (roster CSV, airtable exports)
+/test data/
+
+# local agent state
+/.claude/
+
+# supabase CLI local state
+/supabase/.temp/

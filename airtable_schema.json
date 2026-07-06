@@ -1,0 +1,879 @@
+{
+  "tables": [
+    {
+      "id": "tblv5GwTtebz6hER9",
+      "name": "Contacts",
+      "primaryFieldId": "fldCyJiDiSECd6REK",
+      "fields": [
+        {
+          "type": "formula",
+          "options": {
+            "isValid": true,
+            "formula": "IF({fldBal32K7VEQ7UEC},\r\n\r\nIF({fldDe82sN1hmbAr1L},\r\n\r\nCONCATENATE({fldz2lyRO6lbcQtnz},\" \",{fldBal32K7VEQ7UEC},\" \",{fldAdYy7UFW61st0F},\" (Brother \",{fldDe82sN1hmbAr1L},\")\"),\r\n\r\nCONCATENATE({fldz2lyRO6lbcQtnz},\" \",{fldBal32K7VEQ7UEC},\" \",{fldAdYy7UFW61st0F})),\r\n\r\nIF({fldDe82sN1hmbAr1L},\r\n\r\nCONCATENATE({fldz2lyRO6lbcQtnz},\" \",{fldfwvnrAmrv84BSR},\" \",{fldAdYy7UFW61st0F},\" (Brother \",{fldDe82sN1hmbAr1L},\")\"),\r\n\r\nCONCATENATE({fldz2lyRO6lbcQtnz},\" \",{fldfwvnrAmrv84BSR},\" \",{fldAdYy7UFW61st0F})))",
+            "referencedFieldIds": [
+              "fldBal32K7VEQ7UEC",
+              "fldDe82sN1hmbAr1L",
+              "fldz2lyRO6lbcQtnz",
+              "fldAdYy7UFW61st0F",
+              "fldfwvnrAmrv84BSR"
+            ],
+            "result": { "type": "singleLineText" }
+          },
+          "id": "fldCyJiDiSECd6REK",
+          "name": "FULL NAME"
+        },
+        {
+          "type": "multipleSelects",
+          "options": {
+            "choices": [
+              { "id": "selPL1i1nAi70AGoW", "name": "ADVISOR", "color": "greenLight1" },
+              { "id": "selCHN4f23Kg0fD6v", "name": "BOARDER", "color": "cyanBright" },
+              { "id": "selOzVAq7ptcVqBTw", "name": "MEMBER", "color": "blueLight2" }
+            ]
+          },
+          "id": "fldLVGzDgr5tvchJ9",
+          "name": "Affliation"
+        },
+        {
+          "type": "multipleSelects",
+          "options": {
+            "choices": [
+              { "id": "selOzVAq7ptcVqBTw", "name": "ACTIVE", "color": "blueLight2" },
+              { "id": "selPL1i1nAi70AGoW", "name": "ADVISOR", "color": "greenLight1" },
+              { "id": "sel9EHN2Lg0PyKsPP", "name": "ALUMNI", "color": "cyanLight2" },
+              { "id": "selK0Jm8BL0O7PmGw", "name": "AWAY", "color": "cyanLight2" },
+              { "id": "seldvTGGCGpXu75WW", "name": "DE-BROTHERED", "color": "greenDark1" },
+              { "id": "selGWh1tIDLyX86YS", "name": "DECEASED", "color": "tealLight2" },
+              { "id": "selFBdDLSh1mbVJIM", "name": "DEPLEDGED", "color": "orangeDark1" },
+              { "id": "sel1tOGueKyAy4L1u", "name": "EXPELLED", "color": "blueLight2" },
+              { "id": "selor3DEluv8whTZo", "name": "INACTIVE", "color": "tealLight2" },
+              { "id": "sel4L2ouU2ZdMVEDi", "name": "LEFT SCHOOL", "color": "cyanLight2" },
+              { "id": "seloVe5s8K86NwpCv", "name": "MEDICAL LEAVE", "color": "greenLight2" },
+              { "id": "seluOLGb4D8CwDyn8", "name": "CANDIDATE", "color": "yellowDark1" }
+            ]
+          },
+          "id": "fld2MbrBoIR7dy5Ei",
+          "name": "Status"
+        },
+        {
+          "type": "number",
+          "options": { "precision": 0 },
+          "id": "fld9vIVlCcEBCbJ2x",
+          "name": "ALPHA NUMBER copy"
+        },
+        {
+          "type": "number",
+          "options": { "precision": 0 },
+          "id": "fldz2lyRO6lbcQtnz",
+          "name": "BADGE NUMBER"
+        },
+        { "type": "singleLineText", "id": "fldfwvnrAmrv84BSR", "name": "FIRST NAME" },
+        { "type": "singleLineText", "id": "fldbXqWhoUGExe9CX", "name": "Middle Name" },
+        { "type": "singleLineText", "id": "fldAdYy7UFW61st0F", "name": "LAST NAME" },
+        { "type": "singleLineText", "id": "fldBal32K7VEQ7UEC", "name": "PREFERRED NAME" },
+        {
+          "type": "multipleSelects",
+          "options": {
+            "choices": [
+              { "id": "selUhQ9mlMR4qGjz2", "name": "1992", "color": "blueLight2" },
+              { "id": "selTrudkAKguB9Isz", "name": "1995", "color": "grayBright" },
+              { "id": "selHaTQibNPpxX41E", "name": "1996", "color": "yellowBright" },
+              { "id": "selQebgiNLjzoiqGE", "name": "1997", "color": "orangeBright" },
+              { "id": "selLPRjzMu3Fg0MZh", "name": "1998", "color": "greenBright" },
+              { "id": "seleZMbYex3wrZpEr", "name": "1999", "color": "purpleLight1" },
+              { "id": "selQKcz7s7OcSprq5", "name": "2000", "color": "blueDark1" },
+              { "id": "selCTfNgq04McVkNV", "name": "2001", "color": "pinkLight1" },
+              { "id": "selpINpl07innq42A", "name": "2002", "color": "cyanLight2" },
+              { "id": "selK83CWiBnehWOz3", "name": "2003", "color": "redDark1" },
+              { "id": "sel9zFsgUzCQcZn1S", "name": "2004", "color": "tealLight2" },
+              { "id": "selrFbup6LlGOBAtp", "name": "2005", "color": "pinkDark1" },
+              { "id": "selRlx8jhD9Ghys4S", "name": "2006", "color": "redBright" },
+              { "id": "sel0C9jZ855G2UyaX", "name": "2007", "color": "cyanBright" },
+              { "id": "selKnk2XvzjMNLAFu", "name": "2008", "color": "yellowDark1" },
+              { "id": "sel6RmoNq8OIMWY7W", "name": "2009", "color": "greenLight2" },
+              { "id": "selF8GtY52PgTtq2u", "name": "2010", "color": "yellowLight2" },
+              { "id": "selDlp7KfZB6vHmcm", "name": "2011", "color": "orangeLight2" },
+              { "id": "selQxGRet013zH9I7", "name": "2012", "color": "redLight2" },
+              { "id": "selYDUvtvrSo2z1lS", "name": "2013", "color": "pinkLight2" },
+              { "id": "selFZg6soq9RUzi8W", "name": "2014", "color": "orangeDark1" },
+              { "id": "selPldrmFQdNVF0fr", "name": "2015", "color": "purpleDark1" },
+              { "id": "seloU9eF0e48x2bGs", "name": "2016", "color": "cyanDark1" },
+              { "id": "sel0aJ7pfNH4UTi8W", "name": "2017", "color": "grayLight1" },
+              { "id": "sele0sPnh6txskbeG", "name": "2019", "color": "tealBright" },
+              { "id": "selKM7tUJodsC5nnh", "name": "2020", "color": "purpleLight2" },
+              { "id": "selt83Ut10cYhfJHA", "name": "2021", "color": "grayLight2" },
+              { "id": "sely6IcvDo1mgJbh1", "name": "2022", "color": "blueLight1" },
+              { "id": "selwkxYUa2ff1Z9Ih", "name": "2023", "color": "cyanLight1" },
+              { "id": "sellEKWyyPmAfaYi2", "name": "2024", "color": "tealLight1" },
+              { "id": "selDhh4PZbCltuSK7", "name": "2025", "color": "greenLight1" },
+              { "id": "seloZKIypyweay8ig", "name": "2026", "color": "yellowLight1" },
+              { "id": "selaCfAQes1ufO9Pw", "name": "2027", "color": "orangeLight1" },
+              { "id": "selAgpWhgoOIMY2Rd", "name": "2028", "color": "redLight1" },
+              { "id": "selLewCoL9PD3YXaJ", "name": "2018", "color": "grayDark1" }
+            ]
+          },
+          "id": "fld2zX2nw9zcJuTUn",
+          "name": "ENTRY CLASS OF"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              { "id": "selQmvIzml5cFmFS4", "name": "ALPHA", "color": "tealLight2" },
+              { "id": "sel5ojM7pXcEBBxin", "name": "CARTEL", "color": "greenLight2" },
+              { "id": "selkslAzLCL2QD3HV", "name": "WERTHEIM", "color": "blueLight2" },
+              { "id": "sel2fVVGGL3Y3wdd4", "name": "CROWE", "color": "cyanLight2" },
+              { "id": "selrsWGrmGEUXigLx", "name": "UNKNOWN", "color": "pinkLight1" }
+            ]
+          },
+          "id": "fldV70fKEbc6pPjtf",
+          "name": "FAMILY LINE"
+        },
+        { "type": "singleLineText", "id": "fldDe82sN1hmbAr1L", "name": "BROTHER NICKNAME" },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblv5GwTtebz6hER9",
+            "isReversed": false,
+            "prefersSingleRecordLink": true
+          },
+          "id": "fldVGWYwcTdWHS4UU",
+          "name": "BIG BROTHER"
+        },
+        {
+          "type": "rollup",
+          "options": {
+            "isValid": true,
+            "recordLinkFieldId": "fldVGWYwcTdWHS4UU",
+            "fieldIdInLinkedTable": "fldV70fKEbc6pPjtf",
+            "referencedFieldIds": [],
+            "result": { "type": "singleLineText" }
+          },
+          "id": "fldWjckdT1CMKJSNb",
+          "name": "BIG BROTHER's FAMILY LINE"
+        },
+        { "type": "singleLineText", "id": "fldBj5oOJVhyxXUeH", "name": "HOMETOWN" },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              { "id": "selgmLpV6UXudl2aa", "name": "AL", "color": "blueLight2" },
+              { "id": "seljvFFrVVnGOQafC", "name": "AK", "color": "cyanLight2" },
+              { "id": "selV7TR3m9i67MeNX", "name": "AS", "color": "tealLight2" },
+              { "id": "seljSKtXIJVZ9AM8Y", "name": "AZ", "color": "greenLight2" },
+              { "id": "selpIVV0VyDGwEPGw", "name": "AR", "color": "yellowLight2" },
+              { "id": "sel9AFHEyYV14p60X", "name": "CA", "color": "orangeLight2" },
+              { "id": "sel4AQOaPKOBhs3hN", "name": "CO", "color": "redLight2" },
+              { "id": "selxyzkFSlsznkxKQ", "name": "CT", "color": "pinkLight2" },
+              { "id": "selNAvg075qnVTYum", "name": "DE", "color": "purpleLight2" },
+              { "id": "selizCFlCaj5hTyze", "name": "DC", "color": "grayLight2" },
+              { "id": "selim79J7ysxkbR2G", "name": "FL", "color": "blueLight1" },
+              { "id": "selieYtsvNMNOSDAO", "name": "GA", "color": "cyanLight1" },
+              { "id": "seleYlRDXeljbRuId", "name": "GU", "color": "tealLight1" },
+              { "id": "selOgroWErPk8pF1D", "name": "HI", "color": "greenLight1" },
+              { "id": "seliJwgliZCYzyNpa", "name": "ID", "color": "yellowLight1" },
+              { "id": "selWOLGZUJUpA0u5O", "name": "IL", "color": "orangeLight1" },
+              { "id": "selyCBpXAp2LMWLPC", "name": "IN", "color": "redLight1" },
+              { "id": "selD5UHT0EyXKRYIJ", "name": "IA", "color": "pinkLight1" },
+              { "id": "selelDn9IkIxIir6a", "name": "KS", "color": "purpleLight1" },
+              { "id": "sel2tvIz6inLgsVr5", "name": "KY", "color": "grayLight1" },
+              { "id": "selsL2DRARfAqMoRg", "name": "LA", "color": "blueBright" },
+              { "id": "sel7ZFfEjcfWp5PPD", "name": "ME", "color": "cyanBright" },
+              { "id": "selltwFMxyfPPaAzP", "name": "MH", "color": "tealBright" },
+              { "id": "sel8eRYFCqLESixMD", "name": "MD", "color": "greenBright" },
+              { "id": "seldtWFz3JRQiVxiB", "name": "MA", "color": "yellowBright" },
+              { "id": "seljcxeTuflz125fO", "name": "MI", "color": "orangeBright" },
+              { "id": "selnWPLKHRhTAKbkS", "name": "FM", "color": "redBright" },
+              { "id": "seluwDyoJmfHWcLN4", "name": "MN", "color": "pinkBright" },
+              { "id": "selzFWZNpEJWt2x8N", "name": "MS", "color": "purpleBright" },
+              { "id": "seldJempLAdtAuWW9", "name": "MO", "color": "grayBright" },
+              { "id": "selmz6WXy82lHbdHy", "name": "MT", "color": "blueDark1" },
+              { "id": "selEawzor1BzJcWu3", "name": "NE", "color": "cyanDark1" },
+              { "id": "selYesoI4pCKKdE4Y", "name": "NV", "color": "tealDark1" },
+              { "id": "selyYFLCOphSSPGQp", "name": "NH", "color": "greenDark1" },
+              { "id": "selGt1jYuVVgJ2vGL", "name": "NJ", "color": "yellowDark1" },
+              { "id": "sel3kQ3J73Bq0XVBP", "name": "NM", "color": "orangeDark1" },
+              { "id": "selN9yvHMzPYBM2Pp", "name": "NY", "color": "redDark1" },
+              { "id": "selEX6Y9uOyc3hAGH", "name": "NC", "color": "pinkDark1" },
+              { "id": "selJhtlxZ1WQDkwLY", "name": "ND", "color": "purpleDark1" },
+              { "id": "selinMy8wAL9ngVQZ", "name": "MP", "color": "grayDark1" },
+              { "id": "seli9M8qFaQXIGHYs", "name": "OH", "color": "blueLight2" },
+              { "id": "selfZurUgM3yC1IJF", "name": "OK", "color": "cyanLight2" },
+              { "id": "selLEO9CwV5jWxwOh", "name": "OR", "color": "tealLight2" },
+              { "id": "selqqYNukMHQrzGk6", "name": "PW", "color": "greenLight2" },
+              { "id": "seltRHb3yoOJSJVFc", "name": "PA", "color": "yellowLight2" },
+              { "id": "selvwBHpS6DfDDbdy", "name": "PR", "color": "orangeLight2" },
+              { "id": "selZ8ZE3EctCkZP4q", "name": "RI", "color": "redLight2" },
+              { "id": "seltX4sZHTuCESh96", "name": "SC", "color": "pinkLight2" },
+              { "id": "selQ4mrUvuH2kbH7Q", "name": "SD", "color": "purpleLight2" },
+              { "id": "selR8FTiGdK2VtcgQ", "name": "TN", "color": "grayLight2" },
+              { "id": "selgrOqAFLrob5rNX", "name": "TX", "color": "blueLight1" },
+              { "id": "selL8ybtn4yKtENRa", "name": "UT", "color": "cyanLight1" },
+              { "id": "sel2r9feKqCOzhCvA", "name": "VT", "color": "tealLight1" },
+              { "id": "selvCWVIzeljdlYU1", "name": "VI", "color": "greenLight1" },
+              { "id": "selgqpbge0w9tcJV1", "name": "VA", "color": "yellowLight1" },
+              { "id": "sel834EYdNgZ85o3V", "name": "WA", "color": "orangeLight1" },
+              { "id": "selUU8n23XCkRwRRw", "name": "WV", "color": "redLight1" },
+              { "id": "sel294X7JiT4QAgJ4", "name": "WI", "color": "pinkLight1" },
+              { "id": "selp7SO4hVrAoLdRZ", "name": "WY", "color": "purpleLight1" }
+            ]
+          },
+          "id": "fldGzA84Y653rBrVP",
+          "name": "HOMETOWN STATE (IF APPLICABLE)"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              { "id": "seln6rB4wtV043STg", "name": "American Samoa", "color": "orangeDark1" },
+              { "id": "sel6CzW0dq69E0il8", "name": "Brazil", "color": "purpleDark1" },
+              { "id": "seluLFXRtIH5DQRsD", "name": "Canada", "color": "grayLight2" },
+              { "id": "selHZxcUTICAJRh5a", "name": "Ghana", "color": "greenLight1" },
+              { "id": "selZXKyh8dRmXXsZ9", "name": "Italy", "color": "blueLight2" },
+              { "id": "seltBRjNDW62MWK8m", "name": "Macedonia", "color": "orangeLight1" },
+              { "id": "selFD3uvc5TyiwrZ2", "name": "Mexico", "color": "tealDark1" },
+              { "id": "selw57iw04D58IfX3", "name": "Pakiston", "color": "yellowBright" },
+              { "id": "selMEfL7fEBemmYhm", "name": "Rwanda", "color": "pinkDark1" },
+              { "id": "seljLrvovHKU3BPkF", "name": "Trinidad and Tobago", "color": "grayBright" },
+              { "id": "selKJtw9YxNLrbjOa", "name": "USA", "color": "blueBright" }
+            ]
+          },
+          "id": "fldetBnIMW2LOnqru",
+          "name": "HOMETOWN COUNTRY"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              { "id": "seltZUXMs4KV5J9QB", "name": "Beta Sigma", "color": "blueLight2" },
+              { "id": "selTEnOUpYTBtOIMz", "name": "Beta Zeta", "color": "orangeDark1" },
+              { "id": "selZeFEXwuAmVpWUd", "name": "Beta Lambda", "color": "cyanDark1" },
+              { "id": "selyPVXRzqyLN3nAP", "name": "Beta Rho", "color": "tealLight1" },
+              { "id": "selPwIYwcrd89Fhma", "name": "Beta Phi", "color": "purpleBright" },
+              { "id": "sel0FAu1WOVuANanF", "name": "Gamma Iota", "color": "blueLight1" },
+              { "id": "selhpFyTZqJgWXPrc", "name": "Beta Tau", "color": "tealLight2" },
+              { "id": "sel32Y0gQjUhWjYeX", "name": "Beta Upsilon", "color": "orangeLight2" },
+              { "id": "selrxBt2Kk7sFRH9h", "name": "Beta Psi", "color": "pinkBright" },
+              { "id": "sely6Az5jCdLrezol", "name": "2017", "color": "blueLight2" },
+              { "id": "seljfa9OB8EPCgX2S", "name": "Beta Chi", "color": "tealDark1" },
+              { "id": "selcn0vyIQE8ClLa3", "name": "Gamma Rho", "color": "redDark1" }
+            ]
+          },
+          "id": "fld21K0WdZyvD43Rk",
+          "name": "PLEDGE CLASS"
+        },
+        {
+          "type": "number",
+          "options": { "precision": 0 },
+          "id": "fldoLchORzCXfLWss",
+          "name": "MIT ID"
+        },
+        { "type": "phoneNumber", "id": "fldLbGKUcX6BaUWBR", "name": "Cell Phone" },
+        { "type": "email", "id": "fld81s1iLDGvbAzNd", "name": "MIT Email" },
+        { "type": "email", "id": "fldAdhNcYkdt60iSW", "name": "Personal Email" },
+        { "type": "singleLineText", "id": "fld1se7FeQhw1Rkbk", "name": "Emergency Contact" },
+        {
+          "type": "phoneNumber",
+          "id": "fldvTVRVlat3sLJpf",
+          "name": "Emergency Contact Phone Number"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblBB3DcRfEFGGzEP",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldL22yI7Nvkab6wQ"
+          },
+          "id": "fldlmLziZucHbXUHE",
+          "name": "Positions"
+        },
+        { "type": "singleLineText", "id": "fldgCjSF7N6g8iqtX", "name": "Kerberos ID" },
+        {
+          "type": "date",
+          "options": { "dateFormat": { "name": "local", "format": "l" } },
+          "id": "fldoBgGf0MP9LTMCt",
+          "name": "Proposed Graduation Date"
+        },
+        {
+          "type": "date",
+          "options": { "dateFormat": { "name": "local", "format": "l" } },
+          "id": "fldqAgoVDpnbyrfVV",
+          "name": "Actual Graduation Date"
+        },
+        {
+          "type": "formula",
+          "options": {
+            "isValid": true,
+            "formula": "MAX(YEAR({fldoBgGf0MP9LTMCt},YEAR({fldqAgoVDpnbyrfVV})))",
+            "referencedFieldIds": ["fldoBgGf0MP9LTMCt", "fldqAgoVDpnbyrfVV"],
+            "result": { "type": "number", "options": { "precision": 0 } }
+          },
+          "id": "fld19r1aJvyk0lfPy",
+          "name": "Grad Year"
+        },
+        {
+          "type": "date",
+          "options": { "dateFormat": { "name": "local", "format": "l" } },
+          "id": "fldp3WHZGXzRv8kZx",
+          "name": "Bid Date"
+        },
+        {
+          "type": "date",
+          "options": { "dateFormat": { "name": "local", "format": "l" } },
+          "id": "fldZAoPLIMYXK4mf5",
+          "name": "Initiation Date"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblZYBHaN2yP4uf7b",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fld9pACG3ApuyZMZc"
+          },
+          "id": "fld2Hjq2vC0SxPWxc",
+          "name": "Housing"
+        },
+        {
+          "type": "formula",
+          "options": {
+            "isValid": true,
+            "formula": "CONCATENATE({fldfwvnrAmrv84BSR},\" \",{fldAdYy7UFW61st0F})\r\n",
+            "referencedFieldIds": ["fldfwvnrAmrv84BSR", "fldAdYy7UFW61st0F"],
+            "result": { "type": "singleLineText" }
+          },
+          "id": "fldEUFHHaJ6FaduIK",
+          "name": "FULL NAME no pin"
+        },
+        {
+          "type": "date",
+          "options": { "dateFormat": { "name": "local", "format": "l" } },
+          "id": "fldv2HXvZRCCx3Q0J",
+          "name": "Candidate Ceremony"
+        }
+      ],
+      "views": [
+        { "id": "viw4gA7ga3JyJC845", "name": "Full Roster", "type": "grid" },
+        { "id": "viwdsPcbcD2hsgzQ2", "name": "Names and Big Brothers", "type": "grid" },
+        { "id": "viwKs5DqaNEkiMXAJ", "name": "Active Chapter", "type": "grid" },
+        { "id": "viw7rRZg2ya8PCfnr", "name": "Active Chapter grouped by year", "type": "grid" },
+        { "id": "viw8jOURgA2L00MFk", "name": "Sorted By Year", "type": "grid" },
+        { "id": "viwPLrzsmKUYH659m", "name": "Missing Country", "type": "grid" },
+        { "id": "viwhGYHshaVZlSHYK", "name": "Missing Nickname", "type": "grid" },
+        { "id": "viwICgJFOCPAciElD", "name": "Missing Big Brother", "type": "grid" },
+        { "id": "viwzQ7Zy8FbG1Q45O", "name": "Missing Family Line", "type": "grid" },
+        { "id": "viwDkCgYhs5k1lIrt", "name": "Missing Badge Number", "type": "grid" },
+        { "id": "viwqUvNLkeMiXTzws", "name": "Shared with Derek", "type": "grid" },
+        { "id": "viwFklQc3BO8zLg55", "name": "Sorted By Family Line", "type": "grid" },
+        { "id": "viwG8jZhsfHkLCJxh", "name": "Add Candidate and Initiation Date", "type": "grid" },
+        { "id": "viw3NBAzVV3qqfSoP", "name": "Grouped by Class Year", "type": "grid" }
+      ]
+    },
+    {
+      "id": "tbl0LZDf13shAmzGb",
+      "name": "Positions",
+      "primaryFieldId": "fldsUAnD8IQIZSOGc",
+      "fields": [
+        {
+          "type": "formula",
+          "options": {
+            "isValid": true,
+            "formula": "CONCATENATE({fldiSRKnHIv4cgcKJ},\"-\",{fldbn7Z9frw7ukrYP})",
+            "referencedFieldIds": ["fldiSRKnHIv4cgcKJ", "fldbn7Z9frw7ukrYP"],
+            "result": { "type": "singleLineText" }
+          },
+          "id": "fldsUAnD8IQIZSOGc",
+          "name": "Position"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblzv7oLvjMbT6JY6",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldGbp7lhu6gtbK1S"
+          },
+          "id": "fldiSRKnHIv4cgcKJ",
+          "name": "Organization"
+        },
+        { "type": "singleLineText", "id": "fldbn7Z9frw7ukrYP", "name": "Title" },
+        { "type": "email", "id": "fldJlJUnun7t27Krt", "name": "Officer Email" },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              { "id": "selB87do08UjZURF9", "name": "Executive Team", "color": "blueLight2" },
+              { "id": "seloZ3L9vAhZZRIVm", "name": "Non-Executive Team", "color": "cyanLight2" },
+              { "id": "seld8WWZzL0goGFLZ", "name": "Housing Corporation", "color": "tealDark1" },
+              { "id": "selWNqsOP8z2wSFUL", "name": "Advisory Group", "color": "blueDark1" }
+            ]
+          },
+          "id": "fldISbtwYnq0yKlil",
+          "name": "Hierarchy"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblBB3DcRfEFGGzEP",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldrCBrNxV1mOc5YS"
+          },
+          "id": "fldV8E9In7mj8jwwY",
+          "name": "Leadership"
+        }
+      ],
+      "views": [{ "id": "viwvXIk3VmRtz2P4W", "name": "Grid view", "type": "grid" }]
+    },
+    {
+      "id": "tblBB3DcRfEFGGzEP",
+      "name": "Leadership",
+      "primaryFieldId": "fldbKPqVyshfOkpEG",
+      "fields": [
+        {
+          "type": "formula",
+          "options": {
+            "isValid": true,
+            "formula": "CONCATENATE({fldRRdMxeWActx4Xi},\" \",{fldz39bN6arhLfOsA}, \" - \",{fldrCBrNxV1mOc5YS})",
+            "referencedFieldIds": ["fldRRdMxeWActx4Xi", "fldz39bN6arhLfOsA", "fldrCBrNxV1mOc5YS"],
+            "result": { "type": "singleLineText" }
+          },
+          "id": "fldbKPqVyshfOkpEG",
+          "name": "Name"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              { "id": "selYasFliUB2dESYb", "name": "Spring", "color": "blueLight2" },
+              { "id": "seloUbJtab1nJAajy", "name": "Summer", "color": "cyanLight2" },
+              { "id": "selwp0hQgFJpOQztA", "name": "Fall", "color": "tealLight2" }
+            ]
+          },
+          "id": "fldz39bN6arhLfOsA",
+          "name": "Semester"
+        },
+        {
+          "type": "number",
+          "options": { "precision": 0 },
+          "id": "fldRRdMxeWActx4Xi",
+          "name": "YEAR"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tbl0LZDf13shAmzGb",
+            "isReversed": false,
+            "prefersSingleRecordLink": true,
+            "inverseLinkFieldId": "fldV8E9In7mj8jwwY"
+          },
+          "id": "fldrCBrNxV1mOc5YS",
+          "name": "Position"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblv5GwTtebz6hER9",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldlmLziZucHbXUHE"
+          },
+          "id": "fldL22yI7Nvkab6wQ",
+          "name": "Contacts"
+        },
+        {
+          "type": "multipleLookupValues",
+          "options": {
+            "isValid": true,
+            "recordLinkFieldId": "fldL22yI7Nvkab6wQ",
+            "fieldIdInLinkedTable": "fldLbGKUcX6BaUWBR",
+            "result": { "type": "phoneNumber" }
+          },
+          "id": "fld6KaruQd4XSMNSs",
+          "name": "Cell Phone (from Contacts)"
+        },
+        { "type": "singleLineText", "id": "fldrP8J8RuGKxQWhE", "name": "SN NATIONAL DESGINATION" },
+        {
+          "type": "singleLineText",
+          "id": "fldSxeZEAObHupZK5",
+          "name": "Contact from National Invoice"
+        },
+        {
+          "type": "multipleLookupValues",
+          "options": {
+            "isValid": true,
+            "recordLinkFieldId": "fldL22yI7Nvkab6wQ",
+            "fieldIdInLinkedTable": "fld81s1iLDGvbAzNd",
+            "result": { "type": "email" }
+          },
+          "id": "fld6T3Q0OCUgJqNNW",
+          "name": "MIT EMAIL"
+        },
+        {
+          "type": "multipleLookupValues",
+          "options": {
+            "isValid": true,
+            "recordLinkFieldId": "fldL22yI7Nvkab6wQ",
+            "fieldIdInLinkedTable": "fldAdhNcYkdt60iSW",
+            "result": { "type": "email" }
+          },
+          "id": "fldraHrwHRdESdiAP",
+          "name": "PERSONAL EMAIL"
+        },
+        {
+          "type": "phoneNumber",
+          "id": "fldW0KLRayFqgEF6z",
+          "name": "MOBILE PHONE FROM NATIONAL INVOICE"
+        },
+        {
+          "type": "singleLineText",
+          "id": "fldaOh45CuYh19VTI",
+          "name": "EMAIL FROM NATIONAL INVOICE"
+        },
+        {
+          "type": "multipleLookupValues",
+          "options": {
+            "isValid": true,
+            "recordLinkFieldId": "fldrCBrNxV1mOc5YS",
+            "fieldIdInLinkedTable": "fldISbtwYnq0yKlil",
+            "result": {
+              "type": "singleSelect",
+              "options": {
+                "choices": [
+                  { "id": "selB87do08UjZURF9", "name": "Executive Team", "color": "blueLight2" },
+                  {
+                    "id": "seloZ3L9vAhZZRIVm",
+                    "name": "Non-Executive Team",
+                    "color": "cyanLight2"
+                  },
+                  {
+                    "id": "seld8WWZzL0goGFLZ",
+                    "name": "Housing Corporation",
+                    "color": "tealDark1"
+                  },
+                  { "id": "selWNqsOP8z2wSFUL", "name": "Advisory Group", "color": "blueDark1" }
+                ]
+              }
+            }
+          },
+          "id": "flddEH45scD35pTBv",
+          "name": "Hierarchy (from Position)"
+        }
+      ],
+      "views": [
+        { "id": "viwhO1c57mU5kPjyK", "name": "Grid view", "type": "grid" },
+        { "id": "viwetXG7AGluNChWZ", "name": "Spring 2011 Officers", "type": "grid" },
+        { "id": "viwJ0Iicn7cxbt6ZP", "name": "2020 Officers", "type": "grid" },
+        { "id": "viwy6aCaxprwzvIgs", "name": "2021 Officers", "type": "grid" },
+        { "id": "viws3q3GzlckrEIho", "name": "2022 Officers", "type": "grid" },
+        { "id": "viweFPd0SmsdZCEgW", "name": "2023 Officer", "type": "grid" },
+        { "id": "viwfbWHivDr4uQKaj", "name": "2024 Officer", "type": "grid" },
+        { "id": "viwPGgtAqWg0dvWJ8", "name": "2025 Officers", "type": "grid" }
+      ]
+    },
+    {
+      "id": "tblUFWPVwSSvsoQpt",
+      "name": "Rooms",
+      "primaryFieldId": "fldJ3rGegbhgNxzhg",
+      "fields": [
+        {
+          "type": "formula",
+          "options": {
+            "isValid": true,
+            "formula": "CONCATENATE({fldcoWgVeHN3B7StH},\" \",{fldGl6FcgmVz44YI1},\"-\",{fldxJHLEld6nKofyr})",
+            "referencedFieldIds": ["fldcoWgVeHN3B7StH", "fldGl6FcgmVz44YI1", "fldxJHLEld6nKofyr"],
+            "result": { "type": "singleLineText" }
+          },
+          "id": "fldJ3rGegbhgNxzhg",
+          "name": "Name"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              { "id": "sel2iURLsPXOMsXJA", "name": "SPE", "color": "grayLight2" },
+              { "id": "selHRjqKPfrnIGalZ", "name": "LCA", "color": "cyanLight2" }
+            ]
+          },
+          "id": "fldcoWgVeHN3B7StH",
+          "name": "HOUSE"
+        },
+        { "type": "singleLineText", "id": "fldxJHLEld6nKofyr", "name": "NICKNAMES" },
+        {
+          "type": "number",
+          "options": { "precision": 0 },
+          "id": "fldHaM3UpD9gPSuLG",
+          "name": "CAPACITY"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              { "id": "selikGLBu4pQ4YPMr", "name": "Basement", "color": "blueLight2" },
+              { "id": "selElAiuRzeXr0rp0", "name": "First", "color": "cyanLight2" },
+              { "id": "selHogzUw7BWURqpj", "name": "Second", "color": "tealLight2" },
+              { "id": "selluQP8d928Dc0N8", "name": "Third", "color": "greenLight2" },
+              { "id": "selw5SFpjNt7se7V7", "name": "Fourth", "color": "yellowLight2" },
+              { "id": "selJiVsdVxT3rJV8g", "name": "Fifth", "color": "orangeLight2" },
+              { "id": "selgm6zGQZb8KFPKU", "name": "Sixth", "color": "redLight2" }
+            ]
+          },
+          "id": "fldCSpKLkSX8ozd3e",
+          "name": "Floor"
+        },
+        { "type": "singleLineText", "id": "fldGl6FcgmVz44YI1", "name": "ROOM NUMBER" },
+        {
+          "type": "number",
+          "options": { "precision": 0 },
+          "id": "fldKpLkXh6XTrEtQZ",
+          "name": "SQUARE FOOTAGE"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              { "id": "selDb2w0RbdEfssRl", "name": "BATH", "color": "pinkLight2" },
+              { "id": "selnZMHdd3ayt01xr", "name": "CORR", "color": "yellowLight2" },
+              { "id": "selMqqMn6XO3hlzyD", "name": "FOOD", "color": "cyanLight2" },
+              { "id": "selMN3SXWQiyCGdl2", "name": "FOODSV", "color": "cyanLight2" },
+              { "id": "selsCUbcqVUM7kG6H", "name": "LOBBY", "color": "tealLight2" },
+              { "id": "selC5sKqcsRlPQrxO", "name": "LOUNGE", "color": "redLight2" },
+              { "id": "selzKqnb8lofVkmbC", "name": "REC", "color": "yellowLight2" },
+              { "id": "sel0GgP1G5KJhBnoq", "name": "RECREA", "color": "redLight2" },
+              { "id": "selTIgO631cDuPVeG", "name": "SLEEP", "color": "blueLight2" },
+              { "id": "sel8Cw6gNiXsUkYCl", "name": "SLPSVC", "color": "orangeLight2" },
+              { "id": "selqshkkF13Q8num3", "name": "STAIR", "color": "grayLight2" },
+              { "id": "selXEAnE74twugtS0", "name": "STUDY", "color": "pinkLight2" },
+              { "id": "selEQoI4M2romcilx", "name": "TELE", "color": "greenLight2" },
+              { "id": "selgCqlmNI015wE70", "name": "U/M", "color": "purpleLight2" },
+              { "id": "selkqZswBsNeLBcKx", "name": "ELEV", "color": "greenLight2" }
+            ]
+          },
+          "id": "fld6uhHeK39EkI3K9",
+          "name": "FLOOR PLAN CODE"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              { "id": "selDb2w0RbdEfssRl", "name": "BATH", "color": "pinkLight2" },
+              { "id": "selnZMHdd3ayt01xr", "name": "CORR", "color": "yellowLight2" },
+              { "id": "selMqqMn6XO3hlzyD", "name": "FOOD", "color": "cyanLight2" },
+              { "id": "selMN3SXWQiyCGdl2", "name": "FOODSV", "color": "cyanLight2" },
+              { "id": "selsCUbcqVUM7kG6H", "name": "LOBBY", "color": "tealLight2" },
+              { "id": "selC5sKqcsRlPQrxO", "name": "LOUNGE", "color": "redLight2" },
+              { "id": "selzKqnb8lofVkmbC", "name": "REC", "color": "yellowLight2" },
+              { "id": "sel0GgP1G5KJhBnoq", "name": "RECREA", "color": "redLight2" },
+              { "id": "selTIgO631cDuPVeG", "name": "SLEEP", "color": "blueLight2" },
+              { "id": "sel8Cw6gNiXsUkYCl", "name": "SLPSVC", "color": "orangeLight2" },
+              { "id": "selqshkkF13Q8num3", "name": "STAIR", "color": "grayLight2" },
+              { "id": "selXEAnE74twugtS0", "name": "STUDY", "color": "pinkLight2" },
+              { "id": "selEQoI4M2romcilx", "name": "TELE", "color": "greenLight2" },
+              { "id": "selgCqlmNI015wE70", "name": "U/M", "color": "purpleLight2" },
+              { "id": "selkqZswBsNeLBcKx", "name": "ELEV", "color": "greenLight2" }
+            ]
+          },
+          "id": "fldnnJ86ngqKCVdMT",
+          "name": "FLOOR PLAN USE"
+        },
+        { "type": "singleLineText", "id": "fldkjXtHfsW51Ss6l", "name": "DESCRIPTION" },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblZYBHaN2yP4uf7b",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldPZ9vLtIVwc0Lre"
+          },
+          "id": "fldxG92iKps8yLmQn",
+          "name": "Housing"
+        },
+        {
+          "type": "number",
+          "options": { "precision": 0 },
+          "id": "fldC6NuQw6oEKeGHT",
+          "name": "IDEAL"
+        },
+        {
+          "type": "number",
+          "options": { "precision": 0 },
+          "id": "fldONJ0or9zL9EQsv",
+          "name": "BEDS"
+        },
+        {
+          "type": "number",
+          "options": { "precision": 0 },
+          "id": "fld2iI6ERHjFlQouR",
+          "name": "DRESSERS"
+        },
+        {
+          "type": "number",
+          "options": { "precision": 0 },
+          "id": "fldPhdy5Y4ZBAydrg",
+          "name": "BOOK SHELVES"
+        },
+        {
+          "type": "number",
+          "options": { "precision": 0 },
+          "id": "fldqv2bKwhuhoyx52",
+          "name": "CLOSETS"
+        },
+        {
+          "type": "number",
+          "options": { "precision": 0 },
+          "id": "fldz6Isny9X14vuga",
+          "name": "DESKS"
+        },
+        {
+          "type": "number",
+          "options": { "precision": 0 },
+          "id": "fldwW1SEwhI7dnXVI",
+          "name": "DESK CHAIRS"
+        },
+        {
+          "type": "number",
+          "options": { "precision": 0 },
+          "id": "fldwVD73vKRQcEQyR",
+          "name": "SOFA"
+        },
+        {
+          "type": "number",
+          "options": { "precision": 0 },
+          "id": "fldM00RSC5EfhEiFR",
+          "name": "LOFTED KIT"
+        },
+        {
+          "type": "number",
+          "options": { "precision": 0 },
+          "id": "fld7SO7dTKxOQMxzV",
+          "name": "MATTRESSES"
+        }
+      ],
+      "views": [
+        { "id": "viwYUFejPAu4DzFfQ", "name": "Grid view", "type": "grid" },
+        { "id": "viwQwURJJkgz8nKsS", "name": "LCA Bedrooms", "type": "grid" },
+        { "id": "viwBnljHemvJcK8SO", "name": "SPE Bedrooms", "type": "grid" }
+      ]
+    },
+    {
+      "id": "tblZYBHaN2yP4uf7b",
+      "name": "Housing",
+      "primaryFieldId": "fldz7nuTufbpc8572",
+      "fields": [
+        {
+          "type": "formula",
+          "options": {
+            "isValid": true,
+            "formula": "CONCATENATE({fldfeLQvaJumRlKqE},\" \",{fldXqHfL2Xlr93uVW}, \" - \",{fldPZ9vLtIVwc0Lre})",
+            "referencedFieldIds": ["fldfeLQvaJumRlKqE", "fldXqHfL2Xlr93uVW", "fldPZ9vLtIVwc0Lre"],
+            "result": { "type": "singleLineText" }
+          },
+          "id": "fldz7nuTufbpc8572",
+          "name": "Name"
+        },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              { "id": "selYasFliUB2dESYb", "name": "Spring", "color": "blueLight2" },
+              { "id": "seloUbJtab1nJAajy", "name": "Summer", "color": "cyanLight2" },
+              { "id": "selwp0hQgFJpOQztA", "name": "Fall", "color": "tealLight2" }
+            ]
+          },
+          "id": "fldXqHfL2Xlr93uVW",
+          "name": "Semester"
+        },
+        {
+          "type": "number",
+          "options": { "precision": 0 },
+          "id": "fldfeLQvaJumRlKqE",
+          "name": "YEAR"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblUFWPVwSSvsoQpt",
+            "isReversed": false,
+            "prefersSingleRecordLink": true,
+            "inverseLinkFieldId": "fldxG92iKps8yLmQn"
+          },
+          "id": "fldPZ9vLtIVwc0Lre",
+          "name": "Room"
+        },
+        {
+          "type": "rollup",
+          "options": {
+            "isValid": true,
+            "recordLinkFieldId": "fldPZ9vLtIVwc0Lre",
+            "fieldIdInLinkedTable": "fldC6NuQw6oEKeGHT",
+            "referencedFieldIds": [],
+            "result": { "type": "number", "options": { "precision": 0 } }
+          },
+          "id": "fldNz6418SeKp92gl",
+          "name": "Ideal Bed Count"
+        },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tblv5GwTtebz6hER9",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fld2Hjq2vC0SxPWxc"
+          },
+          "id": "fld9pACG3ApuyZMZc",
+          "name": "Residents"
+        }
+      ],
+      "views": [
+        { "id": "viwFbzg339OfIDZ16", "name": "Grid view", "type": "grid" },
+        { "id": "viwlA9DsX9wIyYvTX", "name": "SPE House Fall 2025", "type": "grid" },
+        { "id": "viw7Ln9yQlrbHul2G", "name": "LCA House Spring 2025", "type": "grid" }
+      ]
+    },
+    {
+      "id": "tblHujkJMrUDX5FYl",
+      "name": "Invoice Items",
+      "primaryFieldId": "fldUAdNX3MajCdMSx",
+      "fields": [
+        { "type": "singleLineText", "id": "fldUAdNX3MajCdMSx", "name": "Name" },
+        { "type": "multilineText", "id": "fldGprPHJXy7iFbyS", "name": "Notes" },
+        { "type": "singleCollaborator", "id": "fld8VBSoiUhq59H8J", "name": "Assignee" },
+        {
+          "type": "singleSelect",
+          "options": {
+            "choices": [
+              { "id": "sel4q99w8gGA8vsIX", "name": "Todo", "color": "redLight2" },
+              { "id": "selFmEeFHllHnAVmo", "name": "In progress", "color": "yellowLight2" },
+              { "id": "selc6a0G6KY4TCUOC", "name": "Done", "color": "greenLight2" }
+            ]
+          },
+          "id": "fldMa3YksJgppSAh9",
+          "name": "Status"
+        }
+      ],
+      "views": [{ "id": "viw8fvw9HBIP61VD4", "name": "Grid view", "type": "grid" }]
+    },
+    {
+      "id": "tblzv7oLvjMbT6JY6",
+      "name": "Organizatoin",
+      "primaryFieldId": "fldi79GXOpV4LrQYr",
+      "fields": [
+        { "type": "singleLineText", "id": "fldi79GXOpV4LrQYr", "name": "Name" },
+        { "type": "singleLineText", "id": "fldjOCu8Av6SUzVVQ", "name": "Leadership" },
+        {
+          "type": "multipleRecordLinks",
+          "options": {
+            "linkedTableId": "tbl0LZDf13shAmzGb",
+            "isReversed": false,
+            "prefersSingleRecordLink": false,
+            "inverseLinkFieldId": "fldiSRKnHIv4cgcKJ"
+          },
+          "id": "fldGbp7lhu6gtbK1S",
+          "name": "Positions"
+        }
+      ],
+      "views": [{ "id": "viwGsucMaAkogyfTA", "name": "Grid view", "type": "grid" }]
+    }
+  ]
+}
