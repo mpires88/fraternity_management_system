@@ -302,7 +302,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "national_org_templates_national_group_id_fkey"
+            foreignKeyName: "national_org_templates_national_org_id_fkey"
             columns: ["parent_organization_id"]
             isOneToOne: false
             referencedRelation: "parent_organizations"
@@ -1321,7 +1321,7 @@ export type Database = {
       current_system_role_holders: {
         Row: {
           full_name: string | null
-          group_id: string | null
+          org_id: string | null
           person_id: string | null
           position_title: string | null
           system_role: string | null
@@ -1339,6 +1339,7 @@ export type Database = {
     }
     Functions: {
       get_my_group_ids: { Args: never; Returns: string[] }
+      get_my_org_ids: { Args: never; Returns: string[] }
       get_my_organization_ids: { Args: never; Returns: string[] }
     }
     Enums: {

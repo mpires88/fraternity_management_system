@@ -10,6 +10,10 @@
 -- `npm run types:db`). If this file disagrees with types.ts, types.ts wins.
 -- ============================================================================
 
+
+
+
+
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
@@ -946,6 +950,10 @@ ALTER TABLE "public"."group_memberships" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."group_relationships" ENABLE ROW LEVEL SECURITY;
 
 
+CREATE POLICY "group_relationships_delete" ON "public"."group_relationships" FOR DELETE USING ((("parent_group_id" IN ( SELECT "public"."get_my_group_ids"() AS "get_my_group_ids")) OR ("child_group_id" IN ( SELECT "public"."get_my_group_ids"() AS "get_my_group_ids"))));
+
+
+
 CREATE POLICY "group_relationships_insert" ON "public"."group_relationships" FOR INSERT WITH CHECK ((("parent_group_id" IN ( SELECT "public"."get_my_group_ids"() AS "get_my_group_ids")) OR ("child_group_id" IN ( SELECT "public"."get_my_group_ids"() AS "get_my_group_ids"))));
 
 
@@ -954,7 +962,19 @@ CREATE POLICY "group_relationships_select" ON "public"."group_relationships" FOR
 
 
 
+CREATE POLICY "group_relationships_update" ON "public"."group_relationships" FOR UPDATE USING ((("parent_group_id" IN ( SELECT "public"."get_my_group_ids"() AS "get_my_group_ids")) OR ("child_group_id" IN ( SELECT "public"."get_my_group_ids"() AS "get_my_group_ids"))));
+
+
+
 ALTER TABLE "public"."groups" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "groups_delete" ON "public"."groups" FOR DELETE USING ((("organization_id" IN ( SELECT "organization_admins"."organization_id"
+   FROM "public"."organization_admins"
+  WHERE ("organization_admins"."person_id" = "auth"."uid"()))) OR (EXISTS ( SELECT 1
+   FROM "public"."platform_admins"
+  WHERE ("platform_admins"."id" = "auth"."uid"())))));
+
 
 
 CREATE POLICY "groups_insert" ON "public"."groups" FOR INSERT WITH CHECK (("organization_id" IN ( SELECT "organization_admins"."organization_id"
@@ -1026,6 +1046,14 @@ CREATE POLICY "organization_admins_select" ON "public"."organization_admins" FOR
 
 
 
+CREATE POLICY "organization_admins_update" ON "public"."organization_admins" FOR UPDATE USING ((("organization_id" IN ( SELECT "organization_admins_1"."organization_id"
+   FROM "public"."organization_admins" "organization_admins_1"
+  WHERE ("organization_admins_1"."person_id" = "auth"."uid"()))) OR (EXISTS ( SELECT 1
+   FROM "public"."platform_admins"
+  WHERE ("platform_admins"."id" = "auth"."uid"())))));
+
+
+
 ALTER TABLE "public"."organizations" ENABLE ROW LEVEL SECURITY;
 
 
@@ -1088,11 +1116,27 @@ CREATE POLICY "position_assignments_select" ON "public"."position_assignments" F
 ALTER TABLE "public"."positions" ENABLE ROW LEVEL SECURITY;
 
 
+CREATE POLICY "positions_delete" ON "public"."positions" FOR DELETE USING (("group_id" IN ( SELECT "public"."get_my_group_ids"() AS "get_my_group_ids")));
+
+
+
+CREATE POLICY "positions_insert" ON "public"."positions" FOR INSERT WITH CHECK (("group_id" IN ( SELECT "public"."get_my_group_ids"() AS "get_my_group_ids")));
+
+
+
 CREATE POLICY "positions_select" ON "public"."positions" FOR SELECT USING (("group_id" IN ( SELECT "public"."get_my_org_ids"() AS "get_my_org_ids")));
 
 
 
+CREATE POLICY "positions_update" ON "public"."positions" FOR UPDATE USING (("group_id" IN ( SELECT "public"."get_my_group_ids"() AS "get_my_group_ids")));
+
+
+
 ALTER TABLE "public"."role_types" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "role_types_delete" ON "public"."role_types" FOR DELETE USING (("group_id" IN ( SELECT "public"."get_my_group_ids"() AS "get_my_group_ids")));
+
 
 
 CREATE POLICY "role_types_insert" ON "public"."role_types" FOR INSERT WITH CHECK (("group_id" IN ( SELECT "public"."get_my_org_ids"() AS "get_my_org_ids")));
@@ -1127,6 +1171,10 @@ CREATE POLICY "rooms_select" ON "public"."rooms" FOR SELECT USING (("facility_id
 
 
 ALTER TABLE "public"."status_definitions" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "status_definitions_delete" ON "public"."status_definitions" FOR DELETE USING (("group_id" IN ( SELECT "public"."get_my_group_ids"() AS "get_my_group_ids")));
+
 
 
 CREATE POLICY "status_definitions_insert" ON "public"."status_definitions" FOR INSERT WITH CHECK (("group_id" IN ( SELECT "public"."get_my_org_ids"() AS "get_my_org_ids")));
@@ -1193,14 +1241,38 @@ CREATE POLICY "system_position_roles_select" ON "public"."system_position_roles"
 ALTER TABLE "public"."term_definitions" ENABLE ROW LEVEL SECURITY;
 
 
+CREATE POLICY "term_definitions_delete" ON "public"."term_definitions" FOR DELETE USING (("group_id" IN ( SELECT "public"."get_my_group_ids"() AS "get_my_group_ids")));
+
+
+
+CREATE POLICY "term_definitions_insert" ON "public"."term_definitions" FOR INSERT WITH CHECK (("group_id" IN ( SELECT "public"."get_my_group_ids"() AS "get_my_group_ids")));
+
+
+
 CREATE POLICY "term_definitions_select" ON "public"."term_definitions" FOR SELECT USING (("group_id" IN ( SELECT "public"."get_my_org_ids"() AS "get_my_org_ids")));
+
+
+
+CREATE POLICY "term_definitions_update" ON "public"."term_definitions" FOR UPDATE USING (("group_id" IN ( SELECT "public"."get_my_group_ids"() AS "get_my_group_ids")));
 
 
 
 ALTER TABLE "public"."terms" ENABLE ROW LEVEL SECURITY;
 
 
+CREATE POLICY "terms_delete" ON "public"."terms" FOR DELETE USING (("group_id" IN ( SELECT "public"."get_my_group_ids"() AS "get_my_group_ids")));
+
+
+
+CREATE POLICY "terms_insert" ON "public"."terms" FOR INSERT WITH CHECK (("group_id" IN ( SELECT "public"."get_my_group_ids"() AS "get_my_group_ids")));
+
+
+
 CREATE POLICY "terms_select" ON "public"."terms" FOR SELECT USING (("group_id" IN ( SELECT "public"."get_my_org_ids"() AS "get_my_org_ids")));
+
+
+
+CREATE POLICY "terms_update" ON "public"."terms" FOR UPDATE USING (("group_id" IN ( SELECT "public"."get_my_group_ids"() AS "get_my_group_ids")));
 
 
 
@@ -1403,3 +1475,10 @@ ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TAB
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "anon";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "authenticated";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "service_role";
+
+
+
+
+
+
+
