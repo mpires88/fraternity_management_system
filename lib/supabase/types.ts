@@ -354,6 +354,98 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          calendar_feed_token: string | null
+          created_at: string
+          email_digest: boolean
+          email_enabled: boolean
+          person_id: string
+          updated_at: string
+        }
+        Insert: {
+          calendar_feed_token?: string | null
+          created_at?: string
+          email_digest?: boolean
+          email_enabled?: boolean
+          person_id: string
+          updated_at?: string
+        }
+        Update: {
+          calendar_feed_token?: string | null
+          created_at?: string
+          email_digest?: boolean
+          email_enabled?: boolean
+          person_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: true
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          emailed_at: string | null
+          group_id: string
+          group_key: string | null
+          href: string | null
+          id: string
+          person_id: string
+          read_at: string | null
+          title: string
+          type: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          emailed_at?: string | null
+          group_id: string
+          group_key?: string | null
+          href?: string | null
+          id?: string
+          person_id: string
+          read_at?: string | null
+          title: string
+          type: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          emailed_at?: string | null
+          group_id?: string
+          group_key?: string | null
+          href?: string | null
+          id?: string
+          person_id?: string
+          read_at?: string | null
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       org_relationship_types: {
         Row: {
           default_permissions: Json

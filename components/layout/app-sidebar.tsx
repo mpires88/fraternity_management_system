@@ -13,6 +13,7 @@ import {
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { NotificationBell } from '@/components/layout/notification-bell'
 import { ThemeToggle } from '@/components/layout/theme-toggle'
 import { useOrg } from '@/lib/context/org-context'
 import { createClient } from '@/lib/supabase/client'
@@ -148,6 +149,7 @@ export function AppSidebar() {
               {person.full_name}
             </p>
           </div>
+          <NotificationBell />
         </div>
         <ThemeToggle />
         <button

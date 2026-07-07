@@ -18,6 +18,11 @@ import {
   updateAssignmentStatusDal,
   updateRequirementDal,
 } from '@/dal/requirements'
+import {
+  notifyProgressApproved,
+  notifyRequirementAssigned,
+  notifySubmissionToVerify,
+} from '@/lib/notifications/triggers'
 import { expandAudience } from '@/lib/utils/requirements'
 import type { CreateRequirementInput, UpdateRequirementInput } from '@/lib/validations/requirement'
 
@@ -38,6 +43,15 @@ export const createRequirement = createOrgAuthenticatedAction<CreateRequirementI
     )
 
     await insertAssignmentsDal(supabase, requirementId, personIds)
+
+    const assigneesExceptCreator = personIds.filter((pid) => pid !== user.id)
+    await notifyRequirementAssigned(
+      supabase,
+      groupId,
+      input.title,
+      '/requirements',
+      assigneesExceptCreator
+    )
   }
 )
 
@@ -57,8 +71,40 @@ export const archiveRequirement = createOrgAuthenticatedAction<ArchiveInput, voi
 type AssignmentStatusInput = { assignmentId: string; status: string; progress?: number }
 
 export const updateAssignmentStatus = createAuthenticatedAction<AssignmentStatusInput, void>(
-  async (supabase, _user, input) => {
+  async (supabase, user, input) => {
     await updateAssignmentStatusDal(supabase, input.assignmentId, input.status, input.progress)
+
+    if (input.status === 'submitted') {
+      const { data: assignment } = await supabase
+        .from('requirement_assignments')
+        .select(
+          'requirements!inner(title, group_id), persons!requirement_assignments_person_id_fkey(full_name)'
+        )
+        .eq('id', input.assignmentId)
+        .single()
+
+      if (assignment) {
+        const req = assignment.requirements as unknown as { title: string; group_id: string }
+        const person = assignment.persons as unknown as { full_name: string }
+
+        const { data: officers } = await supabase
+          .from('group_memberships')
+          .select('person_id, role_types!inner(access_level)')
+          .eq('group_id', req.group_id)
+          .eq('role_types.access_level', 'full')
+
+        const officerIds = (officers ?? []).map((o) => o.person_id).filter((pid) => pid !== user.id)
+
+        await notifySubmissionToVerify(
+          supabase,
+          req.group_id,
+          person?.full_name ?? 'A member',
+          req.title,
+          '/requirements',
+          officerIds
+        )
+      }
+    }
   }
 )
 
@@ -218,8 +264,27 @@ export const logQuotaProgress = createAuthenticatedAction<RecordProgressInput, v
 type ApproveEntryInput = { entryId: string }
 
 export const approveProgressEntry = createOrgAuthenticatedAction<ApproveEntryInput, void>(
-  async (supabase, user, _groupId, input) => {
+  async (supabase, user, groupId, input) => {
     await approveProgressEntryDal(supabase, input.entryId, user.id)
+
+    const { data: entry } = await supabase
+      .from('requirement_progress_entries')
+      .select('logged_by, requirement_assignments!inner(requirements!inner(title))')
+      .eq('id', input.entryId)
+      .single()
+
+    if (entry && entry.logged_by !== user.id) {
+      const ra = entry.requirement_assignments as unknown as {
+        requirements: { title: string }
+      }
+      await notifyProgressApproved(
+        supabase,
+        groupId,
+        entry.logged_by,
+        ra.requirements.title,
+        '/requirements'
+      )
+    }
   }
 )
 

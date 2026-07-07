@@ -6,8 +6,8 @@ this document wins.
 
 ## Progress
 
-- **Next task:** 3.1
-- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4
+- **Next task:** 3.2
+- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 3.1
   Phase 2 complete.
   Phase 1 complete.
   Heads-up: the dev DB holds the real roster — see `docs/DEV.md` "Test users &
