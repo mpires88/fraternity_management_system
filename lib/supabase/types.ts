@@ -39,6 +39,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      data_change_log: {
+        Row: {
+          action: string
+          changed_at: string
+          changed_by: string | null
+          group_id: string | null
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          record_id: string
+          table_name: string
+        }
+        Insert: {
+          action: string
+          changed_at?: string
+          changed_by?: string | null
+          group_id?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id: string
+          table_name: string
+        }
+        Update: {
+          action?: string
+          changed_at?: string
+          changed_by?: string | null
+          group_id?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string
+          table_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_change_log_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_categories: {
         Row: {
           color: string | null
@@ -779,6 +823,158 @@ export type Database = {
           },
         ]
       }
+      requirement_assignments: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          note: string | null
+          person_id: string
+          progress: number
+          requirement_id: string
+          status: string
+          updated_at: string
+          verified_by: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          person_id: string
+          progress?: number
+          requirement_id: string
+          status?: string
+          updated_at?: string
+          verified_by?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          person_id?: string
+          progress?: number
+          requirement_id?: string
+          status?: string
+          updated_at?: string
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "requirement_assignments_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requirement_assignments_requirement_id_fkey"
+            columns: ["requirement_id"]
+            isOneToOne: false
+            referencedRelation: "requirements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requirement_assignments_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      requirements: {
+        Row: {
+          amount_cents: number | null
+          assign_to: string
+          audience_position_ids: string[] | null
+          audience_role_type_ids: string[] | null
+          audience_subgroup_ids: string[] | null
+          created_at: string
+          created_by: string
+          description: string | null
+          due_at: string | null
+          group_id: string
+          id: string
+          is_active: boolean
+          kind: string
+          occurs_at: string | null
+          quota_target: number | null
+          quota_unit: string | null
+          requires_verification: boolean
+          term_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents?: number | null
+          assign_to?: string
+          audience_position_ids?: string[] | null
+          audience_role_type_ids?: string[] | null
+          audience_subgroup_ids?: string[] | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          due_at?: string | null
+          group_id: string
+          id?: string
+          is_active?: boolean
+          kind: string
+          occurs_at?: string | null
+          quota_target?: number | null
+          quota_unit?: string | null
+          requires_verification?: boolean
+          term_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number | null
+          assign_to?: string
+          audience_position_ids?: string[] | null
+          audience_role_type_ids?: string[] | null
+          audience_subgroup_ids?: string[] | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          due_at?: string | null
+          group_id?: string
+          id?: string
+          is_active?: boolean
+          kind?: string
+          occurs_at?: string | null
+          quota_target?: number | null
+          quota_unit?: string | null
+          requires_verification?: boolean
+          term_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "requirements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requirements_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requirements_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_types: {
         Row: {
           access_level: string
@@ -1338,6 +1534,7 @@ export type Database = {
       }
     }
     Functions: {
+      get_my_admin_group_ids: { Args: never; Returns: string[] }
       get_my_group_ids: { Args: never; Returns: string[] }
       get_my_org_ids: { Args: never; Returns: string[] }
       get_my_organization_ids: { Args: never; Returns: string[] }
