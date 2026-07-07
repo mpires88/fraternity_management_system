@@ -1,12 +1,14 @@
 'use client'
 
-import { Bell, CheckCheck } from 'lucide-react'
+import { Bell, CheckCheck, Mail } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useEffect, useState, useTransition } from 'react'
 import {
   getNotifications,
+  getPreferences,
   markAllNotificationsRead,
   markRead,
+  updatePreferences,
 } from '@/actions/notifications.action'
 
 type Notification = {
@@ -33,15 +35,19 @@ function timeAgo(iso: string) {
 export function NotificationBell() {
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
+  const [emailEnabled, setEmailEnabled] = useState(false)
   const [isPending, startTransition] = useTransition()
 
   const unreadCount = notifications.filter((n) => !n.read_at).length
 
   const fetchNotifications = useCallback(() => {
     startTransition(async () => {
-      const result = await getNotifications()
-      if (result.success && result.data) {
-        setNotifications(result.data)
+      const [notifResult, prefResult] = await Promise.all([getNotifications(), getPreferences()])
+      if (notifResult.success && notifResult.data) {
+        setNotifications(notifResult.data)
+      }
+      if (prefResult.success && prefResult.data) {
+        setEmailEnabled(prefResult.data.email_enabled)
       }
     })
   }, [])
@@ -63,6 +69,14 @@ export function NotificationBell() {
     startTransition(async () => {
       await markAllNotificationsRead()
       setNotifications((prev) => prev.map((n) => ({ ...n, read_at: n.read_at ?? 'now' })))
+    })
+  }
+
+  function handleToggleEmail() {
+    const next = !emailEnabled
+    setEmailEnabled(next)
+    startTransition(async () => {
+      await updatePreferences({ email_enabled: next, email_digest: true })
     })
   }
 
@@ -116,6 +130,24 @@ export function NotificationBell() {
                   onClose={() => setOpen(false)}
                 />
               ))}
+            </div>
+
+            <div className="px-4 py-2.5 border-t border-border">
+              <button
+                onClick={handleToggleEmail}
+                disabled={isPending}
+                className="flex items-center gap-2 w-full text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Mail size={12} />
+                <span className="flex-1 text-left">Email reminders</span>
+                <span
+                  className={`w-7 h-4 rounded-full transition-colors flex items-center ${
+                    emailEnabled ? 'bg-brand justify-end' : 'bg-muted justify-start'
+                  }`}
+                >
+                  <span className="w-3 h-3 rounded-full bg-white mx-0.5" />
+                </span>
+              </button>
             </div>
           </div>
         </>

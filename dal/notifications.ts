@@ -1,5 +1,10 @@
 import type { DbClient } from '@/dal/types'
 
+export type NotificationPrefs = {
+  email_enabled: boolean
+  email_digest: boolean
+}
+
 export type NotificationRow = {
   id: string
   type: string
@@ -65,4 +70,33 @@ export async function markAllRead(supabase: DbClient, personId: string) {
     .update({ read_at: new Date().toISOString() })
     .eq('person_id', personId)
     .is('read_at', null)
+}
+
+export async function getNotificationPrefs(
+  supabase: DbClient,
+  personId: string
+): Promise<NotificationPrefs> {
+  const { data } = await supabase
+    .from('notification_preferences')
+    .select('email_enabled, email_digest')
+    .eq('person_id', personId)
+    .single()
+
+  return data ?? { email_enabled: false, email_digest: true }
+}
+
+export async function upsertNotificationPrefs(
+  supabase: DbClient,
+  personId: string,
+  prefs: NotificationPrefs
+) {
+  await supabase.from('notification_preferences').upsert(
+    {
+      person_id: personId,
+      email_enabled: prefs.email_enabled,
+      email_digest: prefs.email_digest,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'person_id' }
+  )
 }
