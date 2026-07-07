@@ -88,6 +88,7 @@ export default async function RequirementsPage({
         <div className="border-t border-border pt-8">
           <ManageRequirements
             requirements={requirements}
+            groupId={ctx.group.id}
             termId={activeTerm.id}
             termName={activeTerm.name}
             roleTypes={roleTypes}

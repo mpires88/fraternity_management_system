@@ -1,6 +1,6 @@
 'use client'
 
-import { Archive, Copy, Pencil, Plus, RefreshCw, Users } from 'lucide-react'
+import { Archive, Copy, Download, Pencil, Plus, RefreshCw, Users } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
@@ -30,6 +30,7 @@ type TermOption = { id: string; name: string }
 
 type Props = {
   requirements: RequirementRow[]
+  groupId: string
   termId: string
   termName: string
   roleTypes: AudienceOption[]
@@ -55,6 +56,7 @@ const ASSIGN_TO_LABELS: Record<string, string> = {
 
 export function ManageRequirements({
   requirements,
+  groupId,
   termId,
   termName,
   roleTypes,
@@ -125,6 +127,16 @@ export function ManageRequirements({
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {active.length > 0 && (
+            <Button variant="outline" asChild>
+              <a
+                href={`/api/export/requirements?groupId=${groupId}&termId=${termId}&termName=${encodeURIComponent(termName)}`}
+              >
+                <Download size={14} data-icon="inline-start" />
+                Export CSV
+              </a>
+            </Button>
+          )}
           {otherTerms.length > 0 && (
             <Button variant="outline" onClick={() => setCloneOpen(!cloneOpen)}>
               <Copy size={14} data-icon="inline-start" />
