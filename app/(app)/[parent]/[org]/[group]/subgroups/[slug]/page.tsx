@@ -2,12 +2,18 @@ import { ArrowLeft, Crown, Users } from 'lucide-react'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { MemberAvatar } from '@/components/shared/member-avatar'
+import {
+  AddSubgroupMemberButton,
+  RemoveSubgroupMemberButton,
+} from '@/components/subgroups/subgroup-member-manager'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getGroupContext } from '@/dal/group-context'
+import { getMembersByOrg } from '@/dal/members'
 import { getSubgroupBySlug } from '@/dal/subgroups'
 import { getLabel, SUBGROUP_TYPE_LABELS } from '@/lib/constants/labels'
 import { createClient } from '@/lib/supabase/server'
+import { resolvePermissionsFromContext } from '@/lib/utils/resolve-permissions'
 
 export default async function SubgroupDetailPage({
   params,
@@ -28,8 +34,16 @@ export default async function SubgroupDetailPage({
   if (!subgroup) notFound()
 
   const base = `/${parentSlug}/${orgSlug}/${groupSlug}`
+  const perms = resolvePermissionsFromContext(ctx)
+  const canManage = perms.access_level === 'full'
 
-  // Separate head from regular members for display
+  const roster = canManage ? await getMembersByOrg(supabase, ctx.group.id) : []
+  const rosterForPicker = roster.map((m) => ({
+    person_id: m.person.id,
+    full_name: m.person.full_name,
+  }))
+  const existingMemberIds = subgroup.members.map((m) => m.person_id)
+
   const headMembers = subgroup.members.filter((m) => m.role === 'head')
   const regularMembers = subgroup.members.filter((m) => m.role !== 'head')
 
@@ -72,23 +86,30 @@ export default async function SubgroupDetailPage({
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users size={16} />
-                Members
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Users size={16} />
+                  Members
+                </CardTitle>
+                {canManage && (
+                  <AddSubgroupMemberButton
+                    subgroupId={subgroup.id}
+                    roster={rosterForPicker}
+                    existingMemberIds={existingMemberIds}
+                  />
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {subgroup.members.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-4 text-center">No members yet.</p>
               ) : (
                 <div className="divide-y divide-border/50 -mt-2">
-                  {/* Heads first */}
                   {headMembers.map((m) => (
-                    <MemberRow key={m.id} member={m} base={base} isHead />
+                    <MemberRow key={m.id} member={m} base={base} isHead canManage={canManage} />
                   ))}
-                  {/* Regular members */}
                   {regularMembers.map((m) => (
-                    <MemberRow key={m.id} member={m} base={base} />
+                    <MemberRow key={m.id} member={m} base={base} canManage={canManage} />
                   ))}
                 </div>
               )}
@@ -163,6 +184,7 @@ function MemberRow({
   member,
   base,
   isHead = false,
+  canManage = false,
 }: {
   member: {
     id: string
@@ -175,13 +197,14 @@ function MemberRow({
   }
   base: string
   isHead?: boolean
+  canManage?: boolean
 }) {
   return (
-    <Link
-      href={`${base}/members/${member.person_id}`}
-      className="flex items-center justify-between py-2.5 hover:bg-accent/50 -mx-4 px-4 rounded transition-colors group"
-    >
-      <div className="flex items-center gap-3">
+    <div className="flex items-center justify-between py-2.5 -mx-4 px-4 rounded transition-colors group">
+      <Link
+        href={`${base}/members/${member.person_id}`}
+        className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity"
+      >
         <MemberAvatar src={member.profile_photo} fullName={member.full_name} size="sm" />
         <div>
           <p className="text-sm font-medium text-foreground group-hover:text-brand transition-colors">
@@ -191,7 +214,7 @@ function MemberRow({
             <p className="text-xs text-muted-foreground">&ldquo;{member.nickname}&rdquo;</p>
           )}
         </div>
-      </div>
+      </Link>
       <div className="flex items-center gap-2">
         {isHead && (
           <Badge variant="secondary" className="text-xs gap-1">
@@ -204,7 +227,12 @@ function MemberRow({
             {member.join_type.replace('_', ' ')}
           </Badge>
         )}
+        {canManage && (
+          <RemoveSubgroupMemberButton
+            member={{ id: member.id, person_id: member.person_id, full_name: member.full_name }}
+          />
+        )}
       </div>
-    </Link>
+    </div>
   )
 }
