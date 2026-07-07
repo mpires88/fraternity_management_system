@@ -11,6 +11,7 @@ import {
   getRecentNotifications,
   markAllRead,
   markNotificationRead,
+  regenerateCalendarToken,
   upsertNotificationPrefs,
 } from '@/dal/notifications'
 
@@ -43,5 +44,11 @@ export const getPreferences = createNoInputQueryAction<NotificationPrefs>(
 export const updatePreferences = createAuthenticatedAction<NotificationPrefs, void>(
   async (supabase, user, input) => {
     await upsertNotificationPrefs(supabase, user.id, input)
+  }
+)
+
+export const regenerateFeedToken = createNoInputAuthenticatedAction<string>(
+  async (supabase, user) => {
+    return regenerateCalendarToken(supabase, user.id)
   }
 )

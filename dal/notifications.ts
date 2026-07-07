@@ -3,6 +3,7 @@ import type { DbClient } from '@/dal/types'
 export type NotificationPrefs = {
   email_enabled: boolean
   email_digest: boolean
+  calendar_feed_token?: string | null
 }
 
 export type NotificationRow = {
@@ -78,11 +79,24 @@ export async function getNotificationPrefs(
 ): Promise<NotificationPrefs> {
   const { data } = await supabase
     .from('notification_preferences')
-    .select('email_enabled, email_digest')
+    .select('email_enabled, email_digest, calendar_feed_token')
     .eq('person_id', personId)
     .single()
 
-  return data ?? { email_enabled: false, email_digest: true }
+  return data ?? { email_enabled: false, email_digest: true, calendar_feed_token: null }
+}
+
+export async function regenerateCalendarToken(supabase: DbClient, personId: string) {
+  const token = crypto.randomUUID()
+  await supabase.from('notification_preferences').upsert(
+    {
+      person_id: personId,
+      calendar_feed_token: token,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'person_id' }
+  )
+  return token
 }
 
 export async function upsertNotificationPrefs(

@@ -1,6 +1,6 @@
 'use client'
 
-import { Bell, CheckCheck, Mail } from 'lucide-react'
+import { Bell, Calendar, CheckCheck, Mail, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useEffect, useState, useTransition } from 'react'
 import {
@@ -8,6 +8,7 @@ import {
   getPreferences,
   markAllNotificationsRead,
   markRead,
+  regenerateFeedToken,
   updatePreferences,
 } from '@/actions/notifications.action'
 
@@ -36,6 +37,7 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [emailEnabled, setEmailEnabled] = useState(false)
+  const [feedToken, setFeedToken] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   const unreadCount = notifications.filter((n) => !n.read_at).length
@@ -48,6 +50,7 @@ export function NotificationBell() {
       }
       if (prefResult.success && prefResult.data) {
         setEmailEnabled(prefResult.data.email_enabled)
+        setFeedToken(prefResult.data.calendar_feed_token ?? null)
       }
     })
   }, [])
@@ -79,6 +82,19 @@ export function NotificationBell() {
       await updatePreferences({ email_enabled: next, email_digest: true })
     })
   }
+
+  function handleRegenerateToken() {
+    startTransition(async () => {
+      const result = await regenerateFeedToken()
+      if (result.success && result.data) {
+        setFeedToken(result.data)
+      }
+    })
+  }
+
+  const calendarUrl = feedToken
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/api/calendar/${feedToken}`
+    : null
 
   // Collapse by group_key
   const collapsed = collapseNotifications(notifications)
@@ -132,7 +148,7 @@ export function NotificationBell() {
               ))}
             </div>
 
-            <div className="px-4 py-2.5 border-t border-border">
+            <div className="px-4 py-2.5 border-t border-border space-y-2">
               <button
                 onClick={handleToggleEmail}
                 disabled={isPending}
@@ -148,6 +164,37 @@ export function NotificationBell() {
                   <span className="w-3 h-3 rounded-full bg-white mx-0.5" />
                 </span>
               </button>
+
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Calendar size={12} />
+                {calendarUrl ? (
+                  <>
+                    <button
+                      onClick={() => navigator.clipboard.writeText(calendarUrl)}
+                      className="flex-1 text-left hover:text-foreground transition-colors truncate"
+                      title={calendarUrl}
+                    >
+                      Copy calendar URL
+                    </button>
+                    <button
+                      onClick={handleRegenerateToken}
+                      disabled={isPending}
+                      className="hover:text-foreground transition-colors"
+                      title="Regenerate URL (kills old link)"
+                    >
+                      <RefreshCw size={10} />
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={handleRegenerateToken}
+                    disabled={isPending}
+                    className="flex-1 text-left hover:text-foreground transition-colors"
+                  >
+                    Enable calendar feed
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </>
