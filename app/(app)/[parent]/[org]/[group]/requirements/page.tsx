@@ -49,11 +49,12 @@ export default async function RequirementsPage({
   let roleTypes: { id: string; name: string }[] = []
   let positionsList: { id: string; name: string }[] = []
   let subgroupsList: { id: string; name: string }[] = []
+  let otherTerms: { id: string; name: string }[] = []
 
   if (isAdmin) {
     requirements = await getRequirementsForGroup(supabase, ctx.group.id, activeTerm.id)
 
-    const [rtRes, posRes, sgRes] = await Promise.all([
+    const [rtRes, posRes, sgRes, termsRes] = await Promise.all([
       supabase
         .from('role_types')
         .select('id, name')
@@ -65,11 +66,18 @@ export default async function RequirementsPage({
         .eq('group_id', ctx.group.id)
         .order('display_order'),
       supabase.from('subgroups').select('id, name').eq('group_id', ctx.group.id).order('name'),
+      supabase
+        .from('terms')
+        .select('id, name')
+        .eq('group_id', ctx.group.id)
+        .neq('id', activeTerm.id)
+        .order('year', { ascending: false }),
     ])
 
     roleTypes = (rtRes.data ?? []).map((r) => ({ id: r.id, name: r.name }))
     positionsList = (posRes.data ?? []).map((p) => ({ id: p.id, name: p.title }))
     subgroupsList = (sgRes.data ?? []).map((s) => ({ id: s.id, name: s.name }))
+    otherTerms = (termsRes.data ?? []).map((t) => ({ id: t.id, name: t.name }))
   }
 
   return (
@@ -85,6 +93,7 @@ export default async function RequirementsPage({
             roleTypes={roleTypes}
             positions={positionsList}
             subgroups={subgroupsList}
+            otherTerms={otherTerms}
           />
         </div>
       )}

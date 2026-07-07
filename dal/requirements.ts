@@ -313,3 +313,36 @@ export async function getAudienceContext(supabase: DbClient, groupId: string, te
     })),
   }
 }
+
+export type CloneableRequirement = {
+  title: string
+  description: string | null
+  kind: string
+  due_at: string | null
+  occurs_at: string | null
+  amount_cents: number | null
+  quota_target: number | null
+  quota_unit: string | null
+  requires_verification: boolean
+  assign_to: string
+  audience_role_type_ids: string[] | null
+  audience_position_ids: string[] | null
+  audience_subgroup_ids: string[] | null
+}
+
+export async function getRequirementsForClone(
+  supabase: DbClient,
+  groupId: string,
+  termId: string
+): Promise<CloneableRequirement[]> {
+  const { data } = await supabase
+    .from('requirements')
+    .select(
+      'title, description, kind, due_at, occurs_at, amount_cents, quota_target, quota_unit, requires_verification, assign_to, audience_role_type_ids, audience_position_ids, audience_subgroup_ids'
+    )
+    .eq('group_id', groupId)
+    .eq('term_id', termId)
+    .eq('is_active', true)
+
+  return (data ?? []) as CloneableRequirement[]
+}

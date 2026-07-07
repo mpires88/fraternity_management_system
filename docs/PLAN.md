@@ -6,8 +6,9 @@ this document wins.
 
 ## Progress
 
-- **Next task:** 1.5
-- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4
+- **Next task:** 2.1
+- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5
+  Phase 1 complete.
   Heads-up: the dev DB holds the real roster — see `docs/DEV.md` "Test users &
   real data" before touching auth/email flows.
   Note: task 0.1 also fixed `getAdminSettings` to query by `groups.id`

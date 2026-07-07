@@ -1,10 +1,11 @@
 'use client'
 
-import { Archive, Pencil, Plus, RefreshCw, Users } from 'lucide-react'
+import { Archive, Copy, Pencil, Plus, RefreshCw, Users } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import {
   archiveRequirement,
+  cloneRequirementsFromTerm,
   createRequirement,
   syncRequirementAssignments,
   updateRequirement,
@@ -24,6 +25,8 @@ import type { RequirementRow } from '@/dal/requirements'
 
 type AudienceOption = { id: string; name: string }
 
+type TermOption = { id: string; name: string }
+
 type Props = {
   requirements: RequirementRow[]
   termId: string
@@ -31,6 +34,7 @@ type Props = {
   roleTypes: AudienceOption[]
   positions: AudienceOption[]
   subgroups: AudienceOption[]
+  otherTerms: TermOption[]
 }
 
 const KIND_LABELS: Record<string, string> = {
@@ -55,11 +59,15 @@ export function ManageRequirements({
   roleTypes,
   positions,
   subgroups,
+  otherTerms,
 }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<RequirementRow | null>(null)
+  const [cloneOpen, setCloneOpen] = useState(false)
+  const [cloneTermId, setCloneTermId] = useState('')
+  const [cloneResult, setCloneResult] = useState<string | null>(null)
 
   const active = requirements.filter((r) => r.is_active)
   const archived = requirements.filter((r) => !r.is_active)
@@ -75,6 +83,23 @@ export function ManageRequirements({
     startTransition(async () => {
       await syncRequirementAssignments({ requirementId, termId })
       router.refresh()
+    })
+  }
+
+  function handleClone() {
+    if (!cloneTermId) return
+    setCloneResult(null)
+    startTransition(async () => {
+      const result = await cloneRequirementsFromTerm({
+        sourceTermId: cloneTermId,
+        targetTermId: termId,
+      })
+      if (result.success) {
+        setCloneResult(`Cloned ${result.data} requirement${result.data !== 1 ? 's' : ''}`)
+        router.refresh()
+      } else {
+        setCloneResult(result.error ?? 'Clone failed')
+      }
     })
   }
 
@@ -97,13 +122,52 @@ export function ManageRequirements({
             {termName} &middot; {active.length} active requirement{active.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <Button onClick={openCreate}>
-          <Plus size={14} data-icon="inline-start" />
-          New Requirement
-        </Button>
+        <div className="flex items-center gap-2">
+          {otherTerms.length > 0 && (
+            <Button variant="outline" onClick={() => setCloneOpen(!cloneOpen)}>
+              <Copy size={14} data-icon="inline-start" />
+              Clone from term
+            </Button>
+          )}
+          <Button onClick={openCreate}>
+            <Plus size={14} data-icon="inline-start" />
+            New Requirement
+          </Button>
+        </div>
       </div>
 
-      {active.length === 0 && (
+      {cloneOpen && (
+        <Card className="p-4">
+          <div className="flex items-end gap-3">
+            <div className="flex-1">
+              <label className="block text-xs font-medium text-muted-foreground mb-1">
+                Source term
+              </label>
+              <select
+                value={cloneTermId}
+                onChange={(e) => {
+                  setCloneTermId(e.target.value)
+                  setCloneResult(null)
+                }}
+                className="w-full px-3 py-2 border border-input rounded-lg text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-brand"
+              >
+                <option value="">Select a term…</option>
+                {otherTerms.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <Button onClick={handleClone} disabled={!cloneTermId || isPending}>
+              {isPending ? 'Cloning…' : 'Clone'}
+            </Button>
+          </div>
+          {cloneResult && <p className="text-sm text-muted-foreground mt-2">{cloneResult}</p>}
+        </Card>
+      )}
+
+      {active.length === 0 && !cloneOpen && (
         <p className="text-muted-foreground">No requirements for this term yet.</p>
       )}
 

@@ -8,6 +8,7 @@ import {
   archiveRequirementDal,
   createRequirementDal,
   getAudienceContext,
+  getRequirementsForClone,
   insertAssignmentsDal,
   updateAssignmentStatusDal,
   updateRequirementDal,
@@ -80,5 +81,66 @@ export const syncRequirementAssignments = createOrgAuthenticatedAction<SyncInput
     )
 
     await insertAssignmentsDal(supabase, input.requirementId, personIds)
+  }
+)
+
+type CloneInput = { sourceTermId: string; targetTermId: string }
+
+export const cloneRequirementsFromTerm = createOrgAuthenticatedAction<CloneInput, number>(
+  async (supabase, user, groupId, input) => {
+    const sourceReqs = await getRequirementsForClone(supabase, groupId, input.sourceTermId)
+    if (sourceReqs.length === 0) return 0
+
+    const [sourceTermRes, targetTermRes] = await Promise.all([
+      supabase.from('terms').select('starts_on').eq('id', input.sourceTermId).single(),
+      supabase.from('terms').select('starts_on').eq('id', input.targetTermId).single(),
+    ])
+
+    const sourceStart = sourceTermRes.data?.starts_on
+    const targetStart = targetTermRes.data?.starts_on
+    const deltaMs =
+      sourceStart && targetStart
+        ? new Date(targetStart).getTime() - new Date(sourceStart).getTime()
+        : 0
+
+    function shiftDate(iso: string | null): string | null {
+      if (!iso || deltaMs === 0) return iso
+      return new Date(new Date(iso).getTime() + deltaMs).toISOString()
+    }
+
+    const ctx = await getAudienceContext(supabase, groupId, input.targetTermId)
+
+    for (const req of sourceReqs) {
+      const reqId = await createRequirementDal(supabase, groupId, user.id, {
+        title: req.title,
+        description: req.description,
+        kind: req.kind,
+        due_at: shiftDate(req.due_at),
+        occurs_at: shiftDate(req.occurs_at),
+        amount_cents: req.amount_cents,
+        quota_target: req.quota_target,
+        quota_unit: req.quota_unit,
+        requires_verification: req.requires_verification,
+        assign_to: req.assign_to,
+        audience_role_type_ids: req.audience_role_type_ids,
+        audience_position_ids: req.audience_position_ids,
+        audience_subgroup_ids: req.audience_subgroup_ids,
+        term_id: input.targetTermId,
+      })
+
+      const personIds = expandAudience(
+        {
+          assign_to: req.assign_to as 'all_active',
+          audience_role_type_ids: req.audience_role_type_ids,
+          audience_position_ids: req.audience_position_ids,
+          audience_subgroup_ids: req.audience_subgroup_ids,
+        },
+        ctx
+      )
+
+      await insertAssignmentsDal(supabase, reqId, personIds)
+    }
+
+    return sourceReqs.length
   }
 )
