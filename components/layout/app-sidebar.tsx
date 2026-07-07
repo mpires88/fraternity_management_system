@@ -1,25 +1,13 @@
 'use client'
 
 import {
-  CalendarDays,
-  CheckSquare,
   ChevronDown,
   ChevronRight,
-  DollarSign,
-  FileText,
   GitBranch,
-  Home,
-  Landmark,
   LayoutDashboard,
   LogOut,
-  Megaphone,
-  Receipt,
-  Scale,
   Settings,
-  UserPlus,
   Users,
-  Vote,
-  Wrench,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -51,63 +39,6 @@ export function AppSidebar() {
           : []),
         ...(isEnabled(org, 'subgroups')
           ? [{ label: 'Subgroups', href: `${base}/subgroups`, icon: <GitBranch size={15} /> }]
-          : []),
-      ],
-    },
-    {
-      label: 'Chapter',
-      icon: <Megaphone size={16} />,
-      items: [
-        ...(isEnabled(org, 'announcements')
-          ? [
-              {
-                label: 'Announcements',
-                href: `${base}/announcements`,
-                icon: <Megaphone size={15} />,
-              },
-            ]
-          : []),
-        ...(isEnabled(org, 'events')
-          ? [{ label: 'Events', href: `${base}/events`, icon: <CalendarDays size={15} /> }]
-          : []),
-        ...(isEnabled(org, 'tasks')
-          ? [{ label: 'Tasks', href: `${base}/tasks`, icon: <CheckSquare size={15} /> }]
-          : []),
-        ...(isEnabled(org, 'documents')
-          ? [{ label: 'Documents', href: `${base}/documents`, icon: <FileText size={15} /> }]
-          : []),
-      ],
-    },
-    {
-      label: 'Finance',
-      icon: <Landmark size={16} />,
-      items: [
-        ...(isEnabled(org, 'budget')
-          ? [{ label: 'Budget', href: `${base}/budget`, icon: <DollarSign size={15} /> }]
-          : []),
-        ...(isEnabled(org, 'dues')
-          ? [{ label: 'Dues', href: `${base}/contracts`, icon: <Receipt size={15} /> }]
-          : []),
-      ],
-    },
-    {
-      label: 'Governance',
-      icon: <Scale size={16} />,
-      items: [
-        ...(isEnabled(org, 'elections')
-          ? [{ label: 'Elections', href: `${base}/elections`, icon: <Vote size={15} /> }]
-          : []),
-      ],
-    },
-    {
-      label: 'Operations',
-      icon: <Wrench size={16} />,
-      items: [
-        ...(isEnabled(org, 'rush')
-          ? [{ label: 'Rush', href: `${base}/rush`, icon: <UserPlus size={15} /> }]
-          : []),
-        ...(isEnabled(org, 'house')
-          ? [{ label: 'House', href: `${base}/house`, icon: <Home size={15} /> }]
           : []),
       ],
     },
