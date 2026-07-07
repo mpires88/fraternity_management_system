@@ -39,6 +39,138 @@ export type Database = {
   }
   public: {
     Tables: {
+      comment_requirement_links: {
+        Row: {
+          comment_id: string
+          created_at: string
+          created_by: string
+          id: string
+          requirement_assignment_id: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          requirement_assignment_id: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          requirement_assignment_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comment_requirement_links_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comment_requirement_links_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comment_requirement_links_requirement_assignment_id_fkey"
+            columns: ["requirement_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "requirement_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comments: {
+        Row: {
+          anchor_context_after: string | null
+          anchor_context_before: string | null
+          anchor_metadata: Json | null
+          anchor_text: string | null
+          body: string
+          created_at: string
+          created_by: string
+          group_id: string
+          id: string
+          parent_comment_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          resource_id: string
+          resource_type: string
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          anchor_context_after?: string | null
+          anchor_context_before?: string | null
+          anchor_metadata?: Json | null
+          anchor_text?: string | null
+          body: string
+          created_at?: string
+          created_by: string
+          group_id: string
+          id?: string
+          parent_comment_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resource_id: string
+          resource_type: string
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          anchor_context_after?: string | null
+          anchor_context_before?: string | null
+          anchor_metadata?: Json | null
+          anchor_text?: string | null
+          body?: string
+          created_at?: string
+          created_by?: string
+          group_id?: string
+          id?: string
+          parent_comment_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resource_id?: string
+          resource_type?: string
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       data_change_log: {
         Row: {
           action: string
@@ -79,6 +211,115 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          body: string | null
+          created_at: string
+          created_by: string
+          file_name: string | null
+          file_path: string | null
+          file_type: string | null
+          group_id: string
+          id: string
+          kind: string
+          parent_document_id: string | null
+          poll_id: string | null
+          status: string
+          submitted_at: string | null
+          term_id: string | null
+          title: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          body?: string | null
+          created_at?: string
+          created_by: string
+          file_name?: string | null
+          file_path?: string | null
+          file_type?: string | null
+          group_id: string
+          id?: string
+          kind?: string
+          parent_document_id?: string | null
+          poll_id?: string | null
+          status?: string
+          submitted_at?: string | null
+          term_id?: string | null
+          title: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          body?: string | null
+          created_at?: string
+          created_by?: string
+          file_name?: string | null
+          file_path?: string | null
+          file_type?: string | null
+          group_id?: string
+          id?: string
+          kind?: string
+          parent_document_id?: string | null
+          poll_id?: string | null
+          status?: string
+          submitted_at?: string | null
+          term_id?: string | null
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_parent_document_id_fkey"
+            columns: ["parent_document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "polls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "terms"
             referencedColumns: ["id"]
           },
         ]
@@ -870,6 +1111,7 @@ export type Database = {
           created_at: string
           created_by: string
           description: string | null
+          document_id: string | null
           group_id: string
           id: string
           lifecycle: string
@@ -890,6 +1132,7 @@ export type Database = {
           created_at?: string
           created_by: string
           description?: string | null
+          document_id?: string | null
           group_id: string
           id?: string
           lifecycle?: string
@@ -910,6 +1153,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string | null
+          document_id?: string | null
           group_id?: string
           id?: string
           lifecycle?: string
@@ -929,6 +1173,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "polls_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
             referencedColumns: ["id"]
           },
           {
@@ -1889,6 +2140,14 @@ export type Database = {
       }
     }
     Functions: {
+      can_read_comments: {
+        Args: { p_resource_id: string; p_resource_type: string }
+        Returns: boolean
+      }
+      can_write_comments: {
+        Args: { p_resource_id: string; p_resource_type: string }
+        Returns: boolean
+      }
       get_my_admin_group_ids: { Args: never; Returns: string[] }
       get_my_group_ids: { Args: never; Returns: string[] }
       get_my_org_ids: { Args: never; Returns: string[] }

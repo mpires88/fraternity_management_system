@@ -4,6 +4,7 @@ import {
   ChevronDown,
   ChevronRight,
   ClipboardCheck,
+  FileText,
   GitBranch,
   LayoutDashboard,
   LogOut,
@@ -125,6 +126,13 @@ export function AppSidebar() {
           href={`${base}/polls`}
           icon={<Vote size={16} />}
           label="Polls"
+          pathname={pathname}
+        />
+
+        <NavLink
+          href={`${base}/documents`}
+          icon={<FileText size={16} />}
+          label="Documents"
           pathname={pathname}
         />
 
