@@ -884,6 +884,61 @@ export type Database = {
           },
         ]
       }
+      requirement_progress_entries: {
+        Row: {
+          amount: number
+          approved_by: string | null
+          assignment_id: string
+          created_at: string
+          id: string
+          logged_by: string
+          note: string | null
+          occurred_on: string
+        }
+        Insert: {
+          amount: number
+          approved_by?: string | null
+          assignment_id: string
+          created_at?: string
+          id?: string
+          logged_by: string
+          note?: string | null
+          occurred_on?: string
+        }
+        Update: {
+          amount?: number
+          approved_by?: string | null
+          assignment_id?: string
+          created_at?: string
+          id?: string
+          logged_by?: string
+          note?: string | null
+          occurred_on?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "requirement_progress_entries_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requirement_progress_entries_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "requirement_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requirement_progress_entries_logged_by_fkey"
+            columns: ["logged_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       requirements: {
         Row: {
           amount_cents: number | null

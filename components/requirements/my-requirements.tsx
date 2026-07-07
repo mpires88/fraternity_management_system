@@ -1,9 +1,21 @@
 'use client'
 
-import { Calendar, CheckCircle2, Circle, Clock, DollarSign, Hash, ShieldCheck } from 'lucide-react'
+import {
+  Calendar,
+  CheckCircle2,
+  Circle,
+  Clock,
+  DollarSign,
+  Hash,
+  Plus,
+  ShieldCheck,
+} from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useTransition } from 'react'
-import { updateAssignmentStatus } from '@/actions/requirements/manage-requirement.action'
+import { useState, useTransition } from 'react'
+import {
+  logQuotaProgress,
+  updateAssignmentStatus,
+} from '@/actions/requirements/manage-requirement.action'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -120,6 +132,9 @@ export function MyRequirements({ assignments, termName }: Props) {
 function AssignmentCard({ assignment: a }: { assignment: AssignmentRow }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [logOpen, setLogOpen] = useState(false)
+  const [logAmount, setLogAmount] = useState('')
+  const [logNote, setLogNote] = useState('')
   const req = a.requirement
   const isDone = a.status === 'complete' || a.status === 'waived'
   const isSubmitted = a.status === 'submitted'
@@ -128,6 +143,23 @@ function AssignmentCard({ assignment: a }: { assignment: AssignmentRow }) {
     const nextStatus = req.requires_verification ? 'submitted' : 'complete'
     startTransition(async () => {
       await updateAssignmentStatus({ assignmentId: a.id, status: nextStatus })
+      router.refresh()
+    })
+  }
+
+  function handleLogProgress() {
+    const amount = Number.parseFloat(logAmount)
+    if (Number.isNaN(amount) || amount <= 0) return
+    startTransition(async () => {
+      await logQuotaProgress({
+        assignmentId: a.id,
+        amount,
+        occurredOn: new Date().toISOString().slice(0, 10),
+        note: logNote || null,
+      })
+      setLogOpen(false)
+      setLogAmount('')
+      setLogNote('')
       router.refresh()
     })
   }
@@ -180,6 +212,40 @@ function AssignmentCard({ assignment: a }: { assignment: AssignmentRow }) {
               />
             </div>
           )}
+
+          {logOpen && (
+            <div className="mt-3 flex items-end gap-2">
+              <div>
+                <label className="block text-xs text-muted-foreground mb-0.5">
+                  {req.quota_unit ?? 'Amount'}
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  min="0.01"
+                  value={logAmount}
+                  onChange={(e) => setLogAmount(e.target.value)}
+                  className="w-20 px-2 py-1 border border-input rounded text-sm bg-background text-foreground"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-xs text-muted-foreground mb-0.5">Note</label>
+                <input
+                  type="text"
+                  value={logNote}
+                  onChange={(e) => setLogNote(e.target.value)}
+                  className="w-full px-2 py-1 border border-input rounded text-sm bg-background text-foreground"
+                  placeholder="optional"
+                />
+              </div>
+              <Button size="xs" onClick={handleLogProgress} disabled={isPending}>
+                Log
+              </Button>
+              <Button size="xs" variant="ghost" onClick={() => setLogOpen(false)}>
+                Cancel
+              </Button>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
@@ -188,6 +254,17 @@ function AssignmentCard({ assignment: a }: { assignment: AssignmentRow }) {
             <Button size="xs" variant="outline" onClick={handleSelfAction} disabled={isPending}>
               <CheckCircle2 size={13} />
               {req.requires_verification ? 'Submit' : 'Done'}
+            </Button>
+          )}
+          {!isDone && req.kind === 'quota' && !logOpen && (
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={() => setLogOpen(true)}
+              disabled={isPending}
+            >
+              <Plus size={13} />
+              Log
             </Button>
           )}
         </div>

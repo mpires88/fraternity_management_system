@@ -5,12 +5,15 @@ import {
   createOrgAuthenticatedAction,
 } from '@/actions/utils/action-helpers'
 import {
+  approveProgressEntryDal,
   archiveRequirementDal,
   bulkMarkAttendanceDal,
+  createProgressEntryDal,
   createRequirementDal,
   getAudienceContext,
   getRequirementsForClone,
   insertAssignmentsDal,
+  rejectProgressEntryDal,
   updateAssignmentOfficerDal,
   updateAssignmentStatusDal,
   updateRequirementDal,
@@ -174,5 +177,56 @@ export const cloneRequirementsFromTerm = createOrgAuthenticatedAction<CloneInput
     }
 
     return sourceReqs.length
+  }
+)
+
+// --- Progress entries ---
+
+type RecordProgressInput = {
+  assignmentId: string
+  amount: number
+  occurredOn: string
+  note: string | null
+}
+
+export const recordPayment = createOrgAuthenticatedAction<RecordProgressInput, void>(
+  async (supabase, user, _groupId, input) => {
+    await createProgressEntryDal(supabase, {
+      assignmentId: input.assignmentId,
+      amount: input.amount,
+      occurredOn: input.occurredOn,
+      note: input.note,
+      loggedBy: user.id,
+      approvedBy: user.id,
+    })
+  }
+)
+
+export const logQuotaProgress = createAuthenticatedAction<RecordProgressInput, void>(
+  async (supabase, user, input) => {
+    await createProgressEntryDal(supabase, {
+      assignmentId: input.assignmentId,
+      amount: input.amount,
+      occurredOn: input.occurredOn,
+      note: input.note,
+      loggedBy: user.id,
+      approvedBy: null,
+    })
+  }
+)
+
+type ApproveEntryInput = { entryId: string }
+
+export const approveProgressEntry = createOrgAuthenticatedAction<ApproveEntryInput, void>(
+  async (supabase, user, _groupId, input) => {
+    await approveProgressEntryDal(supabase, input.entryId, user.id)
+  }
+)
+
+type RejectEntryInput = { entryId: string }
+
+export const rejectProgressEntry = createOrgAuthenticatedAction<RejectEntryInput, void>(
+  async (supabase, _user, _groupId, input) => {
+    await rejectProgressEntryDal(supabase, input.entryId)
   }
 )

@@ -3,7 +3,11 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { RequirementDetailView } from '@/components/requirements/requirement-detail'
 import { getGroupContext } from '@/dal/group-context'
-import { getRequirementById, getRequirementDetail } from '@/dal/requirements'
+import {
+  getPendingEntriesForRequirement,
+  getRequirementById,
+  getRequirementDetail,
+} from '@/dal/requirements'
 import { createClient } from '@/lib/supabase/server'
 import { resolvePermissionsFromContext } from '@/lib/utils/resolve-permissions'
 
@@ -40,7 +44,10 @@ export default async function RequirementDetailPage({
     )
   }
 
-  const assignees = await getRequirementDetail(supabase, id)
+  const [assignees, pendingEntries] = await Promise.all([
+    getRequirementDetail(supabase, id),
+    getPendingEntriesForRequirement(supabase, id),
+  ])
   const base = `/${parentSlug}/${orgSlug}/${groupSlug}`
 
   return (
@@ -53,7 +60,11 @@ export default async function RequirementDetailPage({
         Back to Requirements
       </Link>
 
-      <RequirementDetailView requirement={requirement} assignees={assignees} />
+      <RequirementDetailView
+        requirement={requirement}
+        assignees={assignees}
+        pendingEntries={pendingEntries}
+      />
     </div>
   )
 }

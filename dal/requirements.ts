@@ -386,3 +386,185 @@ export async function getRequirementsForClone(
 
   return (data ?? []) as CloneableRequirement[]
 }
+
+// --- Progress entries ---
+
+export type ProgressEntryRow = {
+  id: string
+  assignment_id: string
+  amount: number
+  occurred_on: string
+  note: string | null
+  logged_by: string
+  logged_by_name: string
+  approved_by: string | null
+  created_at: string
+}
+
+export async function getProgressEntries(
+  supabase: DbClient,
+  assignmentId: string
+): Promise<ProgressEntryRow[]> {
+  const { data } = await supabase
+    .from('requirement_progress_entries')
+    .select('*, persons!requirement_progress_entries_logged_by_fkey(full_name)')
+    .eq('assignment_id', assignmentId)
+    .order('created_at', { ascending: false })
+
+  if (!data) return []
+
+  return data.map((row) => ({
+    id: row.id,
+    assignment_id: row.assignment_id,
+    amount: row.amount,
+    occurred_on: row.occurred_on,
+    note: row.note,
+    logged_by: row.logged_by,
+    logged_by_name: (row.persons as { full_name: string })?.full_name ?? 'Unknown',
+    approved_by: row.approved_by,
+    created_at: row.created_at,
+  }))
+}
+
+export async function getPendingEntriesForRequirement(
+  supabase: DbClient,
+  requirementId: string
+): Promise<
+  (ProgressEntryRow & {
+    person_name: string
+    assignment_progress: number
+  })[]
+> {
+  const { data } = await supabase
+    .from('requirement_progress_entries')
+    .select(
+      '*, persons!requirement_progress_entries_logged_by_fkey(full_name), requirement_assignments!inner(person_id, progress, requirement_id, persons!requirement_assignments_person_id_fkey(full_name))'
+    )
+    .is('approved_by', null)
+    .eq('requirement_assignments.requirement_id', requirementId)
+    .order('created_at', { ascending: true })
+
+  if (!data) return []
+
+  return data.map((row) => {
+    const ra = row.requirement_assignments as unknown as {
+      person_id: string
+      progress: number
+      persons: { full_name: string }
+    }
+    return {
+      id: row.id,
+      assignment_id: row.assignment_id,
+      amount: row.amount,
+      occurred_on: row.occurred_on,
+      note: row.note,
+      logged_by: row.logged_by,
+      logged_by_name: (row.persons as { full_name: string })?.full_name ?? 'Unknown',
+      approved_by: row.approved_by,
+      created_at: row.created_at,
+      person_name: ra.persons?.full_name ?? 'Unknown',
+      assignment_progress: ra.progress ?? 0,
+    }
+  })
+}
+
+export async function createProgressEntryDal(
+  supabase: DbClient,
+  input: {
+    assignmentId: string
+    amount: number
+    occurredOn: string
+    note: string | null
+    loggedBy: string
+    approvedBy: string | null
+  }
+): Promise<void> {
+  const { error } = await supabase.from('requirement_progress_entries').insert({
+    assignment_id: input.assignmentId,
+    amount: input.amount,
+    occurred_on: input.occurredOn,
+    note: input.note,
+    logged_by: input.loggedBy,
+    approved_by: input.approvedBy,
+  })
+  if (error) throw new UserFacingError(error.message)
+
+  await recomputeAssignmentProgress(supabase, input.assignmentId)
+}
+
+export async function approveProgressEntryDal(
+  supabase: DbClient,
+  entryId: string,
+  approvedBy: string
+): Promise<void> {
+  const { data: entry, error } = await supabase
+    .from('requirement_progress_entries')
+    .update({ approved_by: approvedBy })
+    .eq('id', entryId)
+    .select('assignment_id')
+    .single()
+
+  if (error || !entry) throw new UserFacingError(error?.message ?? 'Entry not found')
+  await recomputeAssignmentProgress(supabase, entry.assignment_id)
+}
+
+export async function rejectProgressEntryDal(supabase: DbClient, entryId: string): Promise<void> {
+  const { data: entry, error: fetchErr } = await supabase
+    .from('requirement_progress_entries')
+    .select('assignment_id')
+    .eq('id', entryId)
+    .single()
+
+  if (fetchErr || !entry) throw new UserFacingError(fetchErr?.message ?? 'Entry not found')
+
+  const { error } = await supabase.from('requirement_progress_entries').delete().eq('id', entryId)
+  if (error) throw new UserFacingError(error.message)
+
+  await recomputeAssignmentProgress(supabase, entry.assignment_id)
+}
+
+async function recomputeAssignmentProgress(
+  supabase: DbClient,
+  assignmentId: string
+): Promise<void> {
+  const { data: assignment } = await supabase
+    .from('requirement_assignments')
+    .select('requirement_id, requirements!inner(kind, amount_cents, quota_target)')
+    .eq('id', assignmentId)
+    .single()
+
+  if (!assignment) return
+
+  const req = assignment.requirements as unknown as {
+    kind: string
+    amount_cents: number | null
+    quota_target: number | null
+  }
+
+  const { data: entries } = await supabase
+    .from('requirement_progress_entries')
+    .select('amount, approved_by')
+    .eq('assignment_id', assignmentId)
+
+  if (!entries) return
+
+  let approvedSum: number
+  if (req.kind === 'payment') {
+    approvedSum = entries.reduce((sum, e) => sum + e.amount, 0)
+  } else {
+    approvedSum = entries
+      .filter((e) => e.approved_by !== null)
+      .reduce((sum, e) => sum + e.amount, 0)
+  }
+
+  const target = req.kind === 'payment' ? (req.amount_cents ?? 0) : (req.quota_target ?? 0)
+  const isComplete = target > 0 && approvedSum >= target
+
+  const updates: Record<string, unknown> = { progress: approvedSum }
+  if (isComplete) {
+    updates.status = 'complete'
+    updates.completed_at = new Date().toISOString()
+  }
+
+  await supabase.from('requirement_assignments').update(updates).eq('id', assignmentId)
+}
