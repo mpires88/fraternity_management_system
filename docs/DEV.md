@@ -7,7 +7,9 @@ environment it runs in.
 ## The stack at a glance
 
 - **App:** `npm run dev` → http://localhost:3000. Login page is `/login`.
-  URL shape after login: `/[parent]/[org]/[group]/<feature>` (e.g. `.../dashboard`).
+  URL shape after login: `/[parent]/[org]/[group]/<feature>` — live slugs (verified
+  2026-07-06): `/sigma-nu/epsilon-theta/chapter/dashboard` for the chapter and
+  `/sigma-nu/epsilon-theta/snhc/...` for the housing corp.
 - **Database:** a **hosted** Supabase dev project, ref `grojoxrglzkxpenizmax`, linked
   via the CLI (`supabase/.temp/project-ref`) and targeted by `.env.local`. There is
   **no local Docker database in use** — `supabase/config.toml` exists for CLI tooling,
@@ -16,16 +18,14 @@ environment it runs in.
   `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`. Sentry vars optional
   in dev.
 
-### ⚠ Before the first session: check the database is alive
+### ⚠ Check the database is alive at the start of every session
 
-As of 2026-07-06 the project URL (`grojoxrglzkxpenizmax.supabase.co`) does **not
-resolve** — free-tier Supabase projects are paused after ~1 week of inactivity and
-must be restored at
-https://supabase.com/dashboard/project/grojoxrglzkxpenizmax before anything works.
-If the project was deleted rather than paused: create a new project, `supabase link`
-it, `supabase db push` (all migrations apply cleanly to an empty project), update
-`.env.local` with the new URL/keys, and run the seed script (once task 0.9 rewrites
-it). Verify with: `curl https://<ref>.supabase.co/auth/v1/health`.
+Free-tier Supabase projects are **paused after ~1 week of inactivity** and their DNS
+stops resolving. If `fetch failed` / connection errors appear, don't debug the app —
+first verify `curl https://grojoxrglzkxpenizmax.supabase.co/auth/v1/health` responds
+(any HTTP status, even 401, means it's up; DNS failure means paused). Only the owner
+can restore it, at https://supabase.com/dashboard/project/grojoxrglzkxpenizmax —
+stop and ask.
 
 ## Commands
 
@@ -52,24 +52,34 @@ it). Verify with: `curl https://<ref>.supabase.co/auth/v1/health`.
 
 Never hand-edit `lib/supabase/types.ts` — it is generated output.
 
-## Test users
+## Test users & real data (verified 2026-07-06)
 
-All seeded users share the password `password123`.
+**The dev database contains the REAL chapter roster** — ~100 auth users with real
+`@mit.edu` emails and ~400 group memberships, imported by the `scripts/import-*`
+scripts. It is not synthetic data. Two hard rules follow:
 
-- `admin@test.com` — platform admin + full-access member (the primary login).
-- `jake@`, `ryan@`, `cole@`, `dylan@`, `marcus@`, `ben@` (all `@test.com`) — roster
-  fill from the original seed; they may or may not have survived the v2→v3 schema
-  migrations. Check Studio → Table Editor if in doubt.
+- **Never trigger emails to roster addresses.** Password resets, invites, and (later)
+  notification digests in dev must only target test personas or the owner's own
+  address — real brothers must not receive mail from a dev session.
+- Treat roster rows as read-only fixtures: verify against them freely, but don't
+  mutate real people's records to test a flow — use the test personas.
 
-**Caveat:** `scripts/seed-dev.ts` predates the v3 schema (it writes to dropped tables
-like `orgs` and `membership_types`) and will fail if run. Task 0.9 in PLAN.md rewrites
-it. Until then, the hosted database's current contents are the only seed.
-
-Verification needs three personas — task 0.9's seed must guarantee all three exist:
+**Logins:** the old `admin@test.com` seed users no longer exist. The only working
+login today is the owner's account (`pires.matthew@gmail.com`; password is his —
+ask). Task 0.9 (PLAN.md) creates proper test personas, all `@test.com`, password
+`password123`:
 1. **Officer**: active membership with a full-access (`access_level = 'full'`) role.
 2. **Member**: active membership, non-full access — sees own data only.
 3. **Outsider**: valid login with *no* membership in the target group — must see
    nothing of it.
+
+Until 0.9 lands, in-app verification runs on the owner's login plus Studio
+inspection — prioritize 0.9 early.
+
+**Caveat:** `scripts/seed-dev.ts` predates the v3 schema (it writes to dropped tables
+like `orgs` and `membership_types`) and will fail if run. Task 0.9 rewrites it to
+*add* the personas above idempotently — against this database it must NOT create a
+second org or touch roster data.
 
 ## Verifying in the running app
 

@@ -8,8 +8,8 @@ this document wins.
 
 - **Next task:** 0.1
 - **Completed:** (none yet)
-- **Blocked/notes:** dev Supabase project is paused/unreachable — restore it per
-  `docs/DEV.md` before the first session.
+- **Blocked/notes:** none. Heads-up: the dev DB holds the real roster — see
+  `docs/DEV.md` "Test users & real data" before touching auth/email flows.
 
 Update this block as the final step of every task, inside the task's commit. This
 block is the ONLY part of PLAN.md the implementing model may edit; scope, task text,
@@ -256,14 +256,16 @@ task-assignment status pending→submitted/complete.
 - **0.9 Rewrite the dev seed script for v3.** `scripts/seed-dev.ts` predates the v3
   schema — it writes to dropped tables (`fraternities`, `orgs`, `membership_types`,
   `org_memberships`) and fails. Rewrite it idempotently (upserts) against the current
-  schema: parent org → organization → two groups (chapter + housing corp with a
-  `group_relationships` row), role types/status definitions if the base migrations
-  don't seed them, a current term, and the three verification personas from
-  `docs/DEV.md` (full-access officer, plain member, outsider with no membership in the
-  chapter). Run with `npx tsx --env-file=.env.local scripts/seed-dev.ts`. Pattern:
-  the old script's structure + `lib/supabase/types.ts` for column truth. Accept: runs
-  clean twice in a row against a fresh database; all three personas can log in and see
-  exactly what DEV.md says they should.
+  schema. The live dev DB already contains the real org, groups, and roster
+  (`docs/DEV.md`), so the script must be additive and idempotent: upsert only the
+  three `@test.com` verification personas from DEV.md (full-access officer, plain
+  member, outsider with no chapter membership) into the existing
+  sigma-nu/epsilon-theta org, creating a current term only if none exists. It must
+  never duplicate the org/groups or modify roster rows. Run with
+  `npx tsx --env-file=.env.local scripts/seed-dev.ts`. Pattern: the old script's
+  upsert structure + `lib/supabase/types.ts` for column truth. Accept: runs clean
+  twice in a row against the live dev DB; all three personas can log in and see
+  exactly what DEV.md says they should; roster row counts unchanged.
 
 ## 6. Phase 1 — Requirements engine core
 
