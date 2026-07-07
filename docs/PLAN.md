@@ -6,8 +6,8 @@ this document wins.
 
 ## Progress
 
-- **Next task:** 2.2
-- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1
+- **Next task:** 2.3
+- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2
   Phase 1 complete.
   Heads-up: the dev DB holds the real roster — see `docs/DEV.md` "Test users &
   real data" before touching auth/email flows.

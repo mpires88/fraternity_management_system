@@ -14,7 +14,7 @@ type Props = {
   termName: string
 }
 
-const STATUS_ORDER = ['pending', 'in_progress', 'complete', 'waived'] as const
+const STATUS_ORDER = ['pending', 'in_progress', 'submitted', 'complete', 'waived'] as const
 
 function statusLabel(s: string) {
   switch (s) {
@@ -22,6 +22,8 @@ function statusLabel(s: string) {
       return 'To Do'
     case 'in_progress':
       return 'In Progress'
+    case 'submitted':
+      return 'Submitted'
     case 'complete':
       return 'Complete'
     case 'waived':
@@ -36,10 +38,12 @@ function statusVariant(s: string): 'default' | 'secondary' | 'outline' | 'destru
     case 'complete':
     case 'waived':
       return 'secondary'
+    case 'submitted':
+      return 'default'
     case 'in_progress':
       return 'outline'
     default:
-      return 'default'
+      return 'outline'
   }
 }
 
@@ -118,10 +122,12 @@ function AssignmentCard({ assignment: a }: { assignment: AssignmentRow }) {
   const [isPending, startTransition] = useTransition()
   const req = a.requirement
   const isDone = a.status === 'complete' || a.status === 'waived'
+  const isSubmitted = a.status === 'submitted'
 
-  function markComplete() {
+  function handleSelfAction() {
+    const nextStatus = req.requires_verification ? 'submitted' : 'complete'
     startTransition(async () => {
-      await updateAssignmentStatus({ assignmentId: a.id, status: 'complete' })
+      await updateAssignmentStatus({ assignmentId: a.id, status: nextStatus })
       router.refresh()
     })
   }
@@ -178,10 +184,10 @@ function AssignmentCard({ assignment: a }: { assignment: AssignmentRow }) {
 
         <div className="flex items-center gap-2 shrink-0">
           <Badge variant={statusVariant(a.status)}>{statusLabel(a.status)}</Badge>
-          {!isDone && req.kind === 'task' && !req.requires_verification && (
-            <Button size="xs" variant="outline" onClick={markComplete} disabled={isPending}>
+          {!isDone && !isSubmitted && req.kind === 'task' && (
+            <Button size="xs" variant="outline" onClick={handleSelfAction} disabled={isPending}>
               <CheckCircle2 size={13} />
-              Done
+              {req.requires_verification ? 'Submit' : 'Done'}
             </Button>
           )}
         </div>
