@@ -1,11 +1,15 @@
 'use server'
 
-import { createOrgAuthenticatedAction } from '@/actions/utils/action-helpers'
+import {
+  createAuthenticatedAction,
+  createOrgAuthenticatedAction,
+} from '@/actions/utils/action-helpers'
 import {
   archiveRequirementDal,
   createRequirementDal,
   getAudienceContext,
   insertAssignmentsDal,
+  updateAssignmentStatusDal,
   updateRequirementDal,
 } from '@/dal/requirements'
 import { expandAudience } from '@/lib/utils/requirements'
@@ -42,6 +46,14 @@ type ArchiveInput = { id: string }
 
 export const archiveRequirement = createOrgAuthenticatedAction<ArchiveInput, void>(
   async (supabase, _user, _groupId, input) => archiveRequirementDal(supabase, input.id)
+)
+
+type AssignmentStatusInput = { assignmentId: string; status: string; progress?: number }
+
+export const updateAssignmentStatus = createAuthenticatedAction<AssignmentStatusInput, void>(
+  async (supabase, _user, input) => {
+    await updateAssignmentStatusDal(supabase, input.assignmentId, input.status, input.progress)
+  }
 )
 
 type SyncInput = { requirementId: string; termId: string }

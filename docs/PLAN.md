@@ -6,8 +6,8 @@ this document wins.
 
 ## Progress
 
-- **Next task:** 1.3
-- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2
+- **Next task:** 1.4
+- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3
   Heads-up: the dev DB holds the real roster — see `docs/DEV.md` "Test users &
   real data" before touching auth/email flows.
   Note: task 0.1 also fixed `getAdminSettings` to query by `groups.id`
@@ -460,6 +460,16 @@ elections module (nominations, eligibility rules — Phase 5 polls cover the vot
 themselves) · rush · house/rooms/chores UI · dues invoicing/payment processing ·
 white-label onboarding, subdomains, billing · QuickBooks. All specced in
 `docs/SPEC.md`; none block v1.
+
+**Parked — activities / interaction log.** A unified activity log tracking
+member interactions, officer notes, advisor check-ins, and housing-corp
+communications. Modeled on the `activities` system in `business-data-platform`
+(migration `00054_activities.sql`): polymorphic domain routing via `context`
+JSONB, participant tracking, follow-up dates, cross-entity linking via
+`activity_subjects`. Relevant when the housing corp or advisory board needs
+to track interactions with the chapter, or for officer-handoff continuity.
+Reference tables: `activities`, `activity_participants`, `activity_subjects`,
+`activity_access`.
 
 **Parked Phase 7 — national starter template pack.** Once Phases 1–2 prove out,
 seed `national_org_templates` with a Sigma Nu pack: LEAD-phase requirement sets

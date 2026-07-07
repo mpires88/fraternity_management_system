@@ -258,6 +258,26 @@ export async function insertAssignmentsDal(
   if (error) throw new UserFacingError(error.message)
 }
 
+export async function updateAssignmentStatusDal(
+  supabase: DbClient,
+  assignmentId: string,
+  status: string,
+  progress?: number
+): Promise<void> {
+  const updates: Record<string, unknown> = { status }
+  if (status === 'complete' || status === 'waived') {
+    updates.completed_at = new Date().toISOString()
+  }
+  if (progress !== undefined) {
+    updates.progress = progress
+  }
+  const { error } = await supabase
+    .from('requirement_assignments')
+    .update(updates)
+    .eq('id', assignmentId)
+  if (error) throw new UserFacingError(error.message)
+}
+
 export async function getAudienceContext(supabase: DbClient, groupId: string, termId: string) {
   const [membersRes, holdersRes, subMembersRes] = await Promise.all([
     supabase

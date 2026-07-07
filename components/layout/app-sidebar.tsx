@@ -3,6 +3,7 @@
 import {
   ChevronDown,
   ChevronRight,
+  ClipboardCheck,
   GitBranch,
   LayoutDashboard,
   LogOut,
@@ -108,6 +109,13 @@ export function AppSidebar() {
           href={`${base}/dashboard`}
           icon={<LayoutDashboard size={16} />}
           label="Dashboard"
+          pathname={pathname}
+        />
+
+        <NavLink
+          href={`${base}/requirements`}
+          icon={<ClipboardCheck size={16} />}
+          label="Requirements"
           pathname={pathname}
         />
 
