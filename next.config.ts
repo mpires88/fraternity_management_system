@@ -14,7 +14,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' blob: data: *.supabase.co",
       "font-src 'self'",
-      "connect-src 'self' *.supabase.co wss://*.supabase.co",
+      "connect-src 'self' *.supabase.co wss://*.supabase.co *.sentry.io *.ingest.sentry.io",
       "frame-src 'self'",
       "object-src 'none'",
       "base-uri 'self'",
@@ -25,7 +25,7 @@ const securityHeaders = [
 const isDev = process.env.NODE_ENV === 'development'
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ['192.168.1.230'],
+  allowedDevOrigins: process.env.ALLOWED_DEV_ORIGINS?.split(',').filter(Boolean) ?? [],
   async headers() {
     // Skip CSP in dev to avoid blocking local network access
     if (isDev) return []
