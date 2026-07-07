@@ -136,6 +136,11 @@ export async function getMyAssignments(
   }))
 }
 
+export async function getRequirementById(supabase: DbClient, requirementId: string) {
+  const { data } = await supabase.from('requirements').select('*').eq('id', requirementId).single()
+  return data
+}
+
 export async function getRequirementDetail(
   supabase: DbClient,
   requirementId: string
@@ -275,6 +280,41 @@ export async function updateAssignmentStatusDal(
     .from('requirement_assignments')
     .update(updates)
     .eq('id', assignmentId)
+  if (error) throw new UserFacingError(error.message)
+}
+
+export async function updateAssignmentOfficerDal(
+  supabase: DbClient,
+  assignmentId: string,
+  updates: { status?: string; note?: string | null; verified_by?: string | null; progress?: number }
+): Promise<void> {
+  const row: Record<string, unknown> = {}
+  if (updates.status) {
+    row.status = updates.status
+    if (updates.status === 'complete' || updates.status === 'waived') {
+      row.completed_at = new Date().toISOString()
+    }
+  }
+  if (updates.note !== undefined) row.note = updates.note
+  if (updates.verified_by !== undefined) row.verified_by = updates.verified_by
+  if (updates.progress !== undefined) row.progress = updates.progress
+
+  const { error } = await supabase
+    .from('requirement_assignments')
+    .update(row)
+    .eq('id', assignmentId)
+  if (error) throw new UserFacingError(error.message)
+}
+
+export async function bulkMarkAttendanceDal(
+  supabase: DbClient,
+  assignmentIds: string[]
+): Promise<void> {
+  if (assignmentIds.length === 0) return
+  const { error } = await supabase
+    .from('requirement_assignments')
+    .update({ status: 'complete', completed_at: new Date().toISOString() })
+    .in('id', assignmentIds)
   if (error) throw new UserFacingError(error.message)
 }
 

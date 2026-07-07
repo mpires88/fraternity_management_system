@@ -6,10 +6,12 @@ import {
 } from '@/actions/utils/action-helpers'
 import {
   archiveRequirementDal,
+  bulkMarkAttendanceDal,
   createRequirementDal,
   getAudienceContext,
   getRequirementsForClone,
   insertAssignmentsDal,
+  updateAssignmentOfficerDal,
   updateAssignmentStatusDal,
   updateRequirementDal,
 } from '@/dal/requirements'
@@ -54,6 +56,36 @@ type AssignmentStatusInput = { assignmentId: string; status: string; progress?: 
 export const updateAssignmentStatus = createAuthenticatedAction<AssignmentStatusInput, void>(
   async (supabase, _user, input) => {
     await updateAssignmentStatusDal(supabase, input.assignmentId, input.status, input.progress)
+  }
+)
+
+type WaiveInput = { assignmentId: string; note: string }
+
+export const waiveAssignment = createOrgAuthenticatedAction<WaiveInput, void>(
+  async (supabase, _user, _groupId, input) => {
+    await updateAssignmentOfficerDal(supabase, input.assignmentId, {
+      status: 'waived',
+      note: input.note,
+    })
+  }
+)
+
+type VerifyInput = { assignmentId: string }
+
+export const verifyAssignment = createOrgAuthenticatedAction<VerifyInput, void>(
+  async (supabase, user, _groupId, input) => {
+    await updateAssignmentOfficerDal(supabase, input.assignmentId, {
+      status: 'complete',
+      verified_by: user.id,
+    })
+  }
+)
+
+type BulkAttendanceInput = { assignmentIds: string[] }
+
+export const bulkMarkAttendance = createOrgAuthenticatedAction<BulkAttendanceInput, void>(
+  async (supabase, _user, _groupId, input) => {
+    await bulkMarkAttendanceDal(supabase, input.assignmentIds)
   }
 )
 

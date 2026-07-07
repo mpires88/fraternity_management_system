@@ -1,7 +1,8 @@
 'use client'
 
 import { Archive, Copy, Pencil, Plus, RefreshCw, Users } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import {
   archiveRequirement,
@@ -62,6 +63,7 @@ export function ManageRequirements({
   otherTerms,
 }: Props) {
   const router = useRouter()
+  const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<RequirementRow | null>(null)
@@ -187,7 +189,7 @@ export function ManageRequirements({
               {active.map((req) => (
                 <TableRow key={req.id}>
                   <TableCell>
-                    <div>
+                    <Link href={`${pathname}/${req.id}`} className="block hover:underline">
                       <p className="font-medium text-foreground">{req.title}</p>
                       {req.due_at && (
                         <p className="text-xs text-muted-foreground">
@@ -198,7 +200,7 @@ export function ManageRequirements({
                           })}
                         </p>
                       )}
-                    </div>
+                    </Link>
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline">{KIND_LABELS[req.kind] ?? req.kind}</Badge>
