@@ -68,6 +68,15 @@ export type AdminSettingsData = {
     has_rush: boolean | null
     is_active: boolean | null
   }[]
+  terms: {
+    id: string
+    name: string
+    definition_id: string
+    year: number
+    starts_on: string
+    ends_on: string
+    status: string | null
+  }[]
 }
 
 export async function getAdminSettings(
@@ -83,7 +92,7 @@ export async function getAdminSettings(
 
   if (!group) return null
 
-  const [orgRes, affRes, statusRes, posRes, termRes] = await Promise.all([
+  const [orgRes, affRes, statusRes, posRes, termDefRes, termsRes] = await Promise.all([
     supabase
       .from('organizations')
       .select('id, name, slug, org_type, features')
@@ -97,6 +106,12 @@ export async function getAdminSettings(
       .order('display_order'),
     supabase.from('positions').select('*').eq('group_id', groupId).order('display_order'),
     supabase.from('term_definitions').select('*').eq('group_id', groupId).order('ordinal'),
+    supabase
+      .from('terms')
+      .select('id, name, definition_id, year, starts_on, ends_on, status')
+      .eq('group_id', groupId)
+      .order('year', { ascending: false })
+      .order('starts_on', { ascending: false }),
   ])
 
   if (!orgRes.data) return null
@@ -109,7 +124,8 @@ export async function getAdminSettings(
     roleTypes: (affRes.data ?? []) as AdminSettingsData['roleTypes'],
     statusDefinitions: (statusRes.data ?? []) as AdminSettingsData['statusDefinitions'],
     positions: (posRes.data ?? []) as AdminSettingsData['positions'],
-    termDefinitions: (termRes.data ?? []) as AdminSettingsData['termDefinitions'],
+    termDefinitions: (termDefRes.data ?? []) as AdminSettingsData['termDefinitions'],
+    terms: (termsRes.data ?? []) as AdminSettingsData['terms'],
   }
 }
 
@@ -248,5 +264,111 @@ export async function deletePositionDal(supabase: DbClient, id: string): Promise
   if (pos?.is_locked) throw new UserFacingError('Cannot delete locked position')
 
   const { error } = await supabase.from('positions').delete().eq('id', id)
+  if (error) throw new UserFacingError(error.message)
+}
+
+// ── Term Definitions ──────────────────────────────────────────────────────────
+
+export async function upsertTermDefinitionDal(
+  supabase: DbClient,
+  groupId: string,
+  input: {
+    id?: string
+    name: string
+    slug: string
+    ordinal: number
+    start_month: number
+    start_day: number
+    end_month: number
+    end_day: number
+    has_elections: boolean
+    has_budget: boolean
+    has_rush: boolean
+  }
+): Promise<void> {
+  const { id, ...fields } = input
+
+  const { error } = id
+    ? await supabase
+        .from('term_definitions')
+        .update({ ...fields, group_id: groupId })
+        .eq('id', id)
+    : await supabase.from('term_definitions').insert({ ...fields, group_id: groupId })
+
+  if (error) throw new UserFacingError(error.message)
+}
+
+export async function deleteTermDefinitionDal(supabase: DbClient, id: string): Promise<void> {
+  const { count } = await supabase
+    .from('terms')
+    .select('id', { count: 'exact', head: true })
+    .eq('definition_id', id)
+
+  if (count && count > 0) {
+    throw new UserFacingError('Cannot delete a term definition that has terms created from it')
+  }
+
+  const { error } = await supabase.from('term_definitions').delete().eq('id', id)
+  if (error) throw new UserFacingError(error.message)
+}
+
+// ── Terms ─────────────────────────────────────────────────────────────────────
+
+export async function createTermDal(
+  supabase: DbClient,
+  groupId: string,
+  input: {
+    definition_id: string
+    name: string
+    year: number
+    starts_on: string
+    ends_on: string
+  }
+): Promise<void> {
+  const { data: def } = await supabase
+    .from('term_definitions')
+    .select('has_elections, has_budget, has_rollover, has_rush, officer_selection')
+    .eq('id', input.definition_id)
+    .single()
+
+  if (!def) throw new UserFacingError('Term definition not found')
+
+  const { error } = await supabase.from('terms').insert({
+    group_id: groupId,
+    definition_id: input.definition_id,
+    name: input.name,
+    year: input.year,
+    starts_on: input.starts_on,
+    ends_on: input.ends_on,
+    status: 'upcoming',
+    has_elections: def.has_elections ?? true,
+    has_budget: def.has_budget ?? true,
+    has_rollover: def.has_rollover ?? true,
+    has_rush: def.has_rush ?? false,
+    officer_selection: def.officer_selection ?? 'elected',
+  })
+
+  if (error) throw new UserFacingError(error.message)
+}
+
+export async function activateTermDal(
+  supabase: DbClient,
+  groupId: string,
+  termId: string
+): Promise<void> {
+  const { error: deactivateError } = await supabase
+    .from('terms')
+    .update({ status: 'completed' })
+    .eq('group_id', groupId)
+    .eq('status', 'active')
+
+  if (deactivateError) throw new UserFacingError(deactivateError.message)
+
+  const { error } = await supabase
+    .from('terms')
+    .update({ status: 'active' })
+    .eq('id', termId)
+    .eq('group_id', groupId)
+
   if (error) throw new UserFacingError(error.message)
 }

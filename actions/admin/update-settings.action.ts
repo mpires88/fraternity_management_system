@@ -2,13 +2,17 @@
 
 import { createOrgAuthenticatedAction } from '@/actions/utils/action-helpers'
 import {
+  activateTermDal,
+  createTermDal,
   deletePositionDal,
   deleteRoleTypeDal,
   deleteStatusDefinitionDal,
+  deleteTermDefinitionDal,
   updateOrgDetailsDal,
   upsertPositionDal,
   upsertRoleTypeDal,
   upsertStatusDefinitionDal,
+  upsertTermDefinitionDal,
 } from '@/dal/admin'
 
 // ── Org Details ─────────────────────────────────────────────────────────────
@@ -95,4 +99,48 @@ export const upsertPosition = createOrgAuthenticatedAction<UpsertPositionInput, 
 
 export const deletePosition = createOrgAuthenticatedAction<DeleteByIdInput, void>(
   async (supabase, _user, _groupId, input) => deletePositionDal(supabase, input.id)
+)
+
+// ── Term Definitions ──────────────────────────────────────────────────────────
+
+type UpsertTermDefInput = {
+  id?: string
+  name: string
+  slug: string
+  ordinal: number
+  start_month: number
+  start_day: number
+  end_month: number
+  end_day: number
+  has_elections: boolean
+  has_budget: boolean
+  has_rush: boolean
+}
+
+export const upsertTermDefinition = createOrgAuthenticatedAction<UpsertTermDefInput, void>(
+  async (supabase, _user, groupId, input) => upsertTermDefinitionDal(supabase, groupId, input)
+)
+
+export const deleteTermDefinition = createOrgAuthenticatedAction<DeleteByIdInput, void>(
+  async (supabase, _user, _groupId, input) => deleteTermDefinitionDal(supabase, input.id)
+)
+
+// ── Terms ─────────────────────────────────────────────────────────────────────
+
+type CreateTermInput = {
+  definition_id: string
+  name: string
+  year: number
+  starts_on: string
+  ends_on: string
+}
+
+export const createTerm = createOrgAuthenticatedAction<CreateTermInput, void>(
+  async (supabase, _user, groupId, input) => createTermDal(supabase, groupId, input)
+)
+
+type ActivateTermInput = { termId: string }
+
+export const activateTerm = createOrgAuthenticatedAction<ActivateTermInput, void>(
+  async (supabase, _user, groupId, input) => activateTermDal(supabase, groupId, input.termId)
 )
