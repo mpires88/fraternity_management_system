@@ -9,6 +9,7 @@ import {
   LogOut,
   Settings,
   Users,
+  Vote,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -117,6 +118,13 @@ export function AppSidebar() {
           href={`${base}/requirements`}
           icon={<ClipboardCheck size={16} />}
           label="Requirements"
+          pathname={pathname}
+        />
+
+        <NavLink
+          href={`${base}/polls`}
+          icon={<Vote size={16} />}
+          label="Polls"
           pathname={pathname}
         />
 

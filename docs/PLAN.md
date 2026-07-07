@@ -7,7 +7,9 @@ this document wins.
 ## Progress
 
 - **Next task:** 4.3
-- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 4.1, 4.2
+- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 4.1, 4.2, Phase 5
+  Phase 5 complete: voting migration, pure calculators (plurality/approval/supermajority/RCV)
+  with 16 unit tests, DAL, actions, polls page, ballot + results UI, sidebar nav link.
   Phase 3 complete.
   Phase 2 complete.
   Phase 1 complete.
