@@ -1,10 +1,11 @@
-import { Calendar, GraduationCap, UserPlus, Users, UserX } from 'lucide-react'
+import { Calendar, ClipboardCheck, GraduationCap, UserPlus, Users, UserX } from 'lucide-react'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getDashboardData } from '@/dal/dashboard'
 import { getGroupContext } from '@/dal/group-context'
+import { getMyAssignments } from '@/dal/requirements'
 import { createClient } from '@/lib/supabase/server'
 
 export default async function DashboardPage({
@@ -26,6 +27,21 @@ export default async function DashboardPage({
   const primaryRole = roles[0]
   const base = `/${parentSlug}/${orgSlug}/${groupSlug}`
   const dash = await getDashboardData(supabase, org.id)
+
+  const assignments = dash.currentTerm
+    ? await getMyAssignments(supabase, person.id, dash.currentTerm.id)
+    : []
+  const completedCount = assignments.filter(
+    (a) => a.status === 'complete' || a.status === 'waived'
+  ).length
+  const pending = assignments
+    .filter((a) => a.status !== 'complete' && a.status !== 'waived')
+    .sort((a, b) => {
+      const da = a.requirement.due_at ?? ''
+      const db = b.requirement.due_at ?? ''
+      return da.localeCompare(db)
+    })
+  const nextDue = pending.find((a) => a.requirement.due_at)
 
   return (
     <div className="p-8">
@@ -86,6 +102,52 @@ export default async function DashboardPage({
           href={`${base}/members`}
         />
       </div>
+
+      {/* Requirements summary */}
+      {assignments.length > 0 && (
+        <Link href={`${base}/requirements`} className="block mb-8">
+          <Card className="hover:ring-brand/30 transition-all cursor-pointer">
+            <CardContent className="pt-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <ClipboardCheck size={18} className="text-brand" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      {completedCount} of {assignments.length} requirements complete
+                    </p>
+                    {nextDue && (
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Next due:{' '}
+                        {new Date(nextDue.requirement.due_at as string).toLocaleDateString(
+                          'en-US',
+                          {
+                            month: 'short',
+                            day: 'numeric',
+                          }
+                        )}{' '}
+                        — {nextDue.requirement.title}
+                      </p>
+                    )}
+                    {!nextDue && pending.length > 0 && (
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {pending.length} remaining (no due date)
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-brand rounded-full transition-all"
+                    style={{
+                      width: `${(completedCount / assignments.length) * 100}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      )}
 
       {/* Current officers */}
       {dash.currentOfficers.length > 0 && (
