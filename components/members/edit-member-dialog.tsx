@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { updateMember } from '@/actions/members/update-member.action'
 import type { PersonProfile } from '@/dal/person-profile'
-import { useOrg } from '@/lib/context/org-context'
 
 export function EditMemberDialog({
   profile,
@@ -17,7 +16,6 @@ export function EditMemberDialog({
   statusDefinitions: { id: string; name: string; slug: string; is_base: boolean }[]
   onClose: () => void
 }) {
-  const { parentOrg, org } = useOrg()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState('')
@@ -50,9 +48,6 @@ export function EditMemberDialog({
     startTransition(async () => {
       const result = await updateMember({
         personId: profile.id,
-        groupId: org.id,
-        parentSlug: parentOrg?.slug ?? null,
-        orgSlug: org.slug,
         full_name: form.full_name,
         first_name: form.first_name || null,
         last_name: form.last_name || null,

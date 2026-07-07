@@ -55,15 +55,7 @@ const PERMISSION_FIELDS = [
   },
 ] as const
 
-export function RoleTypesTab({
-  settings,
-  parentSlug,
-  orgSlug,
-}: {
-  settings: AdminSettingsData
-  parentSlug: string
-  orgSlug: string
-}) {
+export function RoleTypesTab({ settings }: { settings: AdminSettingsData }) {
   const [editing, setEditing] = useState<AffType | 'new' | null>(null)
 
   return (
@@ -124,9 +116,6 @@ export function RoleTypesTab({
         {editing && (
           <RoleForm
             existing={editing === 'new' ? null : editing}
-            groupId={settings.org.id}
-            parentSlug={parentSlug}
-            orgSlug={orgSlug}
             nextOrder={(settings.roleTypes.length + 1) * 10}
             onClose={() => setEditing(null)}
           />
@@ -138,16 +127,10 @@ export function RoleTypesTab({
 
 function RoleForm({
   existing,
-  groupId,
-  parentSlug,
-  orgSlug,
   nextOrder,
   onClose,
 }: {
   existing: AffType | null
-  groupId: string
-  parentSlug: string
-  orgSlug: string
   nextOrder: number
   onClose: () => void
 }) {
@@ -175,7 +158,6 @@ function RoleForm({
     startTransition(async () => {
       const result = await upsertRoleType({
         id: existing?.id,
-        groupId,
         name,
         slug: existing?.slug ?? slug,
         access_level: accessLevel,
@@ -183,8 +165,6 @@ function RoleForm({
         color,
         display_order: existing?.display_order ?? nextOrder,
         is_default: isDefault,
-        parentSlug,
-        orgSlug,
       } as Parameters<typeof upsertRoleType>[0])
       if (!result.success) {
         setError(result.error ?? 'Failed')
@@ -198,7 +178,7 @@ function RoleForm({
   function handleDelete() {
     if (!existing) return
     startTransition(async () => {
-      const result = await deleteRoleType({ id: existing.id, parentSlug, orgSlug })
+      const result = await deleteRoleType({ id: existing.id })
       if (!result.success) {
         setError(result.error ?? 'Failed')
         return
@@ -306,7 +286,7 @@ function RoleForm({
             disabled={isPending}
             className="px-4 py-2 bg-brand hover:bg-brand-hover disabled:opacity-50 text-brand-foreground text-sm rounded-lg font-medium transition-colors"
           >
-            {isPending ? 'Saving\u2026' : 'Save'}
+            {isPending ? 'Saving…' : 'Save'}
           </button>
         </div>
       </div>

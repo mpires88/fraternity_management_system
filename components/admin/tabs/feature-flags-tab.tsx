@@ -22,15 +22,7 @@ const ALL_FEATURES = [
   { key: 'subgroups', label: 'Subgroups', description: 'Committees and groups' },
 ]
 
-export function FeatureFlagsTab({
-  settings,
-  parentSlug,
-  orgSlug,
-}: {
-  settings: AdminSettingsData
-  parentSlug: string
-  orgSlug: string
-}) {
+export function FeatureFlagsTab({ settings }: { settings: AdminSettingsData }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [features, setFeatures] = useState<Record<string, boolean>>(settings.org.features)
@@ -45,11 +37,8 @@ export function FeatureFlagsTab({
     setSaved(false)
     startTransition(async () => {
       const result = await updateOrgDetails({
-        groupId: settings.org.id,
         name: settings.org.name,
         features,
-        parentSlug,
-        orgSlug,
       })
       if (result.success) {
         setSaved(true)
@@ -90,7 +79,7 @@ export function FeatureFlagsTab({
             disabled={isPending}
             className="px-4 py-2 bg-brand hover:bg-brand-hover disabled:opacity-50 text-brand-foreground text-sm rounded-lg font-medium transition-colors"
           >
-            {isPending ? 'Saving\u2026' : 'Save'}
+            {isPending ? 'Saving…' : 'Save'}
           </button>
           {saved && <span className="text-sm text-success">Saved</span>}
         </div>

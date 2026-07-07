@@ -11,15 +11,7 @@ import { getLabel, POSITION_TYPE_LABELS } from '@/lib/constants/labels'
 
 type Pos = AdminSettingsData['positions'][0]
 
-export function PositionsTab({
-  settings,
-  parentSlug,
-  orgSlug,
-}: {
-  settings: AdminSettingsData
-  parentSlug: string
-  orgSlug: string
-}) {
+export function PositionsTab({ settings }: { settings: AdminSettingsData }) {
   const [editing, setEditing] = useState<Pos | 'new' | null>(null)
 
   // Group by type
@@ -83,9 +75,6 @@ export function PositionsTab({
         {editing && (
           <PositionForm
             existing={editing === 'new' ? null : editing}
-            groupId={settings.org.id}
-            parentSlug={parentSlug}
-            orgSlug={orgSlug}
             nextOrder={(settings.positions.length + 1) * 10}
             onClose={() => setEditing(null)}
           />
@@ -97,16 +86,10 @@ export function PositionsTab({
 
 function PositionForm({
   existing,
-  groupId,
-  parentSlug,
-  orgSlug,
   nextOrder,
   onClose,
 }: {
   existing: Pos | null
-  groupId: string
-  parentSlug: string
-  orgSlug: string
   nextOrder: number
   onClose: () => void
 }) {
@@ -128,7 +111,6 @@ function PositionForm({
     startTransition(async () => {
       const result = await upsertPosition({
         id: existing?.id,
-        groupId,
         title,
         slug: existing?.slug ?? slug,
         type,
@@ -136,8 +118,6 @@ function PositionForm({
         officer_selection: selection,
         has_budget: hasBudget,
         display_order: existing?.display_order ?? nextOrder,
-        parentSlug,
-        orgSlug,
       })
       if (!result.success) {
         setError(result.error ?? 'Failed')
@@ -151,7 +131,7 @@ function PositionForm({
   function handleDelete() {
     if (!existing) return
     startTransition(async () => {
-      const result = await deletePosition({ id: existing.id, parentSlug, orgSlug })
+      const result = await deletePosition({ id: existing.id })
       if (!result.success) {
         setError(result.error ?? 'Failed')
         return
@@ -253,7 +233,7 @@ function PositionForm({
             disabled={isPending}
             className="px-4 py-2 bg-brand hover:bg-brand-hover disabled:opacity-50 text-brand-foreground text-sm rounded-lg font-medium transition-colors"
           >
-            {isPending ? 'Saving\u2026' : 'Save'}
+            {isPending ? 'Saving…' : 'Save'}
           </button>
         </div>
       </div>

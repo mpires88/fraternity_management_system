@@ -6,13 +6,7 @@ import type { AdminSettingsData } from '@/dal/admin'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-export function TermDefinitionsTab({
-  settings,
-}: {
-  settings: AdminSettingsData
-  parentSlug: string
-  orgSlug: string
-}) {
+export function TermDefinitionsTab({ settings }: { settings: AdminSettingsData }) {
   return (
     <Card>
       <CardHeader>

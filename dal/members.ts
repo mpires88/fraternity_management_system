@@ -1,5 +1,8 @@
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import type { DbClient } from '@/dal/types'
+import { UserFacingError } from '@/lib/errors'
 import type { OrgMembership, Person, RoleType, StatusDefinition } from '@/lib/types/db'
+import type { InviteMemberInput, UpdateMemberInput } from '@/lib/validations/member'
 
 export type MemberRow = OrgMembership & {
   person: Person
@@ -47,4 +50,114 @@ export async function getMembersByOrg(supabase: DbClient, groupId: string): Prom
         membership_type: role_type, // backwards compat
       } as MemberRow
     })
+}
+
+export async function inviteMemberDal(
+  supabase: DbClient,
+  groupId: string,
+  input: InviteMemberInput
+): Promise<void> {
+  const { school_email, full_name, role_type_id } = input
+
+  const { data: existingPerson } = await supabase
+    .from('persons')
+    .select('id')
+    .eq('school_email', school_email)
+    .limit(1)
+    .single()
+
+  let personId: string
+
+  if (existingPerson) {
+    personId = existingPerson.id
+
+    const { data: existingMembership } = await supabase
+      .from('group_memberships')
+      .select('id')
+      .eq('person_id', personId)
+      .eq('group_id', groupId)
+      .is('ended_at', null)
+      .limit(1)
+      .single()
+
+    if (existingMembership) {
+      throw new UserFacingError('This person is already a member of this org')
+    }
+  } else {
+    const admin = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
+
+    const { data: authData, error: authError } = await admin.auth.admin.createUser({
+      email: school_email,
+      password: Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2),
+      email_confirm: true,
+    })
+
+    if (authError) {
+      throw new UserFacingError(`Failed to create account: ${authError.message}`)
+    }
+
+    personId = authData.user.id
+
+    const { error: personError } = await admin
+      .from('persons')
+      .insert({ id: personId, full_name, school_email })
+
+    if (personError) {
+      throw new UserFacingError(`Failed to create person: ${personError.message}`)
+    }
+  }
+
+  const { data: activeStatus } = await supabase
+    .from('status_definitions')
+    .select('id')
+    .eq('slug', 'active')
+    .is('group_id', null)
+    .single()
+
+  const { error: membershipError } = await supabase.from('group_memberships').insert({
+    person_id: personId,
+    group_id: groupId,
+    role_type_id,
+    status_id: activeStatus?.id,
+    joined_at: new Date().toISOString().split('T')[0],
+  })
+
+  if (membershipError) {
+    throw new UserFacingError(`Failed to create membership: ${membershipError.message}`)
+  }
+}
+
+export async function updateMemberDal(
+  supabase: DbClient,
+  groupId: string,
+  input: UpdateMemberInput
+): Promise<void> {
+  const { personId, role_type_id, status_id, ...personFields } = input
+
+  const personUpdate: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(personFields)) {
+    if (v !== undefined) personUpdate[k] = v
+  }
+
+  if (Object.keys(personUpdate).length > 0) {
+    const { error } = await supabase.from('persons').update(personUpdate).eq('id', personId)
+    if (error) throw new UserFacingError(error.message)
+  }
+
+  const membershipUpdate: Record<string, unknown> = {}
+  if (role_type_id !== undefined) membershipUpdate.role_type_id = role_type_id
+  if (status_id !== undefined) membershipUpdate.status_id = status_id
+
+  if (Object.keys(membershipUpdate).length > 0) {
+    const { error } = await supabase
+      .from('group_memberships')
+      .update(membershipUpdate)
+      .eq('person_id', personId)
+      .eq('group_id', groupId)
+    if (error) throw new UserFacingError(error.message)
+  }
 }

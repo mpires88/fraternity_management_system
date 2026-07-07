@@ -24,7 +24,7 @@ export default async function AdminPage({
 
   if (perms.access_level !== 'full') notFound()
 
-  const settings = await getAdminSettings(supabase, ctx.org.id)
+  const settings = await getAdminSettings(supabase, ctx.group.id)
   if (!settings) notFound()
 
   const isSuperUser = await isPlatformAdmin(supabase)
@@ -36,12 +36,7 @@ export default async function AdminPage({
         <p className="text-sm text-muted-foreground mt-2">Manage {ctx.org.name}</p>
       </div>
 
-      <AdminPanel
-        settings={settings}
-        parentSlug={parentSlug}
-        orgSlug={orgSlug}
-        isSuperUser={isSuperUser}
-      />
+      <AdminPanel settings={settings} isSuperUser={isSuperUser} />
     </div>
   )
 }

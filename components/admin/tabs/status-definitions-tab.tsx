@@ -13,15 +13,7 @@ import type { AdminSettingsData } from '@/dal/admin'
 
 type StatusDef = AdminSettingsData['statusDefinitions'][0]
 
-export function StatusDefinitionsTab({
-  settings,
-  parentSlug,
-  orgSlug,
-}: {
-  settings: AdminSettingsData
-  parentSlug: string
-  orgSlug: string
-}) {
+export function StatusDefinitionsTab({ settings }: { settings: AdminSettingsData }) {
   const [editing, setEditing] = useState<StatusDef | 'new' | null>(null)
 
   const baseStatuses = settings.statusDefinitions.filter((s) => s.is_base)
@@ -104,9 +96,6 @@ export function StatusDefinitionsTab({
         {editing && (
           <StatusForm
             existing={editing === 'new' ? null : editing}
-            groupId={settings.org.id}
-            parentSlug={parentSlug}
-            orgSlug={orgSlug}
             nextOrder={(settings.statusDefinitions.length + 1) * 10}
             onClose={() => setEditing(null)}
           />
@@ -127,16 +116,10 @@ function overrideSummary(s: StatusDef): string {
 
 function StatusForm({
   existing,
-  groupId,
-  parentSlug,
-  orgSlug,
   nextOrder,
   onClose,
 }: {
   existing: StatusDef | null
-  groupId: string
-  parentSlug: string
-  orgSlug: string
   nextOrder: number
   onClose: () => void
 }) {
@@ -165,7 +148,6 @@ function StatusForm({
     startTransition(async () => {
       const result = await upsertStatusDefinition({
         id: existing?.id,
-        groupId,
         name,
         slug: existing?.slug ?? slug,
         color,
@@ -174,8 +156,6 @@ function StatusForm({
         override_can_vote: overrideVote,
         override_can_hold_office: overrideOffice,
         override_can_attend_events: overrideEvents,
-        parentSlug,
-        orgSlug,
       })
       if (!result.success) {
         setError(result.error ?? 'Failed')
@@ -189,7 +169,7 @@ function StatusForm({
   function handleDelete() {
     if (!existing) return
     startTransition(async () => {
-      const result = await deleteStatusDefinition({ id: existing.id, parentSlug, orgSlug })
+      const result = await deleteStatusDefinition({ id: existing.id })
       if (!result.success) {
         setError(result.error ?? 'Failed')
         return
@@ -275,7 +255,7 @@ function StatusForm({
             disabled={isPending}
             className="px-4 py-2 bg-brand hover:bg-brand-hover disabled:opacity-50 text-brand-foreground text-sm rounded-lg font-medium transition-colors"
           >
-            {isPending ? 'Saving\u2026' : 'Save'}
+            {isPending ? 'Saving…' : 'Save'}
           </button>
         </div>
       </div>

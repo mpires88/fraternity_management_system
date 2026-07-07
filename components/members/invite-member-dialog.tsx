@@ -4,7 +4,6 @@ import { UserPlus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { inviteMember } from '@/actions/members/invite-member.action'
-import { useOrg } from '@/lib/context/org-context'
 
 export function InviteMemberButton({
   membershipTypes,
@@ -34,7 +33,6 @@ function InviteDialog({
   membershipTypes: { id: string; name: string; slug: string; is_default: boolean | null }[]
   onClose: () => void
 }) {
-  const { parentOrg, org } = useOrg()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState('')
@@ -53,10 +51,6 @@ function InviteDialog({
         school_email: email,
         full_name: fullName,
         role_type_id: typeId,
-        groupId: org.id,
-
-        parentSlug: parentOrg?.slug ?? null,
-        orgSlug: org.slug,
       })
       if (!result.success) {
         setError(result.error ?? 'Failed to invite')

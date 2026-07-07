@@ -7,15 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { AdminSettingsData } from '@/dal/admin'
 import { getLabel, ORG_TYPE_LABELS } from '@/lib/constants/labels'
 
-export function OrgDetailsTab({
-  settings,
-  parentSlug,
-  orgSlug,
-}: {
-  settings: AdminSettingsData
-  parentSlug: string
-  orgSlug: string
-}) {
+export function OrgDetailsTab({ settings }: { settings: AdminSettingsData }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [name, setName] = useState(settings.org.name)
@@ -27,11 +19,8 @@ export function OrgDetailsTab({
     setSaved(false)
     startTransition(async () => {
       const result = await updateOrgDetails({
-        groupId: settings.org.id,
         name,
         features: settings.org.features,
-        parentSlug,
-        orgSlug,
       })
       if (!result.success) {
         setError(result.error ?? 'Failed')
@@ -74,7 +63,7 @@ export function OrgDetailsTab({
           disabled={isPending}
           className="px-4 py-2 bg-brand hover:bg-brand-hover disabled:opacity-50 text-brand-foreground text-sm rounded-lg font-medium transition-colors"
         >
-          {isPending ? 'Saving\u2026' : 'Save'}
+          {isPending ? 'Saving…' : 'Save'}
         </button>
       </CardContent>
     </Card>

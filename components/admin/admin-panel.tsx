@@ -23,13 +23,9 @@ type TabId = (typeof ALL_TABS)[number]['id']
 
 export function AdminPanel({
   settings,
-  parentSlug,
-  orgSlug,
   isSuperUser,
 }: {
   settings: AdminSettingsData
-  parentSlug: string
-  orgSlug: string
   isSuperUser: boolean
 }) {
   const tabs = useMemo(() => ALL_TABS.filter((t) => !t.superOnly || isSuperUser), [isSuperUser])
@@ -55,24 +51,12 @@ export function AdminPanel({
       </nav>
 
       <div className="flex-1 min-w-0">
-        {activeTab === 'org' && (
-          <OrgDetailsTab settings={settings} parentSlug={parentSlug} orgSlug={orgSlug} />
-        )}
-        {activeTab === 'features' && isSuperUser && (
-          <FeatureFlagsTab settings={settings} parentSlug={parentSlug} orgSlug={orgSlug} />
-        )}
-        {activeTab === 'roles' && (
-          <RoleTypesTab settings={settings} parentSlug={parentSlug} orgSlug={orgSlug} />
-        )}
-        {activeTab === 'statuses' && (
-          <StatusDefinitionsTab settings={settings} parentSlug={parentSlug} orgSlug={orgSlug} />
-        )}
-        {activeTab === 'positions' && (
-          <PositionsTab settings={settings} parentSlug={parentSlug} orgSlug={orgSlug} />
-        )}
-        {activeTab === 'terms' && (
-          <TermDefinitionsTab settings={settings} parentSlug={parentSlug} orgSlug={orgSlug} />
-        )}
+        {activeTab === 'org' && <OrgDetailsTab settings={settings} />}
+        {activeTab === 'features' && isSuperUser && <FeatureFlagsTab settings={settings} />}
+        {activeTab === 'roles' && <RoleTypesTab settings={settings} />}
+        {activeTab === 'statuses' && <StatusDefinitionsTab settings={settings} />}
+        {activeTab === 'positions' && <PositionsTab settings={settings} />}
+        {activeTab === 'terms' && <TermDefinitionsTab settings={settings} />}
       </div>
     </div>
   )

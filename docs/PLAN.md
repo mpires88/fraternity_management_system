@@ -6,10 +6,12 @@ this document wins.
 
 ## Progress
 
-- **Next task:** 0.1
-- **Completed:** (none yet)
-- **Blocked/notes:** none. Heads-up: the dev DB holds the real roster — see
-  `docs/DEV.md` "Test users & real data" before touching auth/email flows.
+- **Next task:** 0.5
+- **Completed:** 0.1, 0.2, 0.3, 0.4
+  Heads-up: the dev DB holds the real roster — see `docs/DEV.md` "Test users &
+  real data" before touching auth/email flows.
+  Note: task 0.1 also fixed `getAdminSettings` to query by `groups.id`
+  (matching v3 cookie) instead of `organizations.id`.
 
 Update this block as the final step of every task, inside the task's commit. This
 block is the ONLY part of PLAN.md the implementing model may edit; scope, task text,

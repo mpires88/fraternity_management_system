@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { createSubgroup } from '@/actions/subgroups/manage-subgroup.action'
 import { SUBGROUP_TYPE_LABELS } from '@/lib/constants/labels'
-import { useOrg } from '@/lib/context/org-context'
 
 const SUBGROUP_TYPES = Object.entries(SUBGROUP_TYPE_LABELS)
   .filter(([key]) => key !== 'family_line') // can't manually create family lines
@@ -36,7 +35,6 @@ export function CreateSubgroupButton() {
 }
 
 function CreateSubgroupDialog({ onClose }: { onClose: () => void }) {
-  const { parentOrg, org } = useOrg()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState('')
@@ -50,13 +48,10 @@ function CreateSubgroupDialog({ onClose }: { onClose: () => void }) {
     setError('')
     startTransition(async () => {
       const result = await createSubgroup({
-        groupId: org.id,
         name,
         subgroup_type: type,
         membership_type: membership,
         is_private: isPrivate,
-        parentSlug: parentOrg?.slug ?? null,
-        orgSlug: org.slug,
       })
       if (!result.success) {
         setError(result.error ?? 'Failed to create')
