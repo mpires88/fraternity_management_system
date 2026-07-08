@@ -33,12 +33,12 @@ export default async function MembersPage({
     )
   }
 
-  const members = await getMembersByOrg(supabase, ctx.org.id)
+  const members = await getMembersByOrg(supabase, ctx.group.id)
 
   const { data: roleTypes } = await supabase
     .from('role_types')
     .select('id, name, slug, is_default')
-    .eq('group_id', ctx.org.id)
+    .eq('group_id', ctx.group.id)
     .order('display_order')
 
   const canInvite = perms.access_level === 'full'

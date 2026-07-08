@@ -39,19 +39,19 @@ export default async function MemberProfilePage({
   const perms = resolvePermissionsFromContext(ctx)
   if (!perms.can_view_roster) notFound()
 
-  const profile = await getPersonProfile(supabase, id, ctx.org.id)
+  const profile = await getPersonProfile(supabase, id, ctx.group.id)
   if (!profile) notFound()
 
   const [{ data: roleTypes }, { data: statusDefs }] = await Promise.all([
     supabase
       .from('role_types')
       .select('id, name, slug')
-      .eq('group_id', ctx.org.id)
+      .eq('group_id', ctx.group.id)
       .order('display_order'),
     supabase
       .from('status_definitions')
       .select('id, name, slug, is_base')
-      .or(`org_id.eq.${ctx.org.id},org_id.is.null`)
+      .or(`group_id.eq.${ctx.group.id},group_id.is.null`)
       .order('display_order'),
   ])
 

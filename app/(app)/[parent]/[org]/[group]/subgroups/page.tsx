@@ -36,7 +36,7 @@ export default async function SubgroupsPage({
   if (!ctx) redirect('/login')
   const perms = resolvePermissionsFromContext(ctx)
 
-  const subgroups = await getSubgroupsByOrg(supabase, ctx.org.id)
+  const subgroups = await getSubgroupsByOrg(supabase, ctx.group.id)
   const base = `/${parentSlug}/${orgSlug}/${groupSlug}`
 
   // Group by type

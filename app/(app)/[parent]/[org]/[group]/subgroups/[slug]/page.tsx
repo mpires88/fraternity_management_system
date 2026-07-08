@@ -30,7 +30,7 @@ export default async function SubgroupDetailPage({
   const ctx = await getGroupContext(supabase, { parentSlug, orgSlug, groupSlug }, user.id)
   if (!ctx) redirect('/login')
 
-  const subgroup = await getSubgroupBySlug(supabase, ctx.org.id, slug)
+  const subgroup = await getSubgroupBySlug(supabase, ctx.group.id, slug)
   if (!subgroup) notFound()
 
   const base = `/${parentSlug}/${orgSlug}/${groupSlug}`
