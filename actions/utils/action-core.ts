@@ -28,6 +28,7 @@ export interface ActionContext {
   supabase: DbClient
   user: User
   groupId?: string
+  personId?: string
 }
 
 export interface OptionalAuthContext {
@@ -120,7 +121,14 @@ async function resolveAuth(config: ActionConfig): Promise<ActionContext> {
     if (!groupId) throw new AuthError('No organization selected')
   }
 
-  return { supabase, user, groupId }
+  const { data: personRow } = await supabase
+    .from('persons')
+    .select('id')
+    .eq('auth_user_id', user.id)
+    .maybeSingle()
+  const personId = personRow?.id ?? undefined
+
+  return { supabase, user, groupId, personId }
 }
 
 async function resolveOptionalAuth(): Promise<OptionalAuthContext> {

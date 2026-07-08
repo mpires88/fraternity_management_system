@@ -65,15 +65,19 @@ export async function getGroupContext(
     .single()
   if (!group) return null
 
-  // Person (platform-level)
-  const { data: person } = await supabase.from('persons').select('*').eq('id', userId).single()
+  // Person (platform-level) — resolve via auth_user_id, not id
+  const { data: person } = await supabase
+    .from('persons')
+    .select('*')
+    .eq('auth_user_id', userId)
+    .single()
   if (!person) return null
 
   // Active roles in this group
   const { data: membershipRows } = await supabase
     .from('group_memberships')
     .select('*, role_types(*), status_definitions(*)')
-    .eq('person_id', userId)
+    .eq('person_id', person.id)
     .eq('group_id', group.id)
     .is('ended_at', null)
 
@@ -102,7 +106,7 @@ export async function getGroupContext(
   const { data: allMembershipRows } = await supabase
     .from('group_memberships')
     .select('group_id, groups(*, organizations(slug, parent_organizations(slug)))')
-    .eq('person_id', userId)
+    .eq('person_id', person.id)
     .is('ended_at', null)
 
   const seenGroups = new Set<string>()

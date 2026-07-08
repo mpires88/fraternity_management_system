@@ -11,10 +11,18 @@ export async function resolvePostLoginRedirect(
   supabase: DbClient,
   userId: string
 ): Promise<string | null> {
+  // Resolve person_id from auth_user_id
+  const { data: personRow } = await supabase
+    .from('persons')
+    .select('id')
+    .eq('auth_user_id', userId)
+    .single()
+  if (!personRow) return null
+
   const { data: memberships } = await supabase
     .from('group_memberships')
     .select('group_id, status_definitions(slug)')
-    .eq('person_id', userId)
+    .eq('person_id', personRow.id)
     .is('ended_at', null)
 
   const active = (memberships ?? []).filter((m) => {

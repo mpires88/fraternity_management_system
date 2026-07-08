@@ -869,6 +869,7 @@ export type Database = {
       }
       persons: {
         Row: {
+          auth_user_id: string | null
           bid_date: string | null
           big_id: string | null
           bio: string | null
@@ -900,6 +901,7 @@ export type Database = {
           street_address: string | null
         }
         Insert: {
+          auth_user_id?: string | null
           bid_date?: string | null
           big_id?: string | null
           bio?: string | null
@@ -931,6 +933,7 @@ export type Database = {
           street_address?: string | null
         }
         Update: {
+          auth_user_id?: string | null
           bid_date?: string | null
           big_id?: string | null
           bio?: string | null
@@ -2158,6 +2161,7 @@ export type Database = {
       get_my_group_ids: { Args: never; Returns: string[] }
       get_my_org_ids: { Args: never; Returns: string[] }
       get_my_organization_ids: { Args: never; Returns: string[] }
+      get_my_person_id: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never
