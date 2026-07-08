@@ -27,7 +27,7 @@ export default async function DashboardPage({
   const { org, person, roles } = ctx
   const primaryRole = roles[0]
   const base = `/${parentSlug}/${orgSlug}/${groupSlug}`
-  const dash = await getDashboardData(supabase, org.id)
+  const dash = await getDashboardData(supabase, ctx.group.id)
 
   const assignments = dash.currentTerm
     ? await getMyAssignments(supabase, person.id, dash.currentTerm.id)
