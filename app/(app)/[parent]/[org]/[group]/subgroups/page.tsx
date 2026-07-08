@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { CreateSubgroupButton } from '@/components/subgroups/create-subgroup-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
+import { PageHeader } from '@/components/ui/page-header'
 import { getGroupContext } from '@/dal/group-context'
 import { getSubgroupsByOrg } from '@/dal/subgroups'
 import { getLabel, SUBGROUP_TYPE_LABELS } from '@/lib/constants/labels'
@@ -62,15 +63,13 @@ export default async function SubgroupsPage({
 
   return (
     <div className="p-8">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Subgroups</h1>
-          <p className="text-sm text-muted-foreground mt-2">
-            {subgroups.length} group{subgroups.length !== 1 ? 's' : ''}
-          </p>
-        </div>
+      <PageHeader
+        title="Subgroups"
+        description={`${subgroups.length} group${subgroups.length !== 1 ? 's' : ''}`}
+        info="Subgroups organize members into committees, exec boards, pledge classes, family lines, and more. Click a subgroup to see its members."
+      >
         {perms.access_level === 'full' && <CreateSubgroupButton />}
-      </div>
+      </PageHeader>
 
       {subgroups.length === 0 ? (
         <Card className="py-16 text-center">

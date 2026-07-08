@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { addParticipants, closePoll, createPoll, publishPoll } from '@/actions/polls.action'
 import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/ui/page-header'
 import type { PollRow } from '@/dal/polls'
 import { PollBallot } from './poll-ballot'
 import { PollResults } from './poll-results'
@@ -58,18 +59,18 @@ export function PollsView({ polls, isAdmin, members }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Polls & Voting</h1>
-          <p className="text-muted-foreground mt-1">Motions, elections, and chapter votes</p>
-        </div>
+      <PageHeader
+        title="Polls & Voting"
+        description="Motions, elections, and chapter votes"
+        info="Create polls with different voting methods — plurality, approval, supermajority, or ranked choice. Add participants, publish to open voting, then close to tally results."
+      >
         {isAdmin && (
           <Button onClick={() => setShowCreate(true)} size="sm">
             <Plus size={14} className="mr-1.5" />
             New Poll
           </Button>
         )}
-      </div>
+      </PageHeader>
 
       {polls.length === 0 && (
         <p className="text-muted-foreground py-8 text-center">No polls yet.</p>

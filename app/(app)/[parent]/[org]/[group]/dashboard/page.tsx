@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { PageHeader } from '@/components/ui/page-header'
 import { getDashboardData } from '@/dal/dashboard'
 import { getGroupContext } from '@/dal/group-context'
 import { getMyAssignments } from '@/dal/requirements'
@@ -45,13 +46,11 @@ export default async function DashboardPage({
 
   return (
     <div className="p-8">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-foreground">{org.name}</h1>
-        <p className="text-sm text-muted-foreground mt-2">
-          Welcome back, {person.nickname ?? person.full_name.split(' ')[0]}
-        </p>
-      </div>
+      <PageHeader
+        title={org.name}
+        description={`Welcome back, ${person.nickname ?? person.full_name.split(' ')[0]}`}
+        info="Your chapter dashboard shows membership stats, upcoming requirements, and current officers at a glance."
+      />
 
       {/* Your badge + current term */}
       <div className="flex flex-wrap items-center gap-3 mb-8">

@@ -6,8 +6,12 @@ this document wins.
 
 ## Progress
 
-- **Next task:** 4.3
+- **Next task:** 4.3 (scripts ready — run against production when target project is set up)
 - **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 4.1, 4.2, Phase 5, Phase 6
+  Task 4.3 export/import scripts: `scripts/export-v3.ts` dumps all org structure,
+  roster, memberships, terms, and auth users to JSON; `scripts/import-v3.ts` reads
+  the dump and inserts into a target Supabase project with FK-safe ordering and
+  idempotent upserts. Export verified: 404 persons, 404 memberships, full org tree.
   Phase 6 complete: documents table (draft→in_review→approved→archived, kind, versioning,
   file upload fields, poll link), polymorphic comments (threaded, resolvable, anchored,
   with read/write gate functions), comment-requirement links, document-poll approval wiring.

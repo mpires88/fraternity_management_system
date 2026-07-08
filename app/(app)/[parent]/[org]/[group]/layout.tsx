@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { AppSidebar } from '@/components/layout/app-sidebar'
 import { SetOrgCookie } from '@/components/layout/set-org-cookie'
+import { BrandColorProvider } from '@/components/providers/brand-color-provider'
 import { getGroupContext } from '@/dal/group-context'
 import { OrgProvider } from '@/lib/context/org-context'
 import { createClient } from '@/lib/supabase/server'
@@ -26,11 +27,13 @@ export default async function GroupLayout({
 
   return (
     <OrgProvider value={ctx}>
-      <SetOrgCookie groupId={ctx.group.id} />
-      <div className="flex h-screen overflow-hidden">
-        <AppSidebar />
-        <main className="flex-1 overflow-y-auto bg-background">{children}</main>
-      </div>
+      <BrandColorProvider>
+        <SetOrgCookie groupId={ctx.group.id} />
+        <div className="flex h-screen overflow-hidden">
+          <AppSidebar />
+          <main className="flex-1 overflow-y-auto bg-background">{children}</main>
+        </div>
+      </BrandColorProvider>
     </OrgProvider>
   )
 }

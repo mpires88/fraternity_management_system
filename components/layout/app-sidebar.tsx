@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   LogOut,
   Settings,
+  Shield,
   Users,
   Vote,
 } from 'lucide-react'
@@ -16,6 +17,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { NotificationBell } from '@/components/layout/notification-bell'
+import { ThemeSelector } from '@/components/layout/theme-selector'
 import { ThemeToggle } from '@/components/layout/theme-toggle'
 import { useOrg } from '@/lib/context/org-context'
 import { createClient } from '@/lib/supabase/client'
@@ -25,7 +27,8 @@ type NavItem = { label: string; href: string; icon: React.ReactNode }
 type NavGroup = { label: string; icon: React.ReactNode; items: NavItem[] }
 
 export function AppSidebar() {
-  const { parentOrg, org, group, person, allGroups, switchGroup, permissions } = useOrg()
+  const { parentOrg, org, group, person, allGroups, switchGroup, permissions, isPlatformAdmin } =
+    useOrg()
   const pathname = usePathname()
   const router = useRouter()
   const [switcherOpen, setSwitcherOpen] = useState(false)
@@ -62,9 +65,18 @@ export function AppSidebar() {
           onClick={() => allGroups.length > 1 && setSwitcherOpen(!switcherOpen)}
           className="flex items-center gap-2 w-full text-left group"
         >
-          <div className="w-7 h-7 rounded bg-brand flex items-center justify-center text-brand-foreground text-xs font-bold shrink-0">
-            {group.name.charAt(0)}
-          </div>
+          {parentOrg?.logo_url ? (
+            // biome-ignore lint/performance/noImgElement: external URL, domain unknown at build time
+            <img
+              src={parentOrg.logo_url}
+              alt={group.name}
+              className="w-7 h-7 rounded object-contain shrink-0"
+            />
+          ) : (
+            <div className="w-7 h-7 rounded bg-brand flex items-center justify-center text-brand-foreground text-xs font-bold shrink-0">
+              {group.name.charAt(0)}
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-sidebar-foreground truncate">{group.name}</p>
             <p className="text-xs text-muted-foreground truncate">{parentOrg?.name}</p>
@@ -152,6 +164,18 @@ export function AppSidebar() {
             />
           </div>
         )}
+
+        {/* Platform Admin (super users only) */}
+        {isPlatformAdmin && (
+          <div className="mt-3 pt-3 border-t border-sidebar-border">
+            <NavLink
+              href="/platform-admin"
+              icon={<Shield size={16} />}
+              label="Platform Admin"
+              pathname={pathname}
+            />
+          </div>
+        )}
       </nav>
 
       {/* User footer */}
@@ -167,7 +191,13 @@ export function AppSidebar() {
           </div>
           <NotificationBell />
         </div>
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <ThemeSelector
+            orgPrimaryColor={parentOrg?.primary_color ?? null}
+            orgSecondaryColor={parentOrg?.secondary_color ?? null}
+          />
+        </div>
         <button
           onClick={handleSignOut}
           className="flex items-center gap-2 w-full px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"

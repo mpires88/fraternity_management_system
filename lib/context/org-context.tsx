@@ -17,6 +17,9 @@ export type ParentOrgInfo = {
   id: string
   name: string
   slug: string
+  logo_url: string | null
+  primary_color: string | null
+  secondary_color: string | null
 }
 
 export type ActiveRole = {
@@ -39,6 +42,7 @@ export type OrgContextValue = {
   permissions: EffectivePermissions
   allGroups: Array<{ group: Group; parentSlug: string | null; orgSlug: string }>
   switchGroup: (groupSlug: string, orgSlug?: string, parentSlug?: string) => void
+  isPlatformAdmin: boolean
 }
 
 const OrgContext = createContext<OrgContextValue | null>(null)

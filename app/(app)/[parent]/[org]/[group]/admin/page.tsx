@@ -1,5 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
 import { AdminPanel } from '@/components/admin/admin-panel'
+import { PageHeader } from '@/components/ui/page-header'
 import { getAdminSettings } from '@/dal/admin'
 import { getGroupContext } from '@/dal/group-context'
 import { isPlatformAdmin } from '@/lib/auth/org-context'
@@ -31,10 +32,11 @@ export default async function AdminPage({
 
   return (
     <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-foreground">Settings</h1>
-        <p className="text-sm text-muted-foreground mt-2">Manage {ctx.org.name}</p>
-      </div>
+      <PageHeader
+        title="Settings"
+        description={`Manage ${ctx.org.name}`}
+        info="Configure terms, roles, positions, and feature flags. Changes here affect all members of this group."
+      />
 
       <AdminPanel settings={settings} isSuperUser={isSuperUser} />
     </div>

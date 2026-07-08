@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { createDocument } from '@/actions/documents.action'
 import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/ui/page-header'
 import type { DocumentRow } from '@/dal/documents'
 
 type Props = {
@@ -34,18 +35,18 @@ export function DocumentsView({ documents, isAdmin }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Documents</h1>
-          <p className="text-muted-foreground mt-1">Minutes, bylaws, budgets, and more</p>
-        </div>
+      <PageHeader
+        title="Documents"
+        description="Minutes, bylaws, budgets, and more"
+        info="Store and manage chapter documents. Draft documents can be edited, submitted for review, and approved. Members can comment and discuss inline."
+      >
         {isAdmin && (
           <Button onClick={() => setShowCreate(true)} size="sm">
             <Plus size={14} className="mr-1.5" />
             New Document
           </Button>
         )}
-      </div>
+      </PageHeader>
 
       {documents.length === 0 && (
         <p className="text-muted-foreground py-8 text-center">No documents yet.</p>

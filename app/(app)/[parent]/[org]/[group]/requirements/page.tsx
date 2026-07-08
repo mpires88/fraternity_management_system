@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { ManageRequirements } from '@/components/requirements/manage-requirements'
 import { MyRequirements } from '@/components/requirements/my-requirements'
+import { PageHeader } from '@/components/ui/page-header'
 import { getGroupContext } from '@/dal/group-context'
 import { getMyAssignments, getRequirementsForGroup } from '@/dal/requirements'
 import { createClient } from '@/lib/supabase/server'
@@ -33,10 +34,10 @@ export default async function RequirementsPage({
   if (!activeTerm) {
     return (
       <div className="p-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">Requirements</h1>
-        <p className="text-muted-foreground">
-          No active term. An officer needs to create and activate a term in Settings first.
-        </p>
+        <PageHeader
+          title="Requirements"
+          description="No active term. An officer needs to create and activate a term in Settings first."
+        />
       </div>
     )
   }

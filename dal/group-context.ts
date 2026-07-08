@@ -23,6 +23,7 @@ export type GroupContextData = {
   person: Person
   roles: ActiveRole[]
   allGroups: Array<{ group: Group; parentSlug: string | null; orgSlug: string }>
+  isPlatformAdmin: boolean
 }
 
 /**
@@ -37,7 +38,7 @@ export async function getGroupContext(
   // Look up parent org
   const { data: parentOrg } = await supabase
     .from('parent_organizations')
-    .select('id, name, slug')
+    .select('id, name, slug, logo_url, primary_color, secondary_color')
     .eq('slug', slugs.parentSlug)
     .single()
 
@@ -123,6 +124,12 @@ export async function getGroupContext(
       }
     })
 
+  const { data: adminRow } = await supabase
+    .from('platform_admins')
+    .select('id')
+    .eq('id', userId)
+    .maybeSingle()
+
   return {
     parentOrg: parentOrgInfo,
     org: org as unknown as Org,
@@ -130,5 +137,6 @@ export async function getGroupContext(
     person: person as unknown as Person,
     roles,
     allGroups,
+    isPlatformAdmin: !!adminRow,
   }
 }

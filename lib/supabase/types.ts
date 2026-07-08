@@ -813,6 +813,8 @@ export type Database = {
           logo_url: string | null
           name: string
           org_type: string
+          primary_color: string | null
+          secondary_color: string | null
           slug: string
           status: string | null
           submitted_by: string | null
@@ -826,6 +828,8 @@ export type Database = {
           logo_url?: string | null
           name: string
           org_type: string
+          primary_color?: string | null
+          secondary_color?: string | null
           slug: string
           status?: string | null
           submitted_by?: string | null
@@ -839,6 +843,8 @@ export type Database = {
           logo_url?: string | null
           name?: string
           org_type?: string
+          primary_color?: string | null
+          secondary_color?: string | null
           slug?: string
           status?: string | null
           submitted_by?: string | null

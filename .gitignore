@@ -40,8 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# real member data — never commit (roster CSV, airtable exports)
+# real member data — never commit (roster CSV, airtable exports, DB dumps)
 /test data/
+scripts/export-v3-data.json
 
 # local agent state
 /.claude/

@@ -24,23 +24,46 @@ const supabase = createClient(url, serviceKey, {
 const PASSWORD = 'password123'
 
 const PERSONAS = [
-  { email: 'officer@test.com', name: 'Test Officer', needsMembership: 'full' },
-  { email: 'member@test.com', name: 'Test Member', needsMembership: 'limited' },
-  { email: 'outsider@test.com', name: 'Test Outsider', needsMembership: null },
+  {
+    email: 'admin@test.com',
+    name: 'Platform Admin',
+    needsMembership: 'full',
+    platformAdmin: true,
+  },
+  {
+    email: 'officer@test.com',
+    name: 'Test Officer',
+    needsMembership: 'full',
+    platformAdmin: false,
+  },
+  {
+    email: 'member@test.com',
+    name: 'Test Member',
+    needsMembership: 'limited',
+    platformAdmin: false,
+  },
+  {
+    email: 'outsider@test.com',
+    name: 'Test Outsider',
+    needsMembership: null,
+    platformAdmin: false,
+  },
 ] as const
 
 async function ensureAuthUser(email: string): Promise<string> {
-  const { data: list } = await supabase.auth.admin.listUsers()
-  const existing = list?.users?.find((u) => u.email === email)
-  if (existing) return existing.id
-
   const { data, error } = await supabase.auth.admin.createUser({
     email,
     password: PASSWORD,
     email_confirm: true,
   })
-  if (error) throw new Error(`Failed to create auth user ${email}: ${error.message}`)
-  return data.user.id
+  if (!error) return data.user.id
+
+  if (error.message.includes('already been registered')) {
+    const { data: list } = await supabase.auth.admin.listUsers({ perPage: 1000 })
+    const existing = list?.users?.find((u) => u.email === email)
+    if (existing) return existing.id
+  }
+  throw new Error(`Failed to create auth user ${email}: ${error.message}`)
 }
 
 async function main() {
@@ -109,6 +132,14 @@ async function main() {
     )
     if (personErr) throw new Error(`persons upsert failed: ${personErr.message}`)
     console.log('  person: ok')
+
+    if (persona.platformAdmin) {
+      const { error: adminErr } = await supabase
+        .from('platform_admins')
+        .upsert({ id: userId, email: persona.email }, { onConflict: 'id' })
+      if (adminErr) throw new Error(`platform_admins upsert failed: ${adminErr.message}`)
+      console.log('  platform_admin: ok')
+    }
 
     if (persona.needsMembership) {
       const roleId = persona.needsMembership === 'full' ? fullRole.id : limitedRole.id
@@ -200,6 +231,7 @@ async function main() {
 
   console.log('\n--- Done! ---')
   console.log('Logins (all password123):')
+  console.log('  admin@test.com    — platform super-admin + full-access member')
   console.log('  officer@test.com  — full-access, sees admin/settings')
   console.log('  member@test.com   — limited, sees own data')
   console.log('  outsider@test.com — no membership, sees nothing')

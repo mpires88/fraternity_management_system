@@ -19,6 +19,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { PageHeader } from '@/components/ui/page-header'
 import type { AssignmentRow } from '@/dal/requirements'
 
 type Props = {
@@ -94,13 +95,14 @@ export function MyRequirements({ assignments, termName }: Props) {
 
   return (
     <div className="space-y-6">
+      <PageHeader
+        title="My Requirements"
+        description={`${termName} · ${completed.length} of ${assignments.length} complete`}
+        info="Track your semester requirements here. Mark items complete as you finish them, or submit evidence for officer review."
+      />
       <div>
-        <h1 className="text-3xl font-bold text-foreground">My Requirements</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {termName} &middot; {completed.length} of {assignments.length} complete
-        </p>
         {assignments.length > 0 && (
-          <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden">
+          <div className="h-2 bg-muted rounded-full overflow-hidden">
             <div
               className="h-full bg-brand rounded-full transition-all"
               style={{ width: `${(completed.length / assignments.length) * 100}%` }}
