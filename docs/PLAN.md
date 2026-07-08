@@ -7,7 +7,14 @@ this document wins.
 ## Progress
 
 - **Next task:** 4.3 (scripts ready — run against production when target project is set up)
-- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 4.1, 4.2, Phase 5, Phase 6
+- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 4.1, 4.2, Phase 5, Phase 6, 7.1, 7.2, 7.3, 7.4, 7.5
+  Phase 7 complete: auth identity decoupled from person identity via `persons.auth_user_id`.
+  `get_my_person_id()` SECURITY DEFINER resolves auth.uid() → person.id; all 24 RLS
+  policies updated. Claim token system replaces dummy auth user creation on invite.
+  `/claim/[token]` page for signup/login + auto-link. My Profile page with inline
+  editing (personal fields) and photo upload (Supabase Storage). Change request
+  system: members request admin-field changes, admins approve/reject from Settings
+  tab; approval auto-applies via service_role.
   Task 4.3 export/import scripts: `scripts/export-v3.ts` dumps all org structure,
   roster, memberships, terms, and auth users to JSON; `scripts/import-v3.ts` reads
   the dump and inserts into a target Supabase project with FK-safe ordering and
