@@ -36,6 +36,7 @@ function InviteDialog({
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState('')
+  const [claimUrl, setClaimUrl] = useState<string | null>(null)
 
   const defaultType = membershipTypes.find((t) => t.is_default) ?? membershipTypes[0]
 
@@ -57,7 +58,11 @@ function InviteDialog({
         return
       }
       router.refresh()
-      onClose()
+      if (result.data?.claimUrl) {
+        setClaimUrl(result.data.claimUrl)
+      } else {
+        onClose()
+      }
     })
   }
 
@@ -83,6 +88,29 @@ function InviteDialog({
           </div>
 
           <div className="px-6 py-4 space-y-4">
+            {claimUrl && (
+              <div className="p-3 bg-success/10 border border-success/20 rounded-lg">
+                <p className="text-sm font-medium text-foreground mb-1">
+                  Member added! Share this invite link:
+                </p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={claimUrl}
+                    className="flex-1 px-2 py-1 text-xs bg-background border border-input rounded font-mono"
+                    onFocus={(e) => e.target.select()}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => navigator.clipboard.writeText(claimUrl)}
+                    className="px-2 py-1 text-xs bg-brand hover:bg-brand-hover text-brand-foreground rounded transition-colors"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+            )}
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-1">
                 Full name

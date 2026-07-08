@@ -4,6 +4,8 @@ import { UserFacingError } from '@/lib/errors'
 import type { OrgMembership, Person, RoleType, StatusDefinition } from '@/lib/types/db'
 import type { InviteMemberInput, UpdateMemberInput } from '@/lib/validations/member'
 
+export type InviteResult = { personId: string; claimToken: string }
+
 export type MemberRow = OrgMembership & {
   person: Person
   role_type: RoleType
@@ -55,13 +57,14 @@ export async function getMembersByOrg(supabase: DbClient, groupId: string): Prom
 export async function inviteMemberDal(
   supabase: DbClient,
   groupId: string,
+  invitedBy: string,
   input: InviteMemberInput
-): Promise<void> {
-  const { school_email, full_name, role_type_id } = input
+): Promise<InviteResult> {
+  const { school_email, full_name, role_type_id, invite_email } = input
 
   const { data: existingPerson } = await supabase
     .from('persons')
-    .select('id')
+    .select('id, auth_user_id')
     .eq('school_email', school_email)
     .limit(1)
     .single()
@@ -81,7 +84,7 @@ export async function inviteMemberDal(
       .single()
 
     if (existingMembership) {
-      throw new UserFacingError('This person is already a member of this org')
+      throw new UserFacingError('This person is already a member of this group')
     }
   } else {
     const admin = createAdminClient(
@@ -90,25 +93,16 @@ export async function inviteMemberDal(
       { auth: { autoRefreshToken: false, persistSession: false } }
     )
 
-    const { data: authData, error: authError } = await admin.auth.admin.createUser({
-      email: school_email,
-      password: Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2),
-      email_confirm: true,
-    })
-
-    if (authError) {
-      throw new UserFacingError(`Failed to create account: ${authError.message}`)
-    }
-
-    personId = authData.user.id
-
+    const newId = crypto.randomUUID()
     const { error: personError } = await admin
       .from('persons')
-      .insert({ id: personId, full_name, school_email })
+      .insert({ id: newId, full_name, school_email })
 
     if (personError) {
       throw new UserFacingError(`Failed to create person: ${personError.message}`)
     }
+
+    personId = newId
   }
 
   const { data: activeStatus } = await supabase
@@ -129,6 +123,35 @@ export async function inviteMemberDal(
   if (membershipError) {
     throw new UserFacingError(`Failed to create membership: ${membershipError.message}`)
   }
+
+  // Create claim token (skip for already-claimed persons)
+  const alreadyClaimed = existingPerson?.auth_user_id != null
+  if (alreadyClaimed) {
+    return { personId, claimToken: '' }
+  }
+
+  const admin = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+
+  const { data: tokenRow, error: tokenError } = await admin
+    .from('claim_tokens')
+    .insert({
+      person_id: personId,
+      email: invite_email ?? school_email,
+      group_id: groupId,
+      created_by: invitedBy,
+    })
+    .select('token')
+    .single()
+
+  if (tokenError) {
+    throw new UserFacingError(`Failed to create invite token: ${tokenError.message}`)
+  }
+
+  return { personId, claimToken: tokenRow.token }
 }
 
 export async function updateMemberDal(

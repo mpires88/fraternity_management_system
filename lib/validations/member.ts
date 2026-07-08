@@ -4,6 +4,7 @@ export const inviteMemberSchema = z.object({
   school_email: z.string().email('Valid email required'),
   full_name: z.string().min(1, 'Name is required'),
   role_type_id: z.string().uuid(),
+  invite_email: z.string().email().optional(),
 })
 
 export type InviteMemberInput = z.infer<typeof inviteMemberSchema>

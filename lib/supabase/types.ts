@@ -39,6 +39,64 @@ export type Database = {
   }
   public: {
     Tables: {
+      claim_tokens: {
+        Row: {
+          claimed_at: string | null
+          created_at: string
+          created_by: string
+          email: string
+          expires_at: string
+          group_id: string
+          id: string
+          person_id: string
+          token: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          created_at?: string
+          created_by: string
+          email: string
+          expires_at?: string
+          group_id: string
+          id?: string
+          person_id: string
+          token?: string
+        }
+        Update: {
+          claimed_at?: string | null
+          created_at?: string
+          created_by?: string
+          email?: string
+          expires_at?: string
+          group_id?: string
+          id?: string
+          person_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claim_tokens_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_tokens_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_tokens_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comment_requirement_links: {
         Row: {
           comment_id: string
