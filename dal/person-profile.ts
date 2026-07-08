@@ -1,4 +1,5 @@
 import type { DbClient } from '@/dal/types'
+import type { UpdateProfileInput } from '@/lib/validations/profile'
 
 export type PersonProfile = {
   id: string
@@ -289,4 +290,31 @@ export async function getPersonProfile(
     },
     positions,
   }
+}
+
+const SELF_EDITABLE_FIELDS = [
+  'preferred_name',
+  'nickname',
+  'personal_email',
+  'phone',
+  'bio',
+  'street_address',
+  'city',
+  'state',
+  'country',
+  'profile_photo',
+] as const
+
+export async function updateMyProfile(
+  supabase: DbClient,
+  personId: string,
+  fields: UpdateProfileInput
+): Promise<void> {
+  const update: Record<string, unknown> = {}
+  for (const key of SELF_EDITABLE_FIELDS) {
+    if (fields[key] !== undefined) update[key] = fields[key]
+  }
+  if (Object.keys(update).length === 0) return
+  const { error } = await supabase.from('persons').update(update).eq('id', personId)
+  if (error) throw new Error(error.message)
 }

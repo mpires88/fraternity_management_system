@@ -3,6 +3,7 @@
 import {
   ChevronDown,
   ChevronRight,
+  CircleUser,
   ClipboardCheck,
   FileText,
   GitBranch,
@@ -185,12 +186,22 @@ export function AppSidebar() {
             {person.full_name.charAt(0)}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-sidebar-foreground truncate">
+            <Link
+              href={`${base}/profile`}
+              className="text-sm font-medium text-sidebar-foreground truncate hover:text-brand transition-colors block"
+            >
               {person.full_name}
-            </p>
+            </Link>
           </div>
           <NotificationBell />
         </div>
+        <Link
+          href={`${base}/profile`}
+          className="flex items-center gap-2 w-full px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors mb-1"
+        >
+          <CircleUser size={13} />
+          My Profile
+        </Link>
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <ThemeSelector
