@@ -1,8 +1,18 @@
 'use client'
 
-import { Briefcase, Calendar, Settings, Shield, ToggleLeft, Users } from 'lucide-react'
+import {
+  Briefcase,
+  Calendar,
+  ClipboardList,
+  Settings,
+  Shield,
+  ToggleLeft,
+  Users,
+} from 'lucide-react'
 import { useMemo, useState } from 'react'
 import type { AdminSettingsData } from '@/dal/admin'
+import type { ChangeRequest } from '@/dal/change-requests'
+import { ChangeRequestsTab } from './tabs/change-requests-tab'
 import { FeatureFlagsTab } from './tabs/feature-flags-tab'
 import { OrgDetailsTab } from './tabs/org-details-tab'
 import { PositionsTab } from './tabs/positions-tab'
@@ -17,6 +27,12 @@ const ALL_TABS = [
   { id: 'statuses', label: 'Statuses', icon: <Shield size={15} />, superOnly: false },
   { id: 'positions', label: 'Positions', icon: <Briefcase size={15} />, superOnly: false },
   { id: 'terms', label: 'Terms', icon: <Calendar size={15} />, superOnly: false },
+  {
+    id: 'change-requests',
+    label: 'Change Requests',
+    icon: <ClipboardList size={15} />,
+    superOnly: false,
+  },
 ] as const
 
 type TabId = (typeof ALL_TABS)[number]['id']
@@ -24,9 +40,11 @@ type TabId = (typeof ALL_TABS)[number]['id']
 export function AdminPanel({
   settings,
   isSuperUser,
+  changeRequests,
 }: {
   settings: AdminSettingsData
   isSuperUser: boolean
+  changeRequests: ChangeRequest[]
 }) {
   const tabs = useMemo(() => ALL_TABS.filter((t) => !t.superOnly || isSuperUser), [isSuperUser])
   const [activeTab, setActiveTab] = useState<TabId>(tabs[0].id)
@@ -46,6 +64,11 @@ export function AdminPanel({
           >
             {tab.icon}
             {tab.label}
+            {tab.id === 'change-requests' && changeRequests.length > 0 && (
+              <span className="ml-auto bg-destructive text-destructive-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                {changeRequests.length}
+              </span>
+            )}
           </button>
         ))}
       </nav>
@@ -57,6 +80,7 @@ export function AdminPanel({
         {activeTab === 'statuses' && <StatusDefinitionsTab settings={settings} />}
         {activeTab === 'positions' && <PositionsTab settings={settings} />}
         {activeTab === 'terms' && <TermDefinitionsTab settings={settings} />}
+        {activeTab === 'change-requests' && <ChangeRequestsTab requests={changeRequests} />}
       </div>
     </div>
   )

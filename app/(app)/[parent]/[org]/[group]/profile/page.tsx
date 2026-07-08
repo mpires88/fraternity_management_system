@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { ProfilePage } from '@/components/profile/profile-page'
+import { getMyChangeRequests } from '@/dal/change-requests'
 import { getGroupContext } from '@/dal/group-context'
 import { getPersonProfile } from '@/dal/person-profile'
 import { createClient } from '@/lib/supabase/server'
@@ -19,8 +20,11 @@ export default async function MyProfileRoute({
   const ctx = await getGroupContext(supabase, { parentSlug, orgSlug, groupSlug }, user.id)
   if (!ctx) redirect('/login')
 
-  const profile = await getPersonProfile(supabase, ctx.person.id, ctx.group.id)
+  const [profile, changeRequests] = await Promise.all([
+    getPersonProfile(supabase, ctx.person.id, ctx.group.id),
+    getMyChangeRequests(supabase, ctx.person.id),
+  ])
   if (!profile) redirect('/login')
 
-  return <ProfilePage profile={profile} />
+  return <ProfilePage profile={profile} groupId={ctx.group.id} changeRequests={changeRequests} />
 }

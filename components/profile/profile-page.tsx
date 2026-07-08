@@ -14,13 +14,32 @@ import {
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { updateProfile } from '@/actions/profile/update-profile.action'
+import { ChangeRequestDialog } from '@/components/profile/change-request-dialog'
 import { ProfilePhotoUpload } from '@/components/profile/profile-photo-upload'
 import { MemberAvatar } from '@/components/shared/member-avatar'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import type { ChangeRequest } from '@/dal/change-requests'
 import type { PersonProfile } from '@/dal/person-profile'
 
-export function ProfilePage({ profile }: { profile: PersonProfile }) {
+export function ProfilePage({
+  profile,
+  groupId,
+  changeRequests,
+}: {
+  profile: PersonProfile
+  groupId: string
+  changeRequests: ChangeRequest[]
+}) {
+  const [crDialog, setCrDialog] = useState<{
+    fieldName: string
+    fieldLabel: string
+    currentValue: string | null
+  } | null>(null)
+
+  const pendingCRs = new Set(
+    changeRequests.filter((cr) => cr.status === 'pending').map((cr) => cr.field_name)
+  )
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -158,7 +177,7 @@ export function ProfilePage({ profile }: { profile: PersonProfile }) {
             </CardContent>
           </Card>
 
-          {/* Chapter Info — read-only */}
+          {/* Chapter Info — read-only with change request buttons */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -169,25 +188,36 @@ export function ProfilePage({ profile }: { profile: PersonProfile }) {
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <ReadOnlyField label="Full name" icon={<User size={15} />} value={formalName} />
-                <ReadOnlyField
+                <ChangeableField
                   label="School email"
+                  fieldName="school_email"
                   icon={<Mail size={15} />}
                   value={profile.school_email}
+                  pending={pendingCRs.has('school_email')}
+                  onRequest={(f, l, v) =>
+                    setCrDialog({ fieldName: f, fieldLabel: l, currentValue: v })
+                  }
                 />
-                {profile.expected_grad_year && (
-                  <ReadOnlyField
-                    label="Class of"
-                    icon={<GraduationCap size={15} />}
-                    value={String(profile.expected_grad_year)}
-                  />
-                )}
-                {profile.major && (
-                  <ReadOnlyField
-                    label="Major"
-                    icon={<GraduationCap size={15} />}
-                    value={profile.major}
-                  />
-                )}
+                <ChangeableField
+                  label="Class of"
+                  fieldName="expected_grad_year"
+                  icon={<GraduationCap size={15} />}
+                  value={profile.expected_grad_year ? String(profile.expected_grad_year) : null}
+                  pending={pendingCRs.has('expected_grad_year')}
+                  onRequest={(f, l, v) =>
+                    setCrDialog({ fieldName: f, fieldLabel: l, currentValue: v })
+                  }
+                />
+                <ChangeableField
+                  label="Major"
+                  fieldName="major"
+                  icon={<GraduationCap size={15} />}
+                  value={profile.major}
+                  pending={pendingCRs.has('major')}
+                  onRequest={(f, l, v) =>
+                    setCrDialog({ fieldName: f, fieldLabel: l, currentValue: v })
+                  }
+                />
                 {profile.member_number && (
                   <ReadOnlyField
                     label="Badge number"
@@ -223,6 +253,16 @@ export function ProfilePage({ profile }: { profile: PersonProfile }) {
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">{profile.bio}</p>
               </CardContent>
             </Card>
+          )}
+
+          {crDialog && (
+            <ChangeRequestDialog
+              fieldName={crDialog.fieldName}
+              fieldLabel={crDialog.fieldLabel}
+              currentValue={crDialog.currentValue}
+              groupId={groupId}
+              onClose={() => setCrDialog(null)}
+            />
           )}
         </div>
 
@@ -440,6 +480,47 @@ function ReadOnlyField({
         <p className="text-xs text-muted-foreground">{label}</p>
         <p className="text-sm text-foreground">{value}</p>
       </div>
+    </div>
+  )
+}
+
+function ChangeableField({
+  label,
+  fieldName,
+  icon,
+  value,
+  pending,
+  onRequest,
+}: {
+  label: string
+  fieldName: string
+  icon?: React.ReactNode
+  value: string | null
+  pending: boolean
+  onRequest: (fieldName: string, label: string, currentValue: string | null) => void
+}) {
+  return (
+    <div className="flex items-start gap-2.5 group">
+      {icon && <span className="text-muted-foreground mt-0.5 shrink-0">{icon}</span>}
+      <div className="min-w-0 flex-1">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-sm text-foreground">
+          {value || <span className="italic text-muted-foreground">Not set</span>}
+        </p>
+      </div>
+      {pending ? (
+        <Badge variant="outline" className="text-xs shrink-0 mt-0.5">
+          Pending
+        </Badge>
+      ) : (
+        <button
+          type="button"
+          onClick={() => onRequest(fieldName, label, value)}
+          className="text-xs text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-brand transition-all mt-1 shrink-0"
+        >
+          Request change
+        </button>
+      )}
     </div>
   )
 }

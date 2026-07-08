@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 import { AdminPanel } from '@/components/admin/admin-panel'
 import { PageHeader } from '@/components/ui/page-header'
 import { getAdminSettings } from '@/dal/admin'
+import { getPendingChangeRequests } from '@/dal/change-requests'
 import { getGroupContext } from '@/dal/group-context'
 import { isPlatformAdmin } from '@/lib/auth/org-context'
 import { createClient } from '@/lib/supabase/server'
@@ -25,10 +26,12 @@ export default async function AdminPage({
 
   if (perms.access_level !== 'full') notFound()
 
-  const settings = await getAdminSettings(supabase, ctx.group.id)
+  const [settings, changeRequests, isSuperUser] = await Promise.all([
+    getAdminSettings(supabase, ctx.group.id),
+    getPendingChangeRequests(supabase, ctx.group.id),
+    isPlatformAdmin(supabase),
+  ])
   if (!settings) notFound()
-
-  const isSuperUser = await isPlatformAdmin(supabase)
 
   return (
     <div className="p-8">
@@ -38,7 +41,7 @@ export default async function AdminPage({
         info="Configure terms, roles, positions, and feature flags. Changes here affect all members of this group."
       />
 
-      <AdminPanel settings={settings} isSuperUser={isSuperUser} />
+      <AdminPanel settings={settings} isSuperUser={isSuperUser} changeRequests={changeRequests} />
     </div>
   )
 }
