@@ -1,10 +1,16 @@
 'use server'
 
 import { createClient as createAdminClient } from '@supabase/supabase-js'
-import { createAuthenticatedAction } from '@/actions/utils/action-helpers'
+import { createOptionalAuthAction } from '@/actions/utils/action-helpers'
 
-export const claimRecord = createAuthenticatedAction(
+// Optional-auth on purpose: claiming runs BEFORE persons.auth_user_id is linked,
+// so the person-requiring authenticated helpers would reject the caller.
+export const claimRecord = createOptionalAuthAction(
   async (_supabase, user, input: { token: string }) => {
+    if (!user) {
+      return { error: 'You must be signed in to claim an invite' }
+    }
+
     const admin = createAdminClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,

@@ -6,16 +6,8 @@ import { updateProfileSchema } from '@/lib/validations/profile'
 
 export const updateProfile = createValidatedAction(
   updateProfileSchema,
-  async (supabase, user, input) => {
-    const { data: person } = await supabase
-      .from('persons')
-      .select('id')
-      .eq('auth_user_id', user.id)
-      .single()
-
-    if (!person) throw new Error('No linked member record')
-
-    await updateMyProfile(supabase, person.id, input)
+  async (supabase, actor, input) => {
+    await updateMyProfile(supabase, actor.personId, input)
   },
   { revalidatePaths: ['/profile'] }
 )

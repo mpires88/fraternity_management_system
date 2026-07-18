@@ -43,6 +43,8 @@ export interface OptionalAuthContext {
 export interface ActionConfig {
   /** Auto-extract org context from cookie and inject into Supabase header */
   withOrgContext?: boolean
+  /** Require a linked persons row; ctx.personId is guaranteed when set */
+  requirePerson?: boolean
   /** Zod schema for input validation (runs before auth) */
   schema?: z.ZodSchema
   /** Convert null handler result to this error message */
@@ -127,6 +129,10 @@ async function resolveAuth(config: ActionConfig): Promise<ActionContext> {
     .eq('auth_user_id', user.id)
     .maybeSingle()
   const personId = personRow?.id ?? undefined
+
+  if (config.requirePerson && !personId) {
+    throw new AuthError('No member record is linked to this account')
+  }
 
   return { supabase, user, groupId, personId }
 }

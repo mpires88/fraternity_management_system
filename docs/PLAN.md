@@ -6,8 +6,18 @@ this document wins.
 
 ## Progress
 
-- **Next task:** 4.3 (scripts ready — run against production when target project is set up)
-- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 4.1, 4.2, Phase 5, Phase 6, 7.1, 7.2, 7.3, 7.4, 7.5
+- **Next task:** 8.0 (BLOCKED: dev DB paused — owner must restore at
+  supabase.com/dashboard/project/grojoxrglzkxpenizmax; then 8.0 lands before any
+  other DB work). 4.3 still pending (production launch; now urgent for fall rush).
+- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 4.1, 4.2, Phase 5, Phase 6, 7.1, 7.2, 7.3, 7.4, 7.5, 8.1
+  Task 8.1: authenticated action helpers now pass `actor: { user, personId }` and
+  require a linked persons row (`requirePerson` in action-core); every persons-FK
+  call site (created_by, verified_by, logged_by/approved_by, notification
+  self-exclusion, notifications/prefs/calendar-token person keys, subgroup
+  added_by, poll cast/hasVoted) uses `actor.personId` instead of the auth uid —
+  fixes mis-attribution for claim-flow users where persons.id ≠ auth.uid().
+  claimRecord moved to createOptionalAuthAction (runs pre-link by design).
+  In-app verification with a claimed persona deferred: dev DB paused.
   Phase 7 complete: auth identity decoupled from person identity via `persons.auth_user_id`.
   `get_my_person_id()` SECURITY DEFINER resolves auth.uid() → person.id; all 24 RLS
   policies updated. Claim token system replaces dummy auth user creation on invite.

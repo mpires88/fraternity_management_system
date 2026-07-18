@@ -6,14 +6,8 @@ import { inviteMemberSchema } from '@/lib/validations/member'
 
 export const inviteMember = createValidatedOrgAction(
   inviteMemberSchema,
-  async (supabase, user, groupId, input) => {
-    const { data: person } = await supabase
-      .from('persons')
-      .select('id')
-      .eq('auth_user_id', user.id)
-      .single()
-
-    const result = await inviteMemberDal(supabase, groupId, person?.id ?? user.id, input)
+  async (supabase, actor, groupId, input) => {
+    const result = await inviteMemberDal(supabase, groupId, actor.personId, input)
 
     if (result.claimToken) {
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'

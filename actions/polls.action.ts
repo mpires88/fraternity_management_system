@@ -24,7 +24,7 @@ import { calculateResults } from '@/lib/utils/voting/calculator'
 import type { PollResult, VoteData } from '@/lib/utils/voting/types'
 
 export const getPolls = createOrgQueryAction<{ termId?: string }, PollRow[]>(
-  async (supabase, _user, groupId, input) => {
+  async (supabase, _actor, groupId, input) => {
     return getPollsForGroup(supabase, groupId, input.termId)
   }
 )
@@ -37,12 +37,12 @@ type PollDetailResult = {
 }
 
 export const getPollDetail = createAuthenticatedAction<{ pollId: string }, PollDetailResult>(
-  async (supabase, user, input) => {
+  async (supabase, actor, input) => {
     const poll = await getPollById(supabase, input.pollId)
     if (!poll) throw new Error('Poll not found')
 
     const options = await getPollOptions(supabase, input.pollId)
-    const voted = await hasVoted(supabase, input.pollId, user.id)
+    const voted = await hasVoted(supabase, input.pollId, actor.personId)
 
     let results: PollResult | null = null
     if (poll.status === 'closed') {
@@ -65,25 +65,25 @@ export const getPollDetail = createAuthenticatedAction<{ pollId: string }, PollD
 )
 
 export const createPoll = createOrgAuthenticatedAction<CreatePollInput, string>(
-  async (supabase, user, groupId, input) => {
-    return createPollDal(supabase, groupId, user.id, input)
+  async (supabase, actor, groupId, input) => {
+    return createPollDal(supabase, groupId, actor.personId, input)
   }
 )
 
 export const publishPoll = createOrgAuthenticatedAction<{ pollId: string }, void>(
-  async (supabase, _user, _groupId, input) => {
+  async (supabase, _actor, _groupId, input) => {
     await publishPollDal(supabase, input.pollId)
   }
 )
 
 export const closePoll = createOrgAuthenticatedAction<{ pollId: string }, void>(
-  async (supabase, _user, _groupId, input) => {
+  async (supabase, _actor, _groupId, input) => {
     await closePollDal(supabase, input.pollId)
   }
 )
 
 export const archivePoll = createOrgAuthenticatedAction<{ pollId: string }, void>(
-  async (supabase, _user, _groupId, input) => {
+  async (supabase, _actor, _groupId, input) => {
     await archivePollDal(supabase, input.pollId)
   }
 )
@@ -91,16 +91,16 @@ export const archivePoll = createOrgAuthenticatedAction<{ pollId: string }, void
 export const addParticipants = createOrgAuthenticatedAction<
   { pollId: string; personIds: string[] },
   void
->(async (supabase, _user, _groupId, input) => {
+>(async (supabase, _actor, _groupId, input) => {
   await addParticipantsDal(supabase, input.pollId, input.personIds)
 })
 
 export const castVote = createAuthenticatedAction<
   { pollId: string; voteData: VoteData; onBehalfOf?: string },
   void
->(async (supabase, user, input) => {
-  const personId = input.onBehalfOf ?? user.id
-  const castBy = input.onBehalfOf ? user.id : undefined
+>(async (supabase, actor, input) => {
+  const personId = input.onBehalfOf ?? actor.personId
+  const castBy = input.onBehalfOf ? actor.personId : undefined
   await castVoteDal(
     supabase,
     input.pollId,

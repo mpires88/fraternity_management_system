@@ -27,8 +27,8 @@ import { expandAudience } from '@/lib/utils/requirements'
 import type { CreateRequirementInput, UpdateRequirementInput } from '@/lib/validations/requirement'
 
 export const createRequirement = createOrgAuthenticatedAction<CreateRequirementInput, void>(
-  async (supabase, user, groupId, input) => {
-    const requirementId = await createRequirementDal(supabase, groupId, user.id, input)
+  async (supabase, actor, groupId, input) => {
+    const requirementId = await createRequirementDal(supabase, groupId, actor.personId, input)
 
     const ctx = await getAudienceContext(supabase, groupId, input.term_id)
     const personIds = expandAudience(
@@ -44,7 +44,7 @@ export const createRequirement = createOrgAuthenticatedAction<CreateRequirementI
 
     await insertAssignmentsDal(supabase, requirementId, personIds)
 
-    const assigneesExceptCreator = personIds.filter((pid) => pid !== user.id)
+    const assigneesExceptCreator = personIds.filter((pid) => pid !== actor.personId)
     await notifyRequirementAssigned(
       supabase,
       groupId,
@@ -56,7 +56,7 @@ export const createRequirement = createOrgAuthenticatedAction<CreateRequirementI
 )
 
 export const updateRequirement = createOrgAuthenticatedAction<UpdateRequirementInput, void>(
-  async (supabase, _user, _groupId, input) => {
+  async (supabase, _actor, _groupId, input) => {
     const { id, ...fields } = input
     await updateRequirementDal(supabase, id, fields)
   }
@@ -65,13 +65,13 @@ export const updateRequirement = createOrgAuthenticatedAction<UpdateRequirementI
 type ArchiveInput = { id: string }
 
 export const archiveRequirement = createOrgAuthenticatedAction<ArchiveInput, void>(
-  async (supabase, _user, _groupId, input) => archiveRequirementDal(supabase, input.id)
+  async (supabase, _actor, _groupId, input) => archiveRequirementDal(supabase, input.id)
 )
 
 type AssignmentStatusInput = { assignmentId: string; status: string; progress?: number }
 
 export const updateAssignmentStatus = createAuthenticatedAction<AssignmentStatusInput, void>(
-  async (supabase, user, input) => {
+  async (supabase, actor, input) => {
     await updateAssignmentStatusDal(supabase, input.assignmentId, input.status, input.progress)
 
     if (input.status === 'submitted') {
@@ -93,7 +93,9 @@ export const updateAssignmentStatus = createAuthenticatedAction<AssignmentStatus
           .eq('group_id', req.group_id)
           .eq('role_types.access_level', 'full')
 
-        const officerIds = (officers ?? []).map((o) => o.person_id).filter((pid) => pid !== user.id)
+        const officerIds = (officers ?? [])
+          .map((o) => o.person_id)
+          .filter((pid) => pid !== actor.personId)
 
         await notifySubmissionToVerify(
           supabase,
@@ -111,7 +113,7 @@ export const updateAssignmentStatus = createAuthenticatedAction<AssignmentStatus
 type WaiveInput = { assignmentId: string; note: string }
 
 export const waiveAssignment = createOrgAuthenticatedAction<WaiveInput, void>(
-  async (supabase, _user, _groupId, input) => {
+  async (supabase, _actor, _groupId, input) => {
     await updateAssignmentOfficerDal(supabase, input.assignmentId, {
       status: 'waived',
       note: input.note,
@@ -122,10 +124,10 @@ export const waiveAssignment = createOrgAuthenticatedAction<WaiveInput, void>(
 type VerifyInput = { assignmentId: string }
 
 export const verifyAssignment = createOrgAuthenticatedAction<VerifyInput, void>(
-  async (supabase, user, _groupId, input) => {
+  async (supabase, actor, _groupId, input) => {
     await updateAssignmentOfficerDal(supabase, input.assignmentId, {
       status: 'complete',
-      verified_by: user.id,
+      verified_by: actor.personId,
     })
   }
 )
@@ -133,7 +135,7 @@ export const verifyAssignment = createOrgAuthenticatedAction<VerifyInput, void>(
 type BulkAttendanceInput = { assignmentIds: string[] }
 
 export const bulkMarkAttendance = createOrgAuthenticatedAction<BulkAttendanceInput, void>(
-  async (supabase, _user, _groupId, input) => {
+  async (supabase, _actor, _groupId, input) => {
     await bulkMarkAttendanceDal(supabase, input.assignmentIds)
   }
 )
@@ -141,7 +143,7 @@ export const bulkMarkAttendance = createOrgAuthenticatedAction<BulkAttendanceInp
 type SyncInput = { requirementId: string; termId: string }
 
 export const syncRequirementAssignments = createOrgAuthenticatedAction<SyncInput, void>(
-  async (supabase, _user, groupId, input) => {
+  async (supabase, _actor, groupId, input) => {
     const { data: req } = await supabase
       .from('requirements')
       .select('assign_to, audience_role_type_ids, audience_position_ids, audience_subgroup_ids')
@@ -168,7 +170,7 @@ export const syncRequirementAssignments = createOrgAuthenticatedAction<SyncInput
 type CloneInput = { sourceTermId: string; targetTermId: string }
 
 export const cloneRequirementsFromTerm = createOrgAuthenticatedAction<CloneInput, number>(
-  async (supabase, user, groupId, input) => {
+  async (supabase, actor, groupId, input) => {
     const sourceReqs = await getRequirementsForClone(supabase, groupId, input.sourceTermId)
     if (sourceReqs.length === 0) return 0
 
@@ -192,7 +194,7 @@ export const cloneRequirementsFromTerm = createOrgAuthenticatedAction<CloneInput
     const ctx = await getAudienceContext(supabase, groupId, input.targetTermId)
 
     for (const req of sourceReqs) {
-      const reqId = await createRequirementDal(supabase, groupId, user.id, {
+      const reqId = await createRequirementDal(supabase, groupId, actor.personId, {
         title: req.title,
         description: req.description,
         kind: req.kind,
@@ -236,26 +238,26 @@ type RecordProgressInput = {
 }
 
 export const recordPayment = createOrgAuthenticatedAction<RecordProgressInput, void>(
-  async (supabase, user, _groupId, input) => {
+  async (supabase, actor, _groupId, input) => {
     await createProgressEntryDal(supabase, {
       assignmentId: input.assignmentId,
       amount: input.amount,
       occurredOn: input.occurredOn,
       note: input.note,
-      loggedBy: user.id,
-      approvedBy: user.id,
+      loggedBy: actor.personId,
+      approvedBy: actor.personId,
     })
   }
 )
 
 export const logQuotaProgress = createAuthenticatedAction<RecordProgressInput, void>(
-  async (supabase, user, input) => {
+  async (supabase, actor, input) => {
     await createProgressEntryDal(supabase, {
       assignmentId: input.assignmentId,
       amount: input.amount,
       occurredOn: input.occurredOn,
       note: input.note,
-      loggedBy: user.id,
+      loggedBy: actor.personId,
       approvedBy: null,
     })
   }
@@ -264,8 +266,8 @@ export const logQuotaProgress = createAuthenticatedAction<RecordProgressInput, v
 type ApproveEntryInput = { entryId: string }
 
 export const approveProgressEntry = createOrgAuthenticatedAction<ApproveEntryInput, void>(
-  async (supabase, user, groupId, input) => {
-    await approveProgressEntryDal(supabase, input.entryId, user.id)
+  async (supabase, actor, groupId, input) => {
+    await approveProgressEntryDal(supabase, input.entryId, actor.personId)
 
     const { data: entry } = await supabase
       .from('requirement_progress_entries')
@@ -273,7 +275,7 @@ export const approveProgressEntry = createOrgAuthenticatedAction<ApproveEntryInp
       .eq('id', input.entryId)
       .single()
 
-    if (entry && entry.logged_by !== user.id) {
+    if (entry && entry.logged_by !== actor.personId) {
       const ra = entry.requirement_assignments as unknown as {
         requirements: { title: string }
       }
@@ -291,7 +293,7 @@ export const approveProgressEntry = createOrgAuthenticatedAction<ApproveEntryInp
 type RejectEntryInput = { entryId: string }
 
 export const rejectProgressEntry = createOrgAuthenticatedAction<RejectEntryInput, void>(
-  async (supabase, _user, _groupId, input) => {
+  async (supabase, _actor, _groupId, input) => {
     await rejectProgressEntryDal(supabase, input.entryId)
   }
 )

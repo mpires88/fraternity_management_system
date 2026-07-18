@@ -11,7 +11,7 @@ type CreateSubgroupInput = {
 }
 
 export const createSubgroup = createOrgAuthenticatedAction<CreateSubgroupInput, void>(
-  async (supabase, _user, groupId, input) => createSubgroupDal(supabase, groupId, input)
+  async (supabase, _actor, groupId, input) => createSubgroupDal(supabase, groupId, input)
 )
 
 type AddMemberInput = {
@@ -21,7 +21,7 @@ type AddMemberInput = {
 }
 
 export const addSubgroupMember = createOrgAuthenticatedAction<AddMemberInput, void>(
-  async (supabase, user, _groupId, input) => addSubgroupMemberDal(supabase, user.id, input)
+  async (supabase, actor, _groupId, input) => addSubgroupMemberDal(supabase, actor.personId, input)
 )
 
 type RemoveMemberInput = {
@@ -29,5 +29,5 @@ type RemoveMemberInput = {
 }
 
 export const removeSubgroupMember = createOrgAuthenticatedAction<RemoveMemberInput, void>(
-  async (supabase, _user, _groupId, input) => removeSubgroupMemberDal(supabase, input.membershipId)
+  async (supabase, _actor, _groupId, input) => removeSubgroupMemberDal(supabase, input.membershipId)
 )

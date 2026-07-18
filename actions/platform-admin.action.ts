@@ -19,7 +19,7 @@ export const getParentOrgs = createNoInputQueryAction(async (supabase) => {
 }, 'Failed to load organizations')
 
 export const getParentOrgById = createAuthenticatedAction(
-  async (supabase, _user, input: { id: string }) => {
+  async (supabase, _actor, input: { id: string }) => {
     const isAdmin = await isPlatformAdmin(supabase)
     if (!isAdmin) return { success: false as const, error: 'Not authorized' }
     const org = await getParentOrg(supabase, input.id)
@@ -29,7 +29,7 @@ export const getParentOrgById = createAuthenticatedAction(
 )
 
 export const updateParentOrg = createAuthenticatedAction(
-  async (supabase, _user, input: { id: string } & UpdateParentOrgInput) => {
+  async (supabase, _actor, input: { id: string } & UpdateParentOrgInput) => {
     const isAdmin = await isPlatformAdmin(supabase)
     if (!isAdmin) return { success: false as const, error: 'Not authorized' }
     const { id, ...updates } = input

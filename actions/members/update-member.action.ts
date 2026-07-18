@@ -6,5 +6,5 @@ import { updateMemberSchema } from '@/lib/validations/member'
 
 export const updateMember = createValidatedOrgAction(
   updateMemberSchema,
-  async (supabase, _user, groupId, input) => updateMemberDal(supabase, groupId, input)
+  async (supabase, _actor, groupId, input) => updateMemberDal(supabase, groupId, input)
 )

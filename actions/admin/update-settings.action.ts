@@ -23,7 +23,7 @@ type OrgDetailsInput = {
 }
 
 export const updateOrgDetails = createOrgAuthenticatedAction<OrgDetailsInput, void>(
-  async (supabase, _user, groupId, input) => updateOrgDetailsDal(supabase, groupId, input)
+  async (supabase, _actor, groupId, input) => updateOrgDetailsDal(supabase, groupId, input)
 )
 
 // ── Role Types ───────────────────────────────────────────────────────
@@ -48,13 +48,13 @@ type UpsertRoleTypeInput = {
 }
 
 export const upsertRoleType = createOrgAuthenticatedAction<UpsertRoleTypeInput, void>(
-  async (supabase, _user, groupId, input) => upsertRoleTypeDal(supabase, groupId, input)
+  async (supabase, _actor, groupId, input) => upsertRoleTypeDal(supabase, groupId, input)
 )
 
 type DeleteByIdInput = { id: string }
 
 export const deleteRoleType = createOrgAuthenticatedAction<DeleteByIdInput, void>(
-  async (supabase, _user, _groupId, input) => deleteRoleTypeDal(supabase, input.id)
+  async (supabase, _actor, _groupId, input) => deleteRoleTypeDal(supabase, input.id)
 )
 
 // ── Status Definitions ──────────────────────────────────────────────────────
@@ -73,11 +73,11 @@ type UpsertStatusInput = {
 }
 
 export const upsertStatusDefinition = createOrgAuthenticatedAction<UpsertStatusInput, void>(
-  async (supabase, _user, groupId, input) => upsertStatusDefinitionDal(supabase, groupId, input)
+  async (supabase, _actor, groupId, input) => upsertStatusDefinitionDal(supabase, groupId, input)
 )
 
 export const deleteStatusDefinition = createOrgAuthenticatedAction<DeleteByIdInput, void>(
-  async (supabase, _user, _groupId, input) => deleteStatusDefinitionDal(supabase, input.id)
+  async (supabase, _actor, _groupId, input) => deleteStatusDefinitionDal(supabase, input.id)
 )
 
 // ── Positions ───────────────────────────────────────────────────────────────
@@ -94,11 +94,11 @@ type UpsertPositionInput = {
 }
 
 export const upsertPosition = createOrgAuthenticatedAction<UpsertPositionInput, void>(
-  async (supabase, _user, groupId, input) => upsertPositionDal(supabase, groupId, input)
+  async (supabase, _actor, groupId, input) => upsertPositionDal(supabase, groupId, input)
 )
 
 export const deletePosition = createOrgAuthenticatedAction<DeleteByIdInput, void>(
-  async (supabase, _user, _groupId, input) => deletePositionDal(supabase, input.id)
+  async (supabase, _actor, _groupId, input) => deletePositionDal(supabase, input.id)
 )
 
 // ── Term Definitions ──────────────────────────────────────────────────────────
@@ -118,11 +118,11 @@ type UpsertTermDefInput = {
 }
 
 export const upsertTermDefinition = createOrgAuthenticatedAction<UpsertTermDefInput, void>(
-  async (supabase, _user, groupId, input) => upsertTermDefinitionDal(supabase, groupId, input)
+  async (supabase, _actor, groupId, input) => upsertTermDefinitionDal(supabase, groupId, input)
 )
 
 export const deleteTermDefinition = createOrgAuthenticatedAction<DeleteByIdInput, void>(
-  async (supabase, _user, _groupId, input) => deleteTermDefinitionDal(supabase, input.id)
+  async (supabase, _actor, _groupId, input) => deleteTermDefinitionDal(supabase, input.id)
 )
 
 // ── Terms ─────────────────────────────────────────────────────────────────────
@@ -136,11 +136,11 @@ type CreateTermInput = {
 }
 
 export const createTerm = createOrgAuthenticatedAction<CreateTermInput, void>(
-  async (supabase, _user, groupId, input) => createTermDal(supabase, groupId, input)
+  async (supabase, _actor, groupId, input) => createTermDal(supabase, groupId, input)
 )
 
 type ActivateTermInput = { termId: string }
 
 export const activateTerm = createOrgAuthenticatedAction<ActivateTermInput, void>(
-  async (supabase, _user, groupId, input) => activateTermDal(supabase, groupId, input.termId)
+  async (supabase, _actor, groupId, input) => activateTermDal(supabase, groupId, input.termId)
 )

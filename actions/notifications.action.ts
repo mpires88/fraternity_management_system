@@ -18,37 +18,37 @@ import {
 type MarkReadInput = { notificationId: string }
 
 export const markRead = createAuthenticatedAction<MarkReadInput, void>(
-  async (supabase, _user, input) => {
+  async (supabase, _actor, input) => {
     await markNotificationRead(supabase, input.notificationId)
   }
 )
 
 export const markAllNotificationsRead = createNoInputAuthenticatedAction<void>(
-  async (supabase, user) => {
-    await markAllRead(supabase, user.id)
+  async (supabase, actor) => {
+    await markAllRead(supabase, actor.personId)
   }
 )
 
 export const getNotifications = createNoInputQueryAction<NotificationRow[]>(
-  async (supabase, user) => {
-    return getRecentNotifications(supabase, user.id)
+  async (supabase, actor) => {
+    return getRecentNotifications(supabase, actor.personId)
   }
 )
 
 export const getPreferences = createNoInputQueryAction<NotificationPrefs>(
-  async (supabase, user) => {
-    return getNotificationPrefs(supabase, user.id)
+  async (supabase, actor) => {
+    return getNotificationPrefs(supabase, actor.personId)
   }
 )
 
 export const updatePreferences = createAuthenticatedAction<NotificationPrefs, void>(
-  async (supabase, user, input) => {
-    await upsertNotificationPrefs(supabase, user.id, input)
+  async (supabase, actor, input) => {
+    await upsertNotificationPrefs(supabase, actor.personId, input)
   }
 )
 
 export const regenerateFeedToken = createNoInputAuthenticatedAction<string>(
-  async (supabase, user) => {
-    return regenerateCalendarToken(supabase, user.id)
+  async (supabase, actor) => {
+    return regenerateCalendarToken(supabase, actor.personId)
   }
 )

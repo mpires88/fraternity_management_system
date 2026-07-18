@@ -9,31 +9,15 @@ import {
 
 export const submitChangeRequest = createValidatedAction(
   submitChangeRequestSchema,
-  async (supabase, user, input) => {
-    const { data: person } = await supabase
-      .from('persons')
-      .select('id')
-      .eq('auth_user_id', user.id)
-      .single()
-
-    if (!person) throw new Error('No linked member record')
-
-    await createChangeRequest(supabase, person.id, input)
+  async (supabase, actor, input) => {
+    await createChangeRequest(supabase, actor.personId, input)
   }
 )
 
 export const reviewChangeRequestAction = createValidatedOrgAction(
   reviewChangeRequestSchema,
-  async (supabase, user, _groupId, input) => {
-    const { data: person } = await supabase
-      .from('persons')
-      .select('id')
-      .eq('auth_user_id', user.id)
-      .single()
-
-    if (!person) throw new Error('No linked member record')
-
-    await reviewChangeRequest(supabase, input.request_id, input.decision, person.id)
+  async (supabase, actor, _groupId, input) => {
+    await reviewChangeRequest(supabase, input.request_id, input.decision, actor.personId)
   },
   { revalidatePaths: ['/admin'] }
 )

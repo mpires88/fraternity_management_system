@@ -1,18 +1,23 @@
 /**
  * Action Helpers — public API for creating server actions.
  *
+ * Authenticated handlers receive an Actor: the auth user plus the linked
+ * persons.id. Always use actor.personId for persons foreign keys
+ * (created_by, verified_by, logged_by, …) — auth uid and person id differ
+ * for members onboarded via the claim flow.
+ *
  * Usage pattern:
  *
  *   // Mutation with input
  *   export const updateMember = createAuthenticatedAction(
- *     async (supabase, user, input: UpdateInput) =>
- *       updateMemberDal(supabase, input),
+ *     async (supabase, actor, input: UpdateInput) =>
+ *       updateMemberDal(supabase, actor.personId, input),
  *     { revalidatePaths: ['/members'] }
  *   )
  *
  *   // Org-scoped query
  *   export const getMembers = createNoInputOrgQueryAction(
- *     async (supabase, user, groupId) => getMembersDal(supabase, groupId),
+ *     async (supabase, actor, groupId) => getMembersDal(supabase, groupId),
  *     'Members not found'
  *   )
  */
@@ -34,15 +39,21 @@ export { UserFacingError } from '@/lib/errors'
 // Handler Type Aliases
 // ============================================================================
 
-type AuthHandler<TIn, TOut> = (supabase: DbClient, user: User, input: TIn) => Promise<TOut>
-type NoInputAuthHandler<TOut> = (supabase: DbClient, user: User) => Promise<TOut>
+/** The acting user: auth identity + linked persons.id (guaranteed present). */
+export interface Actor {
+  user: User
+  personId: string
+}
+
+type AuthHandler<TIn, TOut> = (supabase: DbClient, actor: Actor, input: TIn) => Promise<TOut>
+type NoInputAuthHandler<TOut> = (supabase: DbClient, actor: Actor) => Promise<TOut>
 type OrgHandler<TIn, TOut> = (
   supabase: DbClient,
-  user: User,
+  actor: Actor,
   groupId: string,
   input: TIn
 ) => Promise<TOut>
-type NoInputOrgHandler<TOut> = (supabase: DbClient, user: User, groupId: string) => Promise<TOut>
+type NoInputOrgHandler<TOut> = (supabase: DbClient, actor: Actor, groupId: string) => Promise<TOut>
 type OptionalAuthHandler<TIn, TOut> = (
   supabase: DbClient,
   user: User | null,
@@ -52,6 +63,11 @@ type NoInputOptionalAuthHandler<TOut> = (supabase: DbClient, user: User | null) 
 
 type Options = { revalidatePaths?: string[] }
 
+/** ctx.personId is guaranteed by requirePerson before any handler runs. */
+function toActor(ctx: { user: User; personId?: string }): Actor {
+  return { user: ctx.user, personId: ctx.personId! }
+}
+
 // ============================================================================
 // Authenticated — with input
 // ============================================================================
@@ -60,8 +76,9 @@ export function createAuthenticatedAction<TIn, TOut>(
   handler: AuthHandler<TIn, TOut>,
   options?: Options
 ): (input: TIn) => Promise<ActionResult<TOut>> {
-  return executeAction<TIn, TOut>({ revalidatePaths: options?.revalidatePaths }, (ctx, input) =>
-    handler(ctx.supabase, ctx.user, input)
+  return executeAction<TIn, TOut>(
+    { requirePerson: true, revalidatePaths: options?.revalidatePaths },
+    (ctx, input) => handler(ctx.supabase, toActor(ctx), input)
   )
 }
 
@@ -70,8 +87,8 @@ export function createAuthenticatedQueryAction<TIn, TOut>(
   notFoundMessage = 'Not found'
 ): (input: TIn) => Promise<ActionResult<TOut>> {
   return executeAction<TIn, TOut>(
-    { nullError: notFoundMessage },
-    (ctx, input) => handler(ctx.supabase, ctx.user, input) as Promise<TOut>
+    { requirePerson: true, nullError: notFoundMessage },
+    (ctx, input) => handler(ctx.supabase, toActor(ctx), input) as Promise<TOut>
   )
 }
 
@@ -81,8 +98,8 @@ export function createValidatedAction<TSchema extends z.ZodSchema, TOut>(
   options?: Options
 ): (input: unknown) => Promise<ActionResult<TOut>> {
   return executeAction<unknown, TOut>(
-    { schema, revalidatePaths: options?.revalidatePaths },
-    (ctx, input) => handler(ctx.supabase, ctx.user, input as z.infer<TSchema>)
+    { requirePerson: true, schema, revalidatePaths: options?.revalidatePaths },
+    (ctx, input) => handler(ctx.supabase, toActor(ctx), input as z.infer<TSchema>)
   )
 }
 
@@ -94,8 +111,9 @@ export function createNoInputAuthenticatedAction<TOut>(
   handler: NoInputAuthHandler<TOut>,
   options?: Options
 ): () => Promise<ActionResult<TOut>> {
-  return executeNoInputAction<TOut>({ revalidatePaths: options?.revalidatePaths }, (ctx) =>
-    handler(ctx.supabase, ctx.user)
+  return executeNoInputAction<TOut>(
+    { requirePerson: true, revalidatePaths: options?.revalidatePaths },
+    (ctx) => handler(ctx.supabase, toActor(ctx))
   )
 }
 
@@ -104,8 +122,8 @@ export function createNoInputQueryAction<TOut>(
   notFoundMessage = 'Not found'
 ): () => Promise<ActionResult<TOut>> {
   return executeNoInputAction<TOut>(
-    { nullError: notFoundMessage },
-    (ctx) => handler(ctx.supabase, ctx.user) as Promise<TOut>
+    { requirePerson: true, nullError: notFoundMessage },
+    (ctx) => handler(ctx.supabase, toActor(ctx)) as Promise<TOut>
   )
 }
 
@@ -118,8 +136,8 @@ export function createOrgAuthenticatedAction<TIn, TOut>(
   options?: Options
 ): (input: TIn) => Promise<ActionResult<TOut>> {
   return executeAction<TIn, TOut>(
-    { withOrgContext: true, revalidatePaths: options?.revalidatePaths },
-    (ctx, input) => handler(ctx.supabase, ctx.user, ctx.groupId!, input)
+    { requirePerson: true, withOrgContext: true, revalidatePaths: options?.revalidatePaths },
+    (ctx, input) => handler(ctx.supabase, toActor(ctx), ctx.groupId!, input)
   )
 }
 
@@ -128,8 +146,8 @@ export function createOrgQueryAction<TIn, TOut>(
   notFoundMessage = 'Not found'
 ): (input: TIn) => Promise<ActionResult<TOut>> {
   return executeAction<TIn, TOut>(
-    { withOrgContext: true, nullError: notFoundMessage },
-    (ctx, input) => handler(ctx.supabase, ctx.user, ctx.groupId!, input) as Promise<TOut>
+    { requirePerson: true, withOrgContext: true, nullError: notFoundMessage },
+    (ctx, input) => handler(ctx.supabase, toActor(ctx), ctx.groupId!, input) as Promise<TOut>
   )
 }
 
@@ -139,8 +157,13 @@ export function createValidatedOrgAction<TSchema extends z.ZodSchema, TOut>(
   options?: Options
 ): (input: unknown) => Promise<ActionResult<TOut>> {
   return executeAction<unknown, TOut>(
-    { schema, withOrgContext: true, revalidatePaths: options?.revalidatePaths },
-    (ctx, input) => handler(ctx.supabase, ctx.user, ctx.groupId!, input as z.infer<TSchema>)
+    {
+      requirePerson: true,
+      schema,
+      withOrgContext: true,
+      revalidatePaths: options?.revalidatePaths,
+    },
+    (ctx, input) => handler(ctx.supabase, toActor(ctx), ctx.groupId!, input as z.infer<TSchema>)
   )
 }
 
@@ -153,8 +176,8 @@ export function createNoInputOrgAuthenticatedAction<TOut>(
   options?: Options
 ): () => Promise<ActionResult<TOut>> {
   return executeNoInputAction<TOut>(
-    { withOrgContext: true, revalidatePaths: options?.revalidatePaths },
-    (ctx) => handler(ctx.supabase, ctx.user, ctx.groupId!)
+    { requirePerson: true, withOrgContext: true, revalidatePaths: options?.revalidatePaths },
+    (ctx) => handler(ctx.supabase, toActor(ctx), ctx.groupId!)
   )
 }
 
@@ -163,8 +186,8 @@ export function createNoInputOrgQueryAction<TOut>(
   notFoundMessage = 'Not found'
 ): () => Promise<ActionResult<TOut>> {
   return executeNoInputAction<TOut>(
-    { withOrgContext: true, nullError: notFoundMessage },
-    (ctx) => handler(ctx.supabase, ctx.user, ctx.groupId!) as Promise<TOut>
+    { requirePerson: true, withOrgContext: true, nullError: notFoundMessage },
+    (ctx) => handler(ctx.supabase, toActor(ctx), ctx.groupId!) as Promise<TOut>
   )
 }
 
