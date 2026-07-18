@@ -2,15 +2,14 @@
 
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { claimRecord } from '@/actions/auth/claim-record.action'
+import {
+  type ClaimTokenInfo,
+  claimRecord,
+  getClaimTokenInfo,
+} from '@/actions/auth/claim-record.action'
 import { createClient } from '@/lib/supabase/client'
 
-type TokenInfo = {
-  personName: string
-  groupName: string
-  expired: boolean
-  claimed: boolean
-}
+type TokenInfo = ClaimTokenInfo
 
 export default function ClaimPage() {
   const { token } = useParams<{ token: string }>()
@@ -29,27 +28,14 @@ export default function ClaimPage() {
 
   useEffect(() => {
     async function loadToken() {
-      const { data, error: fetchError } = await supabase
-        .from('claim_tokens')
-        .select('person_id, expires_at, claimed_at, persons(full_name), groups(name)')
-        .eq('token', token)
-        .single()
-
-      if (fetchError || !data) {
+      const infoResult = await getClaimTokenInfo({ token })
+      if (!infoResult.success || !infoResult.data) {
         setError('Invalid invite link')
         setLoading(false)
         return
       }
 
-      const persons = data.persons as unknown as { full_name: string } | null
-      const groups = data.groups as unknown as { name: string } | null
-
-      setTokenInfo({
-        personName: persons?.full_name ?? 'Unknown',
-        groupName: groups?.name ?? 'Unknown',
-        expired: new Date(data.expires_at) < new Date(),
-        claimed: data.claimed_at != null,
-      })
+      setTokenInfo(infoResult.data)
       setLoading(false)
 
       // If user is already logged in, try to claim immediately
