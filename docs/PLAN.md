@@ -6,10 +6,22 @@ this document wins.
 
 ## Progress
 
-- **Next task:** Phase 8 COMPLETE (incl. follow-up 8.13). Next: 4.3
+- **Next task:** Phase 8 COMPLETE (incl. follow-ups 8.13, 8.14). Next: 4.3
   (production launch — urgent for fall rush; import scripts updated for the
   person_sensitive_details split AND the pledge_classes drop), then Phases
   9–15 per the roadmap in assistant memory (`phases-8-15-roadmap.md`).
+  **4.3 prep to-do:** export-v3/import-v3 do NOT yet cover positions,
+  position_assignments, subgroups, subgroup_members, facilities, rooms — the
+  legacy importers that originally loaded those are deleted (8.14), so add
+  these tables to the v3 export/import pair before running against production.
+  Task 8.14 (script cleanup, user-approved): deleted the eight dead pre-v3
+  scripts (backfill-names, backfill-address-emergency, import-airtable-housing,
+  import-positions, import-roster, migrate-emergency-contacts,
+  migrate-to-affiliation-model, migrate-to-subgroups) — every one referenced
+  tables or columns that no longer exist (orgs, org_memberships,
+  membership_types, house, person_contacts, pledge_classes, dropped persons
+  columns) and could never run again; history stays in git. Remaining scripts:
+  export-v3, import-v3, seed-dev, setup-alumni-group.
   Task 8.13 (schema layout cleanup, migration 20260718000005, user-approved):
   one-table decision for member classes — dropped `pledge_classes` (0 rows,
   no readers) + `persons.pledge_class_id` + `subgroups.pledge_class_id`;
