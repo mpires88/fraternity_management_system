@@ -13,6 +13,7 @@ import {
   closePollDal,
   createPollDal,
   getParticipantCount,
+  getParticipantPersonIdsDal,
   getPollById,
   getPollOptions,
   getPollsForGroup,
@@ -20,6 +21,7 @@ import {
   hasVoted,
   publishPollDal,
 } from '@/dal/polls'
+import { notifyPollClosed, notifyPollPublished } from '@/lib/notifications/triggers'
 import { calculateResults } from '@/lib/utils/voting/calculator'
 import type { PollResult, VoteData } from '@/lib/utils/voting/types'
 
@@ -71,14 +73,30 @@ export const createPoll = createOrgAuthenticatedAction<CreatePollInput, string>(
 )
 
 export const publishPoll = createOrgAuthenticatedAction<{ pollId: string }, void>(
-  async (supabase, _actor, _groupId, input) => {
+  async (supabase, actor, groupId, input) => {
     await publishPollDal(supabase, input.pollId)
+
+    const poll = await getPollById(supabase, input.pollId)
+    if (poll) {
+      const participants = (await getParticipantPersonIdsDal(supabase, input.pollId)).filter(
+        (pid) => pid !== actor.personId
+      )
+      await notifyPollPublished(supabase, groupId, poll.title, '/polls', participants)
+    }
   }
 )
 
 export const closePoll = createOrgAuthenticatedAction<{ pollId: string }, void>(
-  async (supabase, _actor, _groupId, input) => {
+  async (supabase, actor, groupId, input) => {
     await closePollDal(supabase, input.pollId)
+
+    const poll = await getPollById(supabase, input.pollId)
+    if (poll) {
+      const participants = (await getParticipantPersonIdsDal(supabase, input.pollId)).filter(
+        (pid) => pid !== actor.personId
+      )
+      await notifyPollClosed(supabase, groupId, poll.title, '/polls', participants)
+    }
   }
 )
 

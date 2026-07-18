@@ -23,6 +23,8 @@ import {
   updateCommentDal,
   updateDocumentDal,
 } from '@/dal/documents'
+import { getActiveMemberPersonIdsDal } from '@/dal/members'
+import { notifyDocumentInReview } from '@/lib/notifications/triggers'
 
 // -- Document actions --
 
@@ -55,8 +57,22 @@ export const updateDocument = createOrgAuthenticatedAction<
 })
 
 export const submitForReview = createOrgAuthenticatedAction<{ documentId: string }, void>(
-  async (supabase, _actor, _groupId, input) => {
+  async (supabase, actor, groupId, input) => {
     await submitForReviewDal(supabase, input.documentId)
+
+    const doc = await getDocumentById(supabase, input.documentId)
+    if (doc) {
+      const memberIds = (await getActiveMemberPersonIdsDal(supabase, groupId)).filter(
+        (pid) => pid !== actor.personId
+      )
+      await notifyDocumentInReview(
+        supabase,
+        groupId,
+        doc.title,
+        `/documents/${input.documentId}`,
+        memberIds
+      )
+    }
   }
 )
 

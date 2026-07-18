@@ -168,6 +168,17 @@ export async function archivePollDal(supabase: DbClient, pollId: string) {
     .eq('id', pollId)
 }
 
+export async function getParticipantPersonIdsDal(
+  supabase: DbClient,
+  pollId: string
+): Promise<string[]> {
+  const { data } = await supabase
+    .from('poll_participants')
+    .select('person_id')
+    .eq('poll_id', pollId)
+  return [...new Set((data ?? []).map((p) => p.person_id).filter(Boolean))] as string[]
+}
+
 export async function addParticipantsDal(supabase: DbClient, pollId: string, personIds: string[]) {
   const rows = personIds.map((pid) => ({ poll_id: pollId, person_id: pid }))
   await supabase.from('poll_participants').upsert(rows, { onConflict: 'poll_id,person_id' })

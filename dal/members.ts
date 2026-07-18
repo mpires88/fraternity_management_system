@@ -54,6 +54,26 @@ export async function getMembersByOrg(supabase: DbClient, groupId: string): Prom
     })
 }
 
+/** person_ids of the group's current members (active membership, not expelled). */
+export async function getActiveMemberPersonIdsDal(
+  supabase: DbClient,
+  groupId: string
+): Promise<string[]> {
+  const { data } = await supabase
+    .from('group_memberships')
+    .select('person_id, status_definitions(slug)')
+    .eq('group_id', groupId)
+    .is('ended_at', null)
+
+  return [
+    ...new Set(
+      (data ?? [])
+        .filter((m) => (m.status_definitions as { slug: string } | null)?.slug !== 'expelled')
+        .map((m) => m.person_id)
+    ),
+  ]
+}
+
 /** person_ids of the group's full-access (officer/admin) members. */
 export async function getFullAccessPersonIdsDal(
   supabase: DbClient,

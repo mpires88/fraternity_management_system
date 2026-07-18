@@ -123,7 +123,7 @@ export function rcv(
     .filter((b) => !b.abstain && b.ranking && b.ranking.length > 0)
     .map((b) => [...(b.ranking as string[])])
 
-  let remaining = new Set(optionIds)
+  const remaining = new Set(optionIds)
   const rounds: { round: number; counts: Record<string, number>; eliminated: string | null }[] = []
   const majority = Math.floor(activeBallots.length / 2) + 1
 
