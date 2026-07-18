@@ -9,7 +9,14 @@ this document wins.
 - **Next task:** 8.0 (BLOCKED: dev DB paused — owner must restore at
   supabase.com/dashboard/project/grojoxrglzkxpenizmax; then 8.0 lands before any
   other DB work). 4.3 still pending (production launch; now urgent for fall rush).
-- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 4.1, 4.2, Phase 5, Phase 6, 7.1, 7.2, 7.3, 7.4, 7.5, 8.1, 8.2, 8.3, 8.4
+- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 4.1, 4.2, Phase 5, Phase 6, 7.1, 7.2, 7.3, 7.4, 7.5, 8.1, 8.2, 8.3, 8.4, 8.5
+  Task 8.5: no more inline Supabase in actions/ (`grep supabase.from( actions/`
+  is clean). New DAL fns: `getAssignmentSubmissionContextDal`,
+  `getTermStartDatesDal`, `getProgressEntryMetaDal` (dal/requirements.ts),
+  `getFullAccessPersonIdsDal` (dal/members.ts — now also filters
+  `ended_at IS NULL`, which the old inline officer query didn't). New
+  `dal/positions.ts` (`getPositionsForGroupDal`, `getBudgetedPositionsDal`,
+  `getActivePositionHoldersDal`) ready for the budgets phase.
   Task 8.4: reminders cron selected nonexistent `persons.email` (digest silently
   never sent) — now `personal_email ?? school_email`; removed dead `'in_progress'`
   from status filters in the cron and calendar-feed routes (real status set is

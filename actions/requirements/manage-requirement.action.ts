@@ -4,14 +4,19 @@ import {
   createAuthenticatedAction,
   createOrgAuthenticatedAction,
 } from '@/actions/utils/action-helpers'
+import { getFullAccessPersonIdsDal } from '@/dal/members'
 import {
   approveProgressEntryDal,
   archiveRequirementDal,
   bulkMarkAttendanceDal,
   createProgressEntryDal,
   createRequirementDal,
+  getAssignmentSubmissionContextDal,
   getAudienceContext,
+  getProgressEntryMetaDal,
+  getRequirementById,
   getRequirementsForClone,
+  getTermStartDatesDal,
   insertAssignmentsDal,
   rejectProgressEntryDal,
   updateAssignmentOfficerDal,
@@ -75,33 +80,17 @@ export const updateAssignmentStatus = createAuthenticatedAction<AssignmentStatus
     await updateAssignmentStatusDal(supabase, input.assignmentId, input.status, input.progress)
 
     if (input.status === 'submitted') {
-      const { data: assignment } = await supabase
-        .from('requirement_assignments')
-        .select(
-          'requirements!inner(title, group_id), persons!requirement_assignments_person_id_fkey(full_name)'
+      const ctx = await getAssignmentSubmissionContextDal(supabase, input.assignmentId)
+      if (ctx) {
+        const officerIds = (await getFullAccessPersonIdsDal(supabase, ctx.groupId)).filter(
+          (pid) => pid !== actor.personId
         )
-        .eq('id', input.assignmentId)
-        .single()
-
-      if (assignment) {
-        const req = assignment.requirements as unknown as { title: string; group_id: string }
-        const person = assignment.persons as unknown as { full_name: string }
-
-        const { data: officers } = await supabase
-          .from('group_memberships')
-          .select('person_id, role_types!inner(access_level)')
-          .eq('group_id', req.group_id)
-          .eq('role_types.access_level', 'full')
-
-        const officerIds = (officers ?? [])
-          .map((o) => o.person_id)
-          .filter((pid) => pid !== actor.personId)
 
         await notifySubmissionToVerify(
           supabase,
-          req.group_id,
-          person?.full_name ?? 'A member',
-          req.title,
+          ctx.groupId,
+          ctx.submitterName,
+          ctx.requirementTitle,
           '/requirements',
           officerIds
         )
@@ -144,12 +133,7 @@ type SyncInput = { requirementId: string; termId: string }
 
 export const syncRequirementAssignments = createOrgAuthenticatedAction<SyncInput, void>(
   async (supabase, _actor, groupId, input) => {
-    const { data: req } = await supabase
-      .from('requirements')
-      .select('assign_to, audience_role_type_ids, audience_position_ids, audience_subgroup_ids')
-      .eq('id', input.requirementId)
-      .single()
-
+    const req = await getRequirementById(supabase, input.requirementId)
     if (!req) return
 
     const ctx = await getAudienceContext(supabase, groupId, input.termId)
@@ -174,13 +158,12 @@ export const cloneRequirementsFromTerm = createOrgAuthenticatedAction<CloneInput
     const sourceReqs = await getRequirementsForClone(supabase, groupId, input.sourceTermId)
     if (sourceReqs.length === 0) return 0
 
-    const [sourceTermRes, targetTermRes] = await Promise.all([
-      supabase.from('terms').select('starts_on').eq('id', input.sourceTermId).single(),
-      supabase.from('terms').select('starts_on').eq('id', input.targetTermId).single(),
+    const termStarts = await getTermStartDatesDal(supabase, [
+      input.sourceTermId,
+      input.targetTermId,
     ])
-
-    const sourceStart = sourceTermRes.data?.starts_on
-    const targetStart = targetTermRes.data?.starts_on
+    const sourceStart = termStarts[input.sourceTermId]
+    const targetStart = termStarts[input.targetTermId]
     const deltaMs =
       sourceStart && targetStart
         ? new Date(targetStart).getTime() - new Date(sourceStart).getTime()
@@ -269,21 +252,13 @@ export const approveProgressEntry = createOrgAuthenticatedAction<ApproveEntryInp
   async (supabase, actor, groupId, input) => {
     await approveProgressEntryDal(supabase, input.entryId, actor.personId)
 
-    const { data: entry } = await supabase
-      .from('requirement_progress_entries')
-      .select('logged_by, requirement_assignments!inner(requirements!inner(title))')
-      .eq('id', input.entryId)
-      .single()
-
-    if (entry && entry.logged_by !== actor.personId) {
-      const ra = entry.requirement_assignments as unknown as {
-        requirements: { title: string }
-      }
+    const entry = await getProgressEntryMetaDal(supabase, input.entryId)
+    if (entry && entry.loggedBy !== actor.personId) {
       await notifyProgressApproved(
         supabase,
         groupId,
-        entry.logged_by,
-        ra.requirements.title,
+        entry.loggedBy,
+        entry.requirementTitle,
         '/requirements'
       )
     }

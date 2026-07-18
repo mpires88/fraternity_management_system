@@ -318,6 +318,55 @@ export async function bulkMarkAttendanceDal(
   if (error) throw new UserFacingError(error.message)
 }
 
+/** Context needed to notify officers when an assignment is submitted. */
+export async function getAssignmentSubmissionContextDal(
+  supabase: DbClient,
+  assignmentId: string
+): Promise<{ requirementTitle: string; groupId: string; submitterName: string } | null> {
+  const { data } = await supabase
+    .from('requirement_assignments')
+    .select(
+      'requirements!inner(title, group_id), persons!requirement_assignments_person_id_fkey(full_name)'
+    )
+    .eq('id', assignmentId)
+    .maybeSingle()
+
+  if (!data) return null
+  const req = data.requirements as unknown as { title: string; group_id: string }
+  const person = data.persons as unknown as { full_name: string } | null
+  return {
+    requirementTitle: req.title,
+    groupId: req.group_id,
+    submitterName: person?.full_name ?? 'A member',
+  }
+}
+
+/** starts_on per term id — used to shift dates when cloning across terms. */
+export async function getTermStartDatesDal(
+  supabase: DbClient,
+  termIds: string[]
+): Promise<Record<string, string | null>> {
+  if (termIds.length === 0) return {}
+  const { data } = await supabase.from('terms').select('id, starts_on').in('id', termIds)
+  return Object.fromEntries((data ?? []).map((t) => [t.id, t.starts_on]))
+}
+
+/** Who logged a progress entry + the requirement title, for notifications. */
+export async function getProgressEntryMetaDal(
+  supabase: DbClient,
+  entryId: string
+): Promise<{ loggedBy: string; requirementTitle: string } | null> {
+  const { data } = await supabase
+    .from('requirement_progress_entries')
+    .select('logged_by, requirement_assignments!inner(requirements!inner(title))')
+    .eq('id', entryId)
+    .maybeSingle()
+
+  if (!data) return null
+  const ra = data.requirement_assignments as unknown as { requirements: { title: string } }
+  return { loggedBy: data.logged_by, requirementTitle: ra.requirements.title }
+}
+
 export async function getAudienceContext(supabase: DbClient, groupId: string, termId: string) {
   const [membersRes, holdersRes, subMembersRes] = await Promise.all([
     supabase

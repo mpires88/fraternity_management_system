@@ -54,6 +54,20 @@ export async function getMembersByOrg(supabase: DbClient, groupId: string): Prom
     })
 }
 
+/** person_ids of the group's full-access (officer/admin) members. */
+export async function getFullAccessPersonIdsDal(
+  supabase: DbClient,
+  groupId: string
+): Promise<string[]> {
+  const { data } = await supabase
+    .from('group_memberships')
+    .select('person_id, role_types!inner(access_level)')
+    .eq('group_id', groupId)
+    .eq('role_types.access_level', 'full')
+    .is('ended_at', null)
+  return [...new Set((data ?? []).map((m) => m.person_id))]
+}
+
 export async function inviteMemberDal(
   supabase: DbClient,
   groupId: string,
