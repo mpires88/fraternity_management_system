@@ -530,3 +530,57 @@ Keep the mechanism national-org-generic; only the seed data is Sigma Nu-specific
   on the chapter's billing platform. Don't drift toward invoicing/processing.
 - **Ritual content.** Nothing from any fraternity's ritual, ever, anywhere in the
   app — including seed data, test fixtures, and example copy.
+
+---
+
+## 13. Phase 8 — Hardening (user-approved 2026-07-17)
+
+Fixes from a full code review + multi-tenant isolation audit + performance audit.
+Full task details (schemas, file refs, accept criteria) live in the session plan
+mirrored to the assistant memory file `phases-8-15-roadmap.md`; Phases 9–15 (officer
+permissions, rush, budgets, housing lottery, service requests, housing extras, term
+rollover) are planned there and are NOT yet part of this document's build order.
+
+- **8.0 Claim-token security fix (CRITICAL — first).** Drop the
+  `claim_tokens_select_by_token USING(true)` policy; look tokens up server-side via
+  service role on `/claim/[token]`; `claimRecord` must require the caller's email to
+  match `claim_tokens.email`. Accept: anon REST select on `claim_tokens` returns
+  zero rows; mismatched-email claim rejected; legit claim round-trip works.
+- **8.1 personId through action helpers.** Authenticated helpers pass
+  `actor: { user, personId }`; all persons-FK call sites (`created_by`,
+  `verified_by`, `logged_by`, notification filters, notification/prefs keys) use
+  `actor.personId`. Claim flow moves to `createOptionalAuthAction`. Accept: claimed
+  test user's writes attribute to their `persons.id`.
+- **8.2 Group picker fix.** `[org]/page.tsx` resolves person via `auth_user_id`
+  through a new `dal/orgs.ts` function; no raw Supabase in the page. Also fix
+  `getCurrentOrgId` (`lib/auth/org-context.ts`) comparing `person_id` to auth uid.
+- **8.3 Group-prefixed notification hrefs.** `getGroupSlugPathDal` + pure
+  `buildGroupHref` (unit-tested); triggers + cron build full
+  `/[parent]/[org]/[group]/…` links.
+- **8.4 Cron/calendar fixes.** Digest uses
+  `COALESCE(personal_email, school_email)`; remove dead `'in_progress'` status
+  filters.
+- **8.5 DAL cleanup + `dal/positions.ts`.** No inline Supabase in actions; new
+  positions DAL consolidating scattered queries.
+- **8.6 Alumni chapter group (data).** New `groups` row + role types/statuses/
+  positions/term for the alumni chapter.
+- **8.7 Poll/document notification triggers.** `POLL_PUBLISHED`, `POLL_CLOSED`,
+  `DOCUMENT_IN_REVIEW` types + trigger fns called from the corresponding actions.
+- **8.8 RLS persona tests.** `npm run test:rls` Vitest suite (officer/member/
+  outsider personas against the dev DB; not part of `npm run check`).
+- **8.9 RLS hardening migration.** Config-table writes to admin level;
+  `notifications_insert` binds person→group via SECURITY DEFINER helper;
+  profile-photos select authenticated-only; `parent_organizations` write policy;
+  recreate broken `get_my_organization_ids()`.
+- **8.10 Index migration.** `group_memberships(group_id)`,
+  `requirement_assignments(person_id)`, `requirements(group_id, term_id)`,
+  `position_assignments(group_id, term_id)` + `(person_id)`, `votes(person_id)`,
+  `poll_participants(person_id)`, `subgroup_members` FKs,
+  `data_change_log(changed_at)`.
+- **8.11 App performance pass.** React `cache()` for `getGroupContext`/`getUser`;
+  parallelize context + dashboard queries; middleware local JWT check;
+  `loading.tsx` streaming; narrow roster selects; drop TOKEN_REFRESHED full
+  refresh; reuse admin client in `inviteMemberDal`.
+- **8.12 Person PII minimization.** Move DOB/address/emergency-contact columns to
+  `person_sensitive_details` (RLS: self + shared-group admins); update profile/
+  roster DALs + UI.
