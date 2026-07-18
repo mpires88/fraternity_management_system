@@ -14,7 +14,8 @@
     "format:check": "biome format .",
     "check": "biome check . && npm run typecheck && npm run test",
     "check:full": "npm run check && npm run build",
-    "types:db": "supabase gen types typescript --linked > lib/supabase/types.ts"
+    "types:db": "supabase gen types typescript --linked > lib/supabase/types.ts",
+    "test:rls": "vitest run --config vitest.config.rls.ts"
   },
   "dependencies": {
     "@sentry/nextjs": "^10.47.0",

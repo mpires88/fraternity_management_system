@@ -7,7 +7,8 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./test/setup.ts'],
     include: ['**/*.test.ts', '**/*.test.tsx'],
-    exclude: ['node_modules', '.next'],
+    // test/rls needs the live dev DB — run via `npm run test:rls`, not check
+    exclude: ['node_modules', '.next', 'test/rls/**'],
   },
   resolve: {
     alias: {
