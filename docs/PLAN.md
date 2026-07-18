@@ -6,12 +6,27 @@ this document wins.
 
 ## Progress
 
-- **Next task:** 8.12 (last Phase 8 task).
-  4.3 still pending (production launch; now urgent for fall rush).
+- **Next task:** Phase 8 COMPLETE. Next: 4.3 (production launch — urgent for
+  fall rush; import scripts updated for the new person_sensitive_details
+  split), then Phases 9–15 per the roadmap in assistant memory
+  (`phases-8-15-roadmap.md`). Deferred small items: browser walkthrough of the
+  claimed-user flows (8.1/8.2 accepts verified at RLS level, not yet in-app),
+  a live invite→claim round trip (8.0), first live cron digest run (8.4).
   Known issue: `supabase/schema-reference.sql` is stale (July 6 snapshot;
   regeneration needs Docker Desktop running — `supabase db dump` truncates the
   file and fails without it).
-- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 4.1, 4.2, Phase 5, Phase 6, 7.1, 7.2, 7.3, 7.4, 7.5, 8.0, 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7, 8.8, 8.9, 8.10, 8.11
+- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 4.1, 4.2, Phase 5, Phase 6, 7.1, 7.2, 7.3, 7.4, 7.5, 8.0, 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7, 8.8, 8.9, 8.10, 8.11, 8.12
+  Task 8.12 (PII minimization, migration 20260718000004): `date_of_birth`,
+  `street_address`/`city`/`state`/`country`, `emergency_contact_person_id` +
+  `_relationship` moved from `persons` (visible to every group-mate) to new
+  `person_sensitive_details` — RLS: self OR shared-group admin via SECURITY
+  DEFINER `can_admin_view_person()`; backfilled, then columns dropped. No
+  audit trigger on purpose (would copy PII into the group-readable change
+  log). `getPersonProfile` merges the sensitive row (plain members see null
+  fields); `updateMyProfile` and `updateMemberDal` route address fields via
+  `upsertSensitiveDetails`; `Person` type slimmed; export-v3/import-v3
+  scripts handle both old dumps (strip + route) and new dumps (own table) so
+  task 4.3 still works. RLS suite extended to 17 tests, all green live.
   Task 8.6: Alumni Chapter group created in dev via idempotent
   `scripts/setup-alumni-group.ts` (group `alumni` / `alumni_chapter` under
   epsilon-theta, Alumni Officer (full) + Alumni Member (limited) role types,

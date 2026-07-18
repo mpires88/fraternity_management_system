@@ -1,4 +1,5 @@
 import { createClient as createAdminClient, type SupabaseClient } from '@supabase/supabase-js'
+import { upsertSensitiveDetails } from '@/dal/person-profile'
 import type { DbClient } from '@/dal/types'
 import { UserFacingError } from '@/lib/errors'
 import type { OrgMembership, Person, RoleType, StatusDefinition } from '@/lib/types/db'
@@ -187,12 +188,27 @@ export async function inviteMemberDal(
   return { personId, claimToken: tokenRow.token }
 }
 
+// These live in person_sensitive_details, not persons (PII minimization)
+const SENSITIVE_MEMBER_FIELDS = new Set(['street_address', 'city', 'state', 'country'])
+
 export async function updateMemberDal(
   supabase: DbClient,
   groupId: string,
   input: UpdateMemberInput
 ): Promise<void> {
   const { personId, role_type_id, status_id, ...personFields } = input
+
+  const sensitiveUpdate: Record<string, unknown> = {}
+  for (const key of SENSITIVE_MEMBER_FIELDS) {
+    const value = (personFields as Record<string, unknown>)[key]
+    if (value !== undefined) {
+      sensitiveUpdate[key] = value
+      delete (personFields as Record<string, unknown>)[key]
+    }
+  }
+  if (Object.keys(sensitiveUpdate).length > 0) {
+    await upsertSensitiveDetails(supabase, personId, sensitiveUpdate)
+  }
 
   const personUpdate: Record<string, unknown> = {}
   for (const [k, v] of Object.entries(personFields)) {

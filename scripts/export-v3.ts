@@ -43,6 +43,7 @@ async function main() {
   const nationalOrgTemplates = await fetchAll('national_org_templates')
   const roleTypes = await fetchAll('role_types')
   const persons = await fetchAll('persons')
+  const personSensitiveDetails = await fetchAll('person_sensitive_details')
   const organizationAdmins = await fetchAll('organization_admins')
   const termDefinitions = await fetchAll('term_definitions')
   const terms = await fetchAll('terms')
@@ -81,6 +82,7 @@ async function main() {
     nationalOrgTemplates,
     roleTypes,
     persons,
+    personSensitiveDetails,
     organizationAdmins,
     termDefinitions,
     terms,

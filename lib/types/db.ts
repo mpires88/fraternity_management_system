@@ -43,6 +43,8 @@ export type OrgFeatures = {
   subgroups: boolean
 }
 
+// DOB / address / emergency contact live in person_sensitive_details
+// (self + shared-group admins only) — not on the widely-readable persons row.
 export type Person = {
   id: string
   full_name: string
@@ -53,16 +55,9 @@ export type Person = {
   school_email: string
   phone: string | null
   personal_email: string | null
-  street_address: string | null
-  city: string | null
-  state: string | null
-  country: string | null
-  emergency_contact_person_id: string | null
-  emergency_contact_relationship: string | null
   profile_photo: string | null
   bio: string | null
   nickname: string | null
-  date_of_birth: string | null
   pledge_class_id: string | null
   big_id: string | null
   initiation_date: string | null

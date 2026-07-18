@@ -108,8 +108,12 @@ export async function getPersonProfile(
   personId: string,
   groupId: string
 ): Promise<PersonProfile | null> {
-  // Person record
-  const { data: person } = await supabase.from('persons').select('*').eq('id', personId).single()
+  // Person record + sensitive details (RLS: self + shared-group admins see
+  // the sensitive row; plain group-mates get null fields)
+  const [{ data: person }, { data: sensitive }] = await Promise.all([
+    supabase.from('persons').select('*').eq('id', personId).single(),
+    supabase.from('person_sensitive_details').select('*').eq('person_id', personId).maybeSingle(),
+  ])
 
   if (!person) return null
 
@@ -177,20 +181,20 @@ export async function getPersonProfile(
     })
   }
 
-  // Emergency contact (FK to another person)
+  // Emergency contact (FK to another person, from the sensitive row)
   let emergencyContact: PersonProfile['emergency_contact'] = null
-  if (person.emergency_contact_person_id) {
+  if (sensitive?.emergency_contact_person_id) {
     const { data: ecPerson } = await supabase
       .from('persons')
       .select('id, full_name, phone')
-      .eq('id', person.emergency_contact_person_id)
+      .eq('id', sensitive.emergency_contact_person_id)
       .single()
     if (ecPerson) {
       emergencyContact = {
         id: ecPerson.id,
         full_name: ecPerson.full_name,
         phone: ecPerson.phone,
-        relationship: person.emergency_contact_relationship,
+        relationship: sensitive.emergency_contact_relationship,
       }
     }
   }
@@ -257,15 +261,15 @@ export async function getPersonProfile(
     school_email: person.school_email,
     phone: person.phone,
     personal_email: person.personal_email,
-    street_address: person.street_address,
-    city: person.city,
-    state: person.state,
-    country: person.country,
-    emergency_contact_relationship: person.emergency_contact_relationship,
+    street_address: sensitive?.street_address ?? null,
+    city: sensitive?.city ?? null,
+    state: sensitive?.state ?? null,
+    country: sensitive?.country ?? null,
+    emergency_contact_relationship: sensitive?.emergency_contact_relationship ?? null,
     profile_photo: person.profile_photo,
     bio: person.bio,
     nickname: person.nickname,
-    date_of_birth: person.date_of_birth,
+    date_of_birth: sensitive?.date_of_birth ?? null,
     initiation_date: person.initiation_date,
     bid_date: person.bid_date,
     member_number: person.member_number,
@@ -298,12 +302,11 @@ const SELF_EDITABLE_FIELDS = [
   'personal_email',
   'phone',
   'bio',
-  'street_address',
-  'city',
-  'state',
-  'country',
   'profile_photo',
 ] as const
+
+// Address lives in person_sensitive_details (self + shared-group admins only)
+const SELF_EDITABLE_SENSITIVE_FIELDS = ['street_address', 'city', 'state', 'country'] as const
 
 export async function updateMyProfile(
   supabase: DbClient,
@@ -314,7 +317,31 @@ export async function updateMyProfile(
   for (const key of SELF_EDITABLE_FIELDS) {
     if (fields[key] !== undefined) update[key] = fields[key]
   }
-  if (Object.keys(update).length === 0) return
-  const { error } = await supabase.from('persons').update(update).eq('id', personId)
+  if (Object.keys(update).length > 0) {
+    const { error } = await supabase.from('persons').update(update).eq('id', personId)
+    if (error) throw new Error(error.message)
+  }
+
+  const sensitiveUpdate: Record<string, unknown> = {}
+  for (const key of SELF_EDITABLE_SENSITIVE_FIELDS) {
+    if (fields[key] !== undefined) sensitiveUpdate[key] = fields[key]
+  }
+  if (Object.keys(sensitiveUpdate).length > 0) {
+    await upsertSensitiveDetails(supabase, personId, sensitiveUpdate)
+  }
+}
+
+/** Upsert into person_sensitive_details (RLS: self or shared-group admin). */
+export async function upsertSensitiveDetails(
+  supabase: DbClient,
+  personId: string,
+  fields: Record<string, unknown>
+): Promise<void> {
+  const { error } = await supabase
+    .from('person_sensitive_details')
+    .upsert(
+      { person_id: personId, ...fields, updated_at: new Date().toISOString() },
+      { onConflict: 'person_id' }
+    )
   if (error) throw new Error(error.message)
 }

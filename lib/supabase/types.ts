@@ -925,18 +925,64 @@ export type Database = {
           },
         ]
       }
+      person_sensitive_details: {
+        Row: {
+          city: string | null
+          country: string | null
+          date_of_birth: string | null
+          emergency_contact_person_id: string | null
+          emergency_contact_relationship: string | null
+          person_id: string
+          state: string | null
+          street_address: string | null
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          date_of_birth?: string | null
+          emergency_contact_person_id?: string | null
+          emergency_contact_relationship?: string | null
+          person_id: string
+          state?: string | null
+          street_address?: string | null
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          date_of_birth?: string | null
+          emergency_contact_person_id?: string | null
+          emergency_contact_relationship?: string | null
+          person_id?: string
+          state?: string | null
+          street_address?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "person_sensitive_details_emergency_contact_person_id_fkey"
+            columns: ["emergency_contact_person_id"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "person_sensitive_details_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: true
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       persons: {
         Row: {
           auth_user_id: string | null
           bid_date: string | null
           big_id: string | null
           bio: string | null
-          city: string | null
-          country: string | null
           created_at: string | null
-          date_of_birth: string | null
-          emergency_contact_person_id: string | null
-          emergency_contact_relationship: string | null
           expected_grad_year: number | null
           first_name: string | null
           full_name: string
@@ -955,20 +1001,13 @@ export type Database = {
           quickbooks_customer_id: string | null
           quickbooks_vendor_id: string | null
           school_email: string
-          state: string | null
-          street_address: string | null
         }
         Insert: {
           auth_user_id?: string | null
           bid_date?: string | null
           big_id?: string | null
           bio?: string | null
-          city?: string | null
-          country?: string | null
           created_at?: string | null
-          date_of_birth?: string | null
-          emergency_contact_person_id?: string | null
-          emergency_contact_relationship?: string | null
           expected_grad_year?: number | null
           first_name?: string | null
           full_name: string
@@ -987,20 +1026,13 @@ export type Database = {
           quickbooks_customer_id?: string | null
           quickbooks_vendor_id?: string | null
           school_email: string
-          state?: string | null
-          street_address?: string | null
         }
         Update: {
           auth_user_id?: string | null
           bid_date?: string | null
           big_id?: string | null
           bio?: string | null
-          city?: string | null
-          country?: string | null
           created_at?: string | null
-          date_of_birth?: string | null
-          emergency_contact_person_id?: string | null
-          emergency_contact_relationship?: string | null
           expected_grad_year?: number | null
           first_name?: string | null
           full_name?: string
@@ -1019,20 +1051,11 @@ export type Database = {
           quickbooks_customer_id?: string | null
           quickbooks_vendor_id?: string | null
           school_email?: string
-          state?: string | null
-          street_address?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "persons_big_id_fkey"
             columns: ["big_id"]
-            isOneToOne: false
-            referencedRelation: "persons"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "persons_emergency_contact_person_id_fkey"
-            columns: ["emergency_contact_person_id"]
             isOneToOne: false
             referencedRelation: "persons"
             referencedColumns: ["id"]
@@ -2271,6 +2294,7 @@ export type Database = {
       }
     }
     Functions: {
+      can_admin_view_person: { Args: { p_person_id: string }; Returns: boolean }
       can_read_comments: {
         Args: { p_resource_id: string; p_resource_type: string }
         Returns: boolean
@@ -2284,6 +2308,10 @@ export type Database = {
       get_my_org_ids: { Args: never; Returns: string[] }
       get_my_organization_ids: { Args: never; Returns: string[] }
       get_my_person_id: { Args: never; Returns: string }
+      is_person_in_group: {
+        Args: { p_group_id: string; p_person_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

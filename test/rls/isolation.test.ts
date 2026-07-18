@@ -146,6 +146,19 @@ describe('plain member', () => {
     const { data } = await member.from('claim_tokens').select('token')
     expect(data ?? []).toHaveLength(0)
   })
+
+  it("cannot read other people's sensitive details (8.12)", async () => {
+    const { data: auth } = await member.auth.getUser()
+    const { data: me } = await member
+      .from('persons')
+      .select('id')
+      .eq('auth_user_id', auth.user!.id)
+      .single()
+    const { data } = await member.from('person_sensitive_details').select('person_id')
+    for (const row of data ?? []) {
+      expect(row.person_id).toBe(me!.id)
+    }
+  })
 })
 
 describe('officer (full access)', () => {
@@ -158,5 +171,10 @@ describe('officer (full access)', () => {
     const { data, error } = await officer.rpc('get_my_organization_ids')
     expect(error).toBeNull()
     expect(data?.length).toBeGreaterThan(0)
+  })
+
+  it("can read group members' sensitive details (8.12)", async () => {
+    const { error } = await officer.from('person_sensitive_details').select('person_id').limit(1)
+    expect(error).toBeNull()
   })
 })

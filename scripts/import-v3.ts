@@ -46,6 +46,8 @@ interface ExportData {
   nationalOrgTemplates: any[]
   roleTypes: any[]
   persons: any[]
+  /** Present in dumps made after the 8.12 PII split */
+  personSensitiveDetails?: any[]
   organizationAdmins: any[]
   termDefinitions: any[]
   terms: any[]
@@ -155,13 +157,37 @@ async function main() {
 
   // 5. Persons (id = auth user id)
   console.log('\nInserting persons...')
+  // Sensitive columns moved to person_sensitive_details (migration
+  // 20260718000004). Old dumps carry them on the person rows — strip them
+  // here and route them to the sensitive table in step 8b.
+  const SENSITIVE_FIELDS = [
+    'date_of_birth',
+    'street_address',
+    'city',
+    'state',
+    'country',
+    'emergency_contact_person_id',
+    'emergency_contact_relationship',
+  ] as const
+
+  const legacySensitiveRows: any[] = []
   // Clear self-referential FKs for first pass
-  const personsClean = data.persons.map((p: any) => ({
-    ...p,
-    big_id: null,
-    emergency_contact_person_id: null,
-    pledge_class_id: null,
-  }))
+  const personsClean = data.persons.map((p: any) => {
+    const { big_id: _big, pledge_class_id: _pledge, ...rest } = p
+    const sensitive: Record<string, unknown> = { person_id: p.id }
+    let hasSensitive = false
+    for (const key of SENSITIVE_FIELDS) {
+      if (key in rest) {
+        if (rest[key] != null) {
+          sensitive[key] = rest[key]
+          hasSensitive = true
+        }
+        delete rest[key]
+      }
+    }
+    if (hasSensitive) legacySensitiveRows.push(sensitive)
+    return { ...rest, big_id: null, pledge_class_id: null }
+  })
   await upsertBatch('persons', personsClean)
 
   // 6. Now restore parent_organizations person FKs
@@ -183,12 +209,11 @@ async function main() {
   console.log('\nRestoring person cross-references...')
   let personUpdates = 0
   for (const p of data.persons) {
-    if (p.big_id || p.emergency_contact_person_id || p.pledge_class_id) {
+    if (p.big_id || p.pledge_class_id) {
       await supabase
         .from('persons')
         .update({
           big_id: p.big_id,
-          emergency_contact_person_id: p.emergency_contact_person_id,
           pledge_class_id: p.pledge_class_id,
         })
         .eq('id', p.id)
@@ -196,6 +221,14 @@ async function main() {
     }
   }
   console.log(`  persons: ${personUpdates} rows updated with cross-references`)
+
+  // 8b. Sensitive details — from the dump's own table (new dumps) merged
+  // with anything stripped off legacy person rows above
+  console.log('\nInserting sensitive details...')
+  const sensitiveByPerson = new Map<string, any>()
+  for (const row of legacySensitiveRows) sensitiveByPerson.set(row.person_id, row)
+  for (const row of data.personSensitiveDetails ?? []) sensitiveByPerson.set(row.person_id, row)
+  await upsertBatch('person_sensitive_details', [...sensitiveByPerson.values()], 'person_id')
 
   // 9. Memberships and relationships
   console.log('\nInserting memberships...')
