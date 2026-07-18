@@ -20,6 +20,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Missing groupId or termId' }, { status: 400 })
   }
 
+  // Defense-in-depth: exports are an officer surface. RLS already scopes the
+  // rows, but require a full-access membership in the requested group too.
+  const { data: adminGroupIds } = await supabase.rpc('get_my_admin_group_ids')
+  if (!(adminGroupIds ?? []).some((id: string) => id === groupId)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   const { data: requirements } = await supabase
     .from('requirements')
     .select('id, title, kind, due_at, occurs_at, amount_cents, quota_target, quota_unit')

@@ -6,12 +6,31 @@ this document wins.
 
 ## Progress
 
-- **Next task:** 8.6 / 8.8 / 8.9 / 8.12 (remaining Phase 8; DB is back).
+- **Next task:** 8.6 / 8.12 (remaining Phase 8).
   4.3 still pending (production launch; now urgent for fall rush).
   Known issue: `supabase/schema-reference.sql` is stale (July 6 snapshot;
   regeneration needs Docker Desktop running — `supabase db dump` truncates the
   file and fails without it).
-- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 4.1, 4.2, Phase 5, Phase 6, 7.1, 7.2, 7.3, 7.4, 7.5, 8.0, 8.1, 8.2, 8.3, 8.4, 8.5, 8.7, 8.10, 8.11
+- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 4.1, 4.2, Phase 5, Phase 6, 7.1, 7.2, 7.3, 7.4, 7.5, 8.0, 8.1, 8.2, 8.3, 8.4, 8.5, 8.7, 8.8, 8.9, 8.10, 8.11
+  Task 8.9 (RLS hardening, migration 20260718000003): config-table writes
+  (role_types, status_definitions, positions, terms, term_definitions —
+  insert/update/delete) recreated at `get_my_admin_group_ids()` level (were
+  writable by ANY member); `notifications_insert` now requires the recipient
+  to belong to the target group via new SECURITY DEFINER
+  `is_person_in_group()` (cross-tenant notification injection closed);
+  profile-photos storage select is authenticated-only (bucket itself stays
+  public for avatar URLs — full privatization via signed URLs deferred);
+  `parent_organizations_update` policy added for platform admins;
+  `get_my_organization_ids()` rebuilt for v3 (previously read the dropped
+  org_memberships table — Phase 12 housing selects depend on it). Requirements
+  CSV export route gains an explicit admin-of-group gate.
+  Task 8.8: RLS persona suite — `npm run test:rls` (vitest.config.rls.ts,
+  test/rls/isolation.test.ts) logs in as officer/member/outsider @test.com +
+  anon against the LIVE dev DB: 15 assertions covering claim-token lockdown,
+  outsider isolation, member config-write denial, cross-group notification
+  denial, foreign-assignment denial, and admin/org helper positives. All 15
+  green. Excluded from `npm run check` (needs the live DB). Extend with each
+  new phase's tables.
   Task 8.10: performance indexes (migration 20260718000002) — FK/hot-path
   indexes on group_memberships(group_id), requirement_assignments(person_id),
   requirements(group_id,term_id), position_assignments(group_id,term_id) +
