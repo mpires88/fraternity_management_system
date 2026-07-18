@@ -6,12 +6,19 @@ this document wins.
 
 ## Progress
 
-- **Next task:** 8.6 / 8.8 / 8.9 / 8.10 / 8.12 (remaining Phase 8; DB is back).
+- **Next task:** 8.6 / 8.8 / 8.9 / 8.12 (remaining Phase 8; DB is back).
   4.3 still pending (production launch; now urgent for fall rush).
   Known issue: `supabase/schema-reference.sql` is stale (July 6 snapshot;
   regeneration needs Docker Desktop running — `supabase db dump` truncates the
   file and fails without it).
-- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 4.1, 4.2, Phase 5, Phase 6, 7.1, 7.2, 7.3, 7.4, 7.5, 8.0, 8.1, 8.2, 8.3, 8.4, 8.5, 8.7, 8.11
+- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 4.1, 4.2, Phase 5, Phase 6, 7.1, 7.2, 7.3, 7.4, 7.5, 8.0, 8.1, 8.2, 8.3, 8.4, 8.5, 8.7, 8.10, 8.11
+  Task 8.10: performance indexes (migration 20260718000002) — FK/hot-path
+  indexes on group_memberships(group_id), requirement_assignments(person_id),
+  requirements(group_id,term_id), position_assignments(group_id,term_id) +
+  (person_id), votes(person_id), poll_participants(person_id),
+  subgroup_members(person_id) + (subgroup_id), data_change_log(changed_at).
+  Applied to dev. (EXPLAIN check skipped: at current row counts the planner
+  may seq-scan regardless; these matter as tenants grow.)
   Task 8.0 (CRITICAL security): dropped `claim_tokens_select_by_token
   USING(true)` (migration 20260718000001) — anon REST select on claim_tokens
   verified to return zero rows against the live dev DB. Token lookup for
