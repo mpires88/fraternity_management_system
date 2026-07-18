@@ -58,7 +58,6 @@ export type Person = {
   profile_photo: string | null
   bio: string | null
   nickname: string | null
-  pledge_class_id: string | null
   big_id: string | null
   initiation_date: string | null
   bid_date: string | null
@@ -168,7 +167,7 @@ export type Subgroup = {
   subgroup_type:
     | 'committee'
     | 'exec_board'
-    | 'pledge_class'
+    | 'new_member_class'
     | 'house_residents'
     | 'ad_hoc'
     | 'family_line'
@@ -176,7 +175,6 @@ export type Subgroup = {
     | null
   membership_type: 'appointed' | 'elected' | 'open' | 'invite_only' | 'automatic' | null
   head_position_id: string | null
-  pledge_class_id: string | null
   is_private: boolean
   is_locked: boolean
   can_rename: boolean

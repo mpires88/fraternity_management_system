@@ -995,7 +995,6 @@ export type Database = {
           nickname: string | null
           personal_email: string | null
           phone: string | null
-          pledge_class_id: string | null
           preferred_name: string | null
           profile_photo: string | null
           quickbooks_customer_id: string | null
@@ -1020,7 +1019,6 @@ export type Database = {
           nickname?: string | null
           personal_email?: string | null
           phone?: string | null
-          pledge_class_id?: string | null
           preferred_name?: string | null
           profile_photo?: string | null
           quickbooks_customer_id?: string | null
@@ -1045,7 +1043,6 @@ export type Database = {
           nickname?: string | null
           personal_email?: string | null
           phone?: string | null
-          pledge_class_id?: string | null
           preferred_name?: string | null
           profile_photo?: string | null
           quickbooks_customer_id?: string | null
@@ -1058,13 +1055,6 @@ export type Database = {
             columns: ["big_id"]
             isOneToOne: false
             referencedRelation: "persons"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "persons_pledge_class_id_fkey"
-            columns: ["pledge_class_id"]
-            isOneToOne: false
-            referencedRelation: "pledge_classes"
             referencedColumns: ["id"]
           },
         ]
@@ -1086,38 +1076,6 @@ export type Database = {
           id?: string
         }
         Relationships: []
-      }
-      pledge_classes: {
-        Row: {
-          group_id: string
-          id: string
-          initiated_count: number | null
-          name: string
-          term_id: string | null
-        }
-        Insert: {
-          group_id: string
-          id?: string
-          initiated_count?: number | null
-          name: string
-          term_id?: string | null
-        }
-        Update: {
-          group_id?: string
-          id?: string
-          initiated_count?: number | null
-          name?: string
-          term_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pledge_classes_term_id_fkey"
-            columns: ["term_id"]
-            isOneToOne: false
-            referencedRelation: "terms"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       poll_options: {
         Row: {
@@ -2018,7 +1976,6 @@ export type Database = {
           is_private: boolean | null
           membership_type: string | null
           name: string
-          pledge_class_id: string | null
           slug: string
           subgroup_type: string | null
         }
@@ -2031,7 +1988,6 @@ export type Database = {
           is_private?: boolean | null
           membership_type?: string | null
           name: string
-          pledge_class_id?: string | null
           slug: string
           subgroup_type?: string | null
         }
@@ -2044,7 +2000,6 @@ export type Database = {
           is_private?: boolean | null
           membership_type?: string | null
           name?: string
-          pledge_class_id?: string | null
           slug?: string
           subgroup_type?: string | null
         }
@@ -2054,13 +2009,6 @@ export type Database = {
             columns: ["head_position_id"]
             isOneToOne: false
             referencedRelation: "positions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "subgroups_pledge_class_id_fkey"
-            columns: ["pledge_class_id"]
-            isOneToOne: false
-            referencedRelation: "pledge_classes"
             referencedColumns: ["id"]
           },
         ]

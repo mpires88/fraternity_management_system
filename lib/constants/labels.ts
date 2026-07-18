@@ -81,9 +81,22 @@ export const RELATIONSHIP_LABELS: Record<string, string> = {
 export const SUBGROUP_TYPE_LABELS: Record<string, string> = {
   committee: 'Committee',
   exec_board: 'Executive Board',
-  pledge_class: 'Pledge Class',
+  new_member_class: 'New Member Class',
   house_residents: 'House Residents',
   ad_hoc: 'Ad Hoc',
+  family_line: 'Family Line',
+  advisory_board: 'Advisory Board',
+}
+
+/**
+ * Subgroup type label honoring the group's terminology jsonb — Sigma Nu shows
+ * "Candidate Class", an NPHC chapter shows "Line", default is the neutral map.
+ */
+export function getSubgroupTypeLabel(
+  type: string,
+  terminology?: Record<string, string> | null
+): string {
+  return terminology?.[type] ?? getLabel(SUBGROUP_TYPE_LABELS, type)
 }
 
 // ── Term Status ──────────────────────────────────────────────────────────────

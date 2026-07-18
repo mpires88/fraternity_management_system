@@ -47,7 +47,6 @@ async function main() {
   const organizationAdmins = await fetchAll('organization_admins')
   const termDefinitions = await fetchAll('term_definitions')
   const terms = await fetchAll('terms')
-  const pledgeClasses = await fetchAll('pledge_classes')
   const groupMemberships = await fetchAll('group_memberships')
   const groupRelationships = await fetchAll('group_relationships')
 
@@ -86,7 +85,6 @@ async function main() {
     organizationAdmins,
     termDefinitions,
     terms,
-    pledgeClasses,
     groupMemberships,
     groupRelationships,
   }

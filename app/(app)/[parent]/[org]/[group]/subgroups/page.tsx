@@ -7,14 +7,14 @@ import { Card, CardContent } from '@/components/ui/card'
 import { PageHeader } from '@/components/ui/page-header'
 import { getGroupContext } from '@/dal/group-context'
 import { getSubgroupsByOrg } from '@/dal/subgroups'
-import { getLabel, SUBGROUP_TYPE_LABELS } from '@/lib/constants/labels'
+import { getSubgroupTypeLabel } from '@/lib/constants/labels'
 import { createClient, getAuthUser } from '@/lib/supabase/server'
 import { resolvePermissionsFromContext } from '@/lib/utils/resolve-permissions'
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
   committee: <Users size={15} />,
   exec_board: <Shield size={15} />,
-  pledge_class: <UserPlus size={15} />,
+  new_member_class: <UserPlus size={15} />,
   house_residents: <Home size={15} />,
   family_line: <GitBranch size={15} />,
   ad_hoc: <Users size={15} />,
@@ -50,7 +50,7 @@ export default async function SubgroupsPage({
     'exec_board',
     'committee',
     'family_line',
-    'pledge_class',
+    'new_member_class',
     'house_residents',
     'ad_hoc',
     'other',
@@ -64,7 +64,7 @@ export default async function SubgroupsPage({
       <PageHeader
         title="Subgroups"
         description={`${subgroups.length} group${subgroups.length !== 1 ? 's' : ''}`}
-        info="Subgroups organize members into committees, exec boards, pledge classes, family lines, and more. Click a subgroup to see its members."
+        info="Subgroups organize members into committees, exec boards, new member classes, family lines, and more. Click a subgroup to see its members."
       >
         {perms.access_level === 'full' && <CreateSubgroupButton />}
       </PageHeader>
@@ -80,7 +80,7 @@ export default async function SubgroupsPage({
             return (
               <div key={type}>
                 <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                  {getLabel(SUBGROUP_TYPE_LABELS, type)} ({items.length})
+                  {getSubgroupTypeLabel(type, ctx.group.terminology)} ({items.length})
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {items.map((sg) => (

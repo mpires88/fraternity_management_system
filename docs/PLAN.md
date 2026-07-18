@@ -6,10 +6,21 @@ this document wins.
 
 ## Progress
 
-- **Next task:** Phase 8 COMPLETE. Next: 4.3 (production launch — urgent for
-  fall rush; import scripts updated for the new person_sensitive_details
-  split), then Phases 9–15 per the roadmap in assistant memory
-  (`phases-8-15-roadmap.md`). Deferred small items: browser walkthrough of the
+- **Next task:** Phase 8 COMPLETE (incl. follow-up 8.13). Next: 4.3
+  (production launch — urgent for fall rush; import scripts updated for the
+  person_sensitive_details split AND the pledge_classes drop), then Phases
+  9–15 per the roadmap in assistant memory (`phases-8-15-roadmap.md`).
+  Task 8.13 (schema layout cleanup, migration 20260718000005, user-approved):
+  one-table decision for member classes — dropped `pledge_classes` (0 rows,
+  no readers) + `persons.pledge_class_id` + `subgroups.pledge_class_id`;
+  renamed subgroup_type value `pledge_class` → `new_member_class` (neutral;
+  0 rows used it); labels go through new `getSubgroupTypeLabel(type,
+  terminology)` — epsilon-theta groups' terminology jsonb now maps
+  `new_member_class` → "Candidate Class" (Sigma Nu vocabulary as data, not
+  schema). `event_categories` is KEPT, reserved for the future events module
+  (owner decision). Rush task 10.4 should create `subgroup_type:
+  'new_member_class'` subgroups. Legacy scripts (migrate-to-subgroups,
+  backfill-names) left as pre-v3 history. Deferred small items: browser walkthrough of the
   claimed-user flows (8.1/8.2 accepts verified at RLS level, not yet in-app),
   a live invite→claim round trip (8.0), first live cron digest run (8.4).
   Known issue: `supabase/schema-reference.sql` is stale (July 6 snapshot;

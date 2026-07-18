@@ -51,7 +51,8 @@ interface ExportData {
   organizationAdmins: any[]
   termDefinitions: any[]
   terms: any[]
-  pledgeClasses: any[]
+  /** Legacy dumps only — pledge_classes was dropped (one-table decision, Jul 2026) */
+  pledgeClasses?: any[]
   groupMemberships: any[]
   groupRelationships: any[]
 }
@@ -171,7 +172,9 @@ async function main() {
   ] as const
 
   const legacySensitiveRows: any[] = []
-  // Clear self-referential FKs for first pass
+  // Clear self-referential FKs for first pass.
+  // pledge_class_id is stripped for good: the column was dropped with the
+  // pledge_classes table (classes are subgroups now).
   const personsClean = data.persons.map((p: any) => {
     const { big_id: _big, pledge_class_id: _pledge, ...rest } = p
     const sensitive: Record<string, unknown> = { person_id: p.id }
@@ -186,7 +189,7 @@ async function main() {
       }
     }
     if (hasSensitive) legacySensitiveRows.push(sensitive)
-    return { ...rest, big_id: null, pledge_class_id: null }
+    return { ...rest, big_id: null }
   })
   await upsertBatch('persons', personsClean)
 
@@ -200,23 +203,17 @@ async function main() {
     }
   }
 
-  // 7. Terms and pledge classes
+  // 7. Terms
   console.log('\nInserting terms...')
   await upsertBatch('terms', data.terms)
-  await upsertBatch('pledge_classes', data.pledgeClasses)
+  // Legacy dumps carry pledgeClasses — dropped table, intentionally not imported
 
-  // 8. Now restore persons self-refs (big_id, pledge_class_id)
+  // 8. Now restore persons self-refs (big_id)
   console.log('\nRestoring person cross-references...')
   let personUpdates = 0
   for (const p of data.persons) {
-    if (p.big_id || p.pledge_class_id) {
-      await supabase
-        .from('persons')
-        .update({
-          big_id: p.big_id,
-          pledge_class_id: p.pledge_class_id,
-        })
-        .eq('id', p.id)
+    if (p.big_id) {
+      await supabase.from('persons').update({ big_id: p.big_id }).eq('id', p.id)
       personUpdates++
     }
   }
