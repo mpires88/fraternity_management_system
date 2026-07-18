@@ -1,5 +1,108 @@
 import type { DbClient } from '@/dal/types'
 
+export interface GroupPickerGroup {
+  id: string
+  name: string
+  slug: string
+  group_type: string | null
+  roleName: string
+  statusName: string
+  memberCount: number
+}
+
+export interface GroupPickerData {
+  parentOrgName: string | null
+  orgName: string
+  groups: GroupPickerGroup[]
+}
+
+/**
+ * Data for the group picker landing page: the org's groups the person
+ * actually belongs to (active, non-expelled), with role/status labels and
+ * member counts. Person is resolved via persons.auth_user_id — never assume
+ * persons.id equals the auth uid.
+ */
+export async function getGroupPickerDataDal(
+  supabase: DbClient,
+  authUserId: string,
+  parentSlug: string,
+  orgSlug: string
+): Promise<GroupPickerData | null> {
+  const { data: parentOrg } = await supabase
+    .from('parent_organizations')
+    .select('id, name')
+    .eq('slug', parentSlug)
+    .single()
+  if (!parentOrg) return null
+
+  const { data: org } = await supabase
+    .from('organizations')
+    .select('id, name')
+    .eq('parent_organization_id', parentOrg.id)
+    .eq('slug', orgSlug)
+    .single()
+  if (!org) return null
+
+  const { data: personRow } = await supabase
+    .from('persons')
+    .select('id')
+    .eq('auth_user_id', authUserId)
+    .maybeSingle()
+  if (!personRow) return { parentOrgName: parentOrg.name, orgName: org.name, groups: [] }
+
+  const { data: memberships } = await supabase
+    .from('group_memberships')
+    .select('group_id, role_types(name), status_definitions(name, slug)')
+    .eq('person_id', personRow.id)
+    .is('ended_at', null)
+
+  const active = (memberships ?? []).filter(
+    (m) => (m.status_definitions as { slug: string } | null)?.slug !== 'expelled'
+  )
+  const activeGroupIds = [...new Set(active.map((m) => m.group_id))]
+  if (activeGroupIds.length === 0) {
+    return { parentOrgName: parentOrg.name, orgName: org.name, groups: [] }
+  }
+
+  const [{ data: groups }, { data: allMembers }] = await Promise.all([
+    supabase
+      .from('groups')
+      .select('id, name, slug, group_type, is_primary')
+      .eq('organization_id', org.id)
+      .in('id', activeGroupIds)
+      .order('is_primary', { ascending: false }),
+    supabase
+      .from('group_memberships')
+      .select('group_id, status_definitions(slug)')
+      .in('group_id', activeGroupIds)
+      .is('ended_at', null),
+  ])
+
+  const counts: Record<string, number> = {}
+  for (const m of allMembers ?? []) {
+    if ((m.status_definitions as { slug: string } | null)?.slug !== 'expelled') {
+      counts[m.group_id] = (counts[m.group_id] ?? 0) + 1
+    }
+  }
+
+  return {
+    parentOrgName: parentOrg.name,
+    orgName: org.name,
+    groups: (groups ?? []).map((g) => {
+      const membership = active.find((m) => m.group_id === g.id)
+      return {
+        id: g.id,
+        name: g.name,
+        slug: g.slug,
+        group_type: g.group_type,
+        roleName: (membership?.role_types as { name: string } | null)?.name ?? 'Member',
+        statusName: (membership?.status_definitions as { name: string } | null)?.name ?? 'Active',
+        memberCount: counts[g.id] ?? 0,
+      }
+    }),
+  }
+}
+
 /**
  * Resolves where to send a newly-logged-in user.
  *

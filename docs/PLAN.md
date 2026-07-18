@@ -9,7 +9,14 @@ this document wins.
 - **Next task:** 8.0 (BLOCKED: dev DB paused — owner must restore at
   supabase.com/dashboard/project/grojoxrglzkxpenizmax; then 8.0 lands before any
   other DB work). 4.3 still pending (production launch; now urgent for fall rush).
-- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 4.1, 4.2, Phase 5, Phase 6, 7.1, 7.2, 7.3, 7.4, 7.5, 8.1
+- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 4.1, 4.2, Phase 5, Phase 6, 7.1, 7.2, 7.3, 7.4, 7.5, 8.1, 8.2
+  Task 8.2: group picker page (`[org]/page.tsx`) now calls `getGroupPickerDataDal`
+  (dal/orgs.ts) which resolves the person via `auth_user_id` — the page previously
+  queried memberships by the auth uid and showed claimed users zero groups; page
+  has no inline Supabase queries left. `getCurrentOrgId` cookie validation joins
+  `persons!inner(auth_user_id)` instead of comparing person_id to the auth uid
+  (was failing closed for claimed users, breaking all org-scoped actions).
+  In-app verification with a claimed persona deferred: dev DB paused.
   Task 8.1: authenticated action helpers now pass `actor: { user, personId }` and
   require a linked persons row (`requirePerson` in action-core); every persons-FK
   call site (created_by, verified_by, logged_by/approved_by, notification

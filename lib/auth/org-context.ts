@@ -11,7 +11,8 @@ export async function getCurrentOrgId(supabase?: DbClient): Promise<string | nul
 
   if (!groupId || !supabase) return groupId
 
-  // Validate membership exists
+  // Validate membership exists. person_id is persons.id, NOT the auth uid —
+  // join through persons.auth_user_id (differs for claim-flow users).
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -19,11 +20,11 @@ export async function getCurrentOrgId(supabase?: DbClient): Promise<string | nul
 
   const { data } = await supabase
     .from('group_memberships')
-    .select('id, status_definitions(slug)')
-    .eq('person_id', user.id)
+    .select('id, status_definitions(slug), persons!inner(auth_user_id)')
+    .eq('persons.auth_user_id', user.id)
     .eq('group_id', groupId)
     .limit(1)
-    .single()
+    .maybeSingle()
 
   // Reject expelled members
   const sd = data?.status_definitions as { slug: string } | null
