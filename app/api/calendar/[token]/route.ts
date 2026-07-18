@@ -23,7 +23,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ tok
     .from('requirement_assignments')
     .select('id, status, requirements!inner(title, kind, due_at, occurs_at)')
     .eq('person_id', pref.person_id)
-    .in('status', ['pending', 'in_progress', 'submitted'])
+    .in('status', ['pending', 'submitted'])
 
   type ReqData = {
     title: string

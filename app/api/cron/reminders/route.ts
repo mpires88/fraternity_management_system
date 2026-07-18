@@ -22,7 +22,7 @@ export async function GET(request: Request) {
   const { data: dueSoon } = await supabase
     .from('requirement_assignments')
     .select('id, person_id, requirement_id, requirements!inner(title, due_at, group_id)')
-    .in('status', ['pending', 'in_progress', 'submitted'])
+    .in('status', ['pending', 'submitted'])
     .not('requirements.due_at', 'is', null)
     .lte('requirements.due_at', threeDaysOut)
 
@@ -112,9 +112,10 @@ export async function GET(request: Request) {
     const optedIn = new Set((prefs ?? []).map((p) => p.person_id))
 
     if (optedIn.size > 0) {
+      // persons has personal_email/school_email — there is no plain email column
       const { data: persons } = await supabase
         .from('persons')
-        .select('id, email, full_name')
+        .select('id, personal_email, school_email, full_name')
         .in('id', [...optedIn])
 
       const personMap = new Map((persons ?? []).map((p) => [p.id, p]))
@@ -135,14 +136,15 @@ export async function GET(request: Request) {
 
         for (const [personId, { titles, notifIds }] of byPerson) {
           const person = personMap.get(personId)
-          if (!person?.email) continue
+          const email = person?.personal_email ?? person?.school_email
+          if (!person || !email) continue
 
           const listHtml = titles.map((t) => `<li>${t}</li>`).join('')
           const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.example.com'
 
           await resend.emails.send({
             from: 'Chapter Platform <notifications@notifications.example.com>',
-            to: person.email,
+            to: email,
             subject: `${titles.length} requirement${titles.length > 1 ? 's' : ''} due soon`,
             html: `<p>Hi ${person.full_name},</p>
 <p>You have upcoming requirements:</p>
