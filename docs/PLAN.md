@@ -6,12 +6,18 @@ this document wins.
 
 ## Progress
 
-- **Next task:** 8.6 / 8.12 (remaining Phase 8).
+- **Next task:** 8.12 (last Phase 8 task).
   4.3 still pending (production launch; now urgent for fall rush).
   Known issue: `supabase/schema-reference.sql` is stale (July 6 snapshot;
   regeneration needs Docker Desktop running — `supabase db dump` truncates the
   file and fails without it).
-- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 4.1, 4.2, Phase 5, Phase 6, 7.1, 7.2, 7.3, 7.4, 7.5, 8.0, 8.1, 8.2, 8.3, 8.4, 8.5, 8.7, 8.8, 8.9, 8.10, 8.11
+- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 4.1, 4.2, Phase 5, Phase 6, 7.1, 7.2, 7.3, 7.4, 7.5, 8.0, 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7, 8.8, 8.9, 8.10, 8.11
+  Task 8.6: Alumni Chapter group created in dev via idempotent
+  `scripts/setup-alumni-group.ts` (group `alumni` / `alumni_chapter` under
+  epsilon-theta, Alumni Officer (full) + Alumni Member (limited) role types,
+  Fall term definition + active Fall 2026 term, full-access alumni membership
+  for officer@test.com). Verified via RLS as the officer persona: both
+  chapter and alumni groups visible. URL: /sigma-nu/epsilon-theta/alumni/….
   Task 8.9 (RLS hardening, migration 20260718000003): config-table writes
   (role_types, status_definitions, positions, terms, term_definitions —
   insert/update/delete) recreated at `get_my_admin_group_ids()` level (were
