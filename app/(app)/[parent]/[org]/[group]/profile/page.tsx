@@ -3,7 +3,7 @@ import { ProfilePage } from '@/components/profile/profile-page'
 import { getMyChangeRequests } from '@/dal/change-requests'
 import { getGroupContext } from '@/dal/group-context'
 import { getPersonProfile } from '@/dal/person-profile'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from '@/lib/supabase/server'
 
 export default async function MyProfileRoute({
   params,
@@ -12,9 +12,7 @@ export default async function MyProfileRoute({
 }) {
   const { parent: parentSlug, org: orgSlug, group: groupSlug } = await params
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser()
   if (!user) redirect('/login')
 
   const ctx = await getGroupContext(supabase, { parentSlug, orgSlug, groupSlug }, user.id)

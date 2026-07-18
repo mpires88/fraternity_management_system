@@ -4,7 +4,7 @@ import { SetOrgCookie } from '@/components/layout/set-org-cookie'
 import { BrandColorProvider } from '@/components/providers/brand-color-provider'
 import { getGroupContext } from '@/dal/group-context'
 import { OrgProvider } from '@/lib/context/org-context'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from '@/lib/supabase/server'
 
 export default async function GroupLayout({
   children,
@@ -16,9 +16,7 @@ export default async function GroupLayout({
   const { parent: parentSlug, org: orgSlug, group: groupSlug } = await params
   const supabase = await createClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser()
   if (!user) redirect('/login')
 
   const ctx = await getGroupContext(supabase, { parentSlug, orgSlug, groupSlug }, user.id)

@@ -5,7 +5,7 @@ import { getAdminSettings } from '@/dal/admin'
 import { getPendingChangeRequests } from '@/dal/change-requests'
 import { getGroupContext } from '@/dal/group-context'
 import { isPlatformAdmin } from '@/lib/auth/org-context'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from '@/lib/supabase/server'
 import { resolvePermissionsFromContext } from '@/lib/utils/resolve-permissions'
 
 export default async function AdminPage({
@@ -15,9 +15,7 @@ export default async function AdminPage({
 }) {
   const { parent: parentSlug, org: orgSlug, group: groupSlug } = await params
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser()
   if (!user) redirect('/login')
 
   const ctx = await getGroupContext(supabase, { parentSlug, orgSlug, groupSlug }, user.id)

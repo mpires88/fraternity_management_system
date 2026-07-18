@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import type { DbClient } from '@/dal/types'
 import type { ActiveRole, ParentOrgInfo } from '@/lib/context/org-context'
 import type { Org, OrgMembership, Person, RoleType, StatusDefinition } from '@/lib/types/db'
@@ -26,26 +27,53 @@ export type GroupContextData = {
   isPlatformAdmin: boolean
 }
 
+// Per-request memo: the group layout and its page both load context during a
+// single navigation — dedupe on slugs + user rather than client identity.
+const requestMemo = cache(() => new Map<string, Promise<GroupContextData | null>>())
+
 /**
  * Loads context for a group within an org under a parent.
  * URL: /[parentSlug]/[orgSlug]/[groupSlug]/...
  */
-export async function getGroupContext(
+export function getGroupContext(
   supabase: DbClient,
   slugs: { parentSlug: string; orgSlug: string; groupSlug: string },
   userId: string
 ): Promise<GroupContextData | null> {
-  // Look up parent org
-  const { data: parentOrg } = await supabase
-    .from('parent_organizations')
-    .select('id, name, slug, logo_url, primary_color, secondary_color')
-    .eq('slug', slugs.parentSlug)
-    .single()
+  const key = `${slugs.parentSlug}|${slugs.orgSlug}|${slugs.groupSlug}|${userId}`
+  const memo = requestMemo()
+  const hit = memo.get(key)
+  if (hit) return hit
+  const pending = loadGroupContext(supabase, slugs, userId)
+  memo.set(key, pending)
+  return pending
+}
+
+async function loadGroupContext(
+  supabase: DbClient,
+  slugs: { parentSlug: string; orgSlug: string; groupSlug: string },
+  userId: string
+): Promise<GroupContextData | null> {
+  // Independent lookups first: parent org, person, platform-admin flag
+  const [parentOrgRes, personRes, adminRes] = await Promise.all([
+    supabase
+      .from('parent_organizations')
+      .select('id, name, slug, logo_url, primary_color, secondary_color')
+      .eq('slug', slugs.parentSlug)
+      .maybeSingle(),
+    // Person (platform-level) — resolve via auth_user_id, not id
+    supabase.from('persons').select('*').eq('auth_user_id', userId).maybeSingle(),
+    supabase.from('platform_admins').select('id').eq('id', userId).maybeSingle(),
+  ])
+
+  const parentOrg = parentOrgRes.data
+  const person = personRes.data
+  if (!person) return null
 
   // For independent orgs, parentSlug = orgSlug (no parent org exists)
   const parentOrgInfo: ParentOrgInfo | null = parentOrg
 
-  // Look up organization
+  // Organization (needs parentOrg) + the person's other groups (needs person)
   let orgQuery = supabase.from('organizations').select('*').eq('slug', slugs.orgSlug)
   if (parentOrg) {
     orgQuery = orgQuery.eq('parent_organization_id', parentOrg.id)
@@ -53,8 +81,17 @@ export async function getGroupContext(
     // Independent org: parentSlug IS the org slug
     orgQuery = supabase.from('organizations').select('*').eq('slug', slugs.parentSlug)
   }
-  const { data: org } = await orgQuery.single()
+  const [orgRes, allMembershipsRes] = await Promise.all([
+    orgQuery.maybeSingle(),
+    supabase
+      .from('group_memberships')
+      .select('group_id, groups(*, organizations(slug, parent_organizations(slug)))')
+      .eq('person_id', person.id)
+      .is('ended_at', null),
+  ])
+  const org = orgRes.data
   if (!org) return null
+  const allMembershipRows = allMembershipsRes.data
 
   // Look up group
   const { data: group } = await supabase
@@ -62,16 +99,8 @@ export async function getGroupContext(
     .select('*')
     .eq('organization_id', org.id)
     .eq('slug', slugs.groupSlug)
-    .single()
+    .maybeSingle()
   if (!group) return null
-
-  // Person (platform-level) — resolve via auth_user_id, not id
-  const { data: person } = await supabase
-    .from('persons')
-    .select('*')
-    .eq('auth_user_id', userId)
-    .single()
-  if (!person) return null
 
   // Active roles in this group
   const { data: membershipRows } = await supabase
@@ -102,13 +131,6 @@ export async function getGroupContext(
 
   if (roles.length === 0) return null
 
-  // All groups this person belongs to (for the group switcher)
-  const { data: allMembershipRows } = await supabase
-    .from('group_memberships')
-    .select('group_id, groups(*, organizations(slug, parent_organizations(slug)))')
-    .eq('person_id', person.id)
-    .is('ended_at', null)
-
   const seenGroups = new Set<string>()
   const allGroups = (allMembershipRows ?? [])
     .filter((row) => {
@@ -128,12 +150,6 @@ export async function getGroupContext(
       }
     })
 
-  const { data: adminRow } = await supabase
-    .from('platform_admins')
-    .select('id')
-    .eq('id', userId)
-    .maybeSingle()
-
   return {
     parentOrg: parentOrgInfo,
     org: org as unknown as Org,
@@ -141,6 +157,6 @@ export async function getGroupContext(
     person: person as unknown as Person,
     roles,
     allGroups,
-    isPlatformAdmin: !!adminRow,
+    isPlatformAdmin: !!adminRes.data,
   }
 }

@@ -19,7 +19,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { getGroupContext } from '@/dal/group-context'
 import { getPersonProfile } from '@/dal/person-profile'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from '@/lib/supabase/server'
 import { resolvePermissionsFromContext } from '@/lib/utils/resolve-permissions'
 
 export default async function MemberProfilePage({
@@ -29,9 +29,7 @@ export default async function MemberProfilePage({
 }) {
   const { parent: parentSlug, org: orgSlug, group: groupSlug, id } = await params
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser()
   if (!user) redirect('/login')
 
   const ctx = await getGroupContext(supabase, { parentSlug, orgSlug, groupSlug }, user.id)

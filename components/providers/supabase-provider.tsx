@@ -28,9 +28,8 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
         router.push('/login')
         router.refresh()
       }
-      if (event === 'TOKEN_REFRESHED') {
-        router.refresh()
-      }
+      // Deliberately no refresh on TOKEN_REFRESHED — it fires roughly hourly
+      // and a full server re-render of the current route is wasted work.
     })
 
     return () => subscription.unsubscribe()

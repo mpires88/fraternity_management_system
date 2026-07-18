@@ -25,10 +25,12 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Refresh session on every request — required for SSR auth
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // Refresh session on every request — required for SSR auth.
+  // getClaims verifies the JWT locally (JWKS) instead of hitting the Auth
+  // endpoint per request like getUser; pages that need a verified user
+  // still call getUser server-side.
+  const { data: claimsData } = await supabase.auth.getClaims()
+  const isAuthenticated = !!claimsData?.claims
 
   const { pathname } = request.nextUrl
 
@@ -39,7 +41,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/reset-password') ||
     pathname.startsWith('/update-password')
 
-  if (!user && !isPublicPath) {
+  if (!isAuthenticated && !isPublicPath) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)

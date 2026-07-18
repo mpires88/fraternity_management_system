@@ -5,14 +5,12 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { getHomeData } from '@/dal/home'
 import { getLabel, ORG_TYPE_LABELS } from '@/lib/constants/labels'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from '@/lib/supabase/server'
 
 export default async function HomePage({ params }: { params: Promise<{ parent: string }> }) {
   const { parent: parentSlug } = await params
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser()
   if (!user) redirect('/login')
 
   // Look up the parent org

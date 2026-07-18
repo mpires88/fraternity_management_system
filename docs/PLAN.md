@@ -9,7 +9,18 @@ this document wins.
 - **Next task:** 8.0 (BLOCKED: dev DB paused — owner must restore at
   supabase.com/dashboard/project/grojoxrglzkxpenizmax; then 8.0 lands before any
   other DB work). 4.3 still pending (production launch; now urgent for fall rush).
-- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 4.1, 4.2, Phase 5, Phase 6, 7.1, 7.2, 7.3, 7.4, 7.5, 8.1, 8.2, 8.3, 8.4, 8.5, 8.7
+- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 4.1, 4.2, Phase 5, Phase 6, 7.1, 7.2, 7.3, 7.4, 7.5, 8.1, 8.2, 8.3, 8.4, 8.5, 8.7, 8.11
+  Task 8.11 (app performance): `createClient` + new `getAuthUser` are React
+  cache()d (layout + page share one client and one Auth call per navigation —
+  all group pages converted); `getGroupContext` is per-request memoized (was
+  fetched twice per navigation) and its 7 sequential queries now run in ~4
+  rounds via Promise.all; middleware uses `getClaims()` (local JWT verify)
+  instead of a network `getUser()` per request; `loading.tsx` added at the
+  [group] segment (streaming skeleton); dashboard counts+term parallelized;
+  TOKEN_REFRESHED no longer full-refreshes the route every hour;
+  `inviteMemberDal` creates one admin client instead of two. Deliberately
+  skipped: narrowing `getMembersByOrg`'s `persons(*)` — the edit-member dialog
+  is fed from those rows and needs the wide columns. Production build verified.
   Task 8.7: polls and documents finally ring the bell — new notification types
   `poll_published` (to participants on publish), `poll_closed` (results ready),
   `document_in_review` (to active group members on submit-for-review), with

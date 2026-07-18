@@ -1,4 +1,4 @@
-import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { createClient as createAdminClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { DbClient } from '@/dal/types'
 import { UserFacingError } from '@/lib/errors'
 import type { OrgMembership, Person, RoleType, StatusDefinition } from '@/lib/types/db'
@@ -96,6 +96,17 @@ export async function inviteMemberDal(
 ): Promise<InviteResult> {
   const { school_email, full_name, role_type_id, invite_email } = input
 
+  // Service-role client for person creation + claim tokens; create at most once
+  let adminClient: SupabaseClient | null = null
+  const getAdmin = () => {
+    adminClient ??= createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
+    return adminClient
+  }
+
   const { data: existingPerson } = await supabase
     .from('persons')
     .select('id, auth_user_id')
@@ -121,14 +132,8 @@ export async function inviteMemberDal(
       throw new UserFacingError('This person is already a member of this group')
     }
   } else {
-    const admin = createAdminClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    )
-
     const newId = crypto.randomUUID()
-    const { error: personError } = await admin
+    const { error: personError } = await getAdmin()
       .from('persons')
       .insert({ id: newId, full_name, school_email })
 
@@ -164,13 +169,7 @@ export async function inviteMemberDal(
     return { personId, claimToken: '' }
   }
 
-  const admin = createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  )
-
-  const { data: tokenRow, error: tokenError } = await admin
+  const { data: tokenRow, error: tokenError } = await getAdmin()
     .from('claim_tokens')
     .insert({
       person_id: personId,

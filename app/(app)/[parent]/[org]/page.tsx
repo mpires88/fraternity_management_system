@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { getGroupPickerDataDal } from '@/dal/orgs'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from '@/lib/supabase/server'
 
 export default async function OrgLandingPage({
   params,
@@ -13,9 +13,7 @@ export default async function OrgLandingPage({
 }) {
   const { parent: parentSlug, org: orgSlug } = await params
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser()
   if (!user) redirect('/login')
 
   const data = await getGroupPickerDataDal(supabase, user.id, parentSlug, orgSlug)

@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { cache } from 'react'
 import type { Database } from './types'
 
 /**
@@ -8,8 +9,10 @@ import type { Database } from './types'
  * Reads currentOrgId from the cookie jar and injects it as the
  * x-org-id request header so Postgres RLS policies can scope queries
  * via current_setting('request.headers').
+ *
+ * Wrapped in React cache() so layout + page share one client per request.
  */
-export async function createClient() {
+export const createClient = cache(async () => {
   const cookieStore = await cookies()
   const currentOrgId = cookieStore.get('currentOrgId')?.value
 
@@ -36,4 +39,17 @@ export async function createClient() {
       },
     }
   )
-}
+})
+
+/**
+ * Per-request memoized auth lookup. The group layout and every page under it
+ * both need the user during one navigation — only the first call hits the
+ * Auth endpoint.
+ */
+export const getAuthUser = cache(async () => {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  return user
+})

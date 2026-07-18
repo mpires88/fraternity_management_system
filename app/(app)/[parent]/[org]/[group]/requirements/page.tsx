@@ -4,7 +4,7 @@ import { MyRequirements } from '@/components/requirements/my-requirements'
 import { PageHeader } from '@/components/ui/page-header'
 import { getGroupContext } from '@/dal/group-context'
 import { getMyAssignments, getRequirementsForGroup } from '@/dal/requirements'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from '@/lib/supabase/server'
 import { resolvePermissionsFromContext } from '@/lib/utils/resolve-permissions'
 
 export default async function RequirementsPage({
@@ -14,9 +14,7 @@ export default async function RequirementsPage({
 }) {
   const { parent: parentSlug, org: orgSlug, group: groupSlug } = await params
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser()
   if (!user) redirect('/login')
 
   const ctx = await getGroupContext(supabase, { parentSlug, orgSlug, groupSlug }, user.id)

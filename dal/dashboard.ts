@@ -15,11 +15,22 @@ export async function getDashboardData(
   supabase: DbClient,
   groupId: string
 ): Promise<DashboardData> {
-  // Member counts by status
-  const { data: memberships } = await supabase
-    .from('group_memberships')
-    .select('status_id, status_definitions(slug)')
-    .eq('group_id', groupId)
+  // Member counts by status + current term (independent lookups)
+  const [membershipsRes, currentTermRes] = await Promise.all([
+    supabase
+      .from('group_memberships')
+      .select('status_id, status_definitions(slug)')
+      .eq('group_id', groupId),
+    supabase
+      .from('terms')
+      .select('id, name, starts_on, ends_on')
+      .eq('group_id', groupId)
+      .eq('status', 'active')
+      .limit(1)
+      .maybeSingle(),
+  ])
+  const memberships = membershipsRes.data
+  const currentTerm = currentTermRes.data
 
   const counts = { active: 0, candidate: 0, away: 0, alumni: 0, total: 0 }
   for (const m of memberships ?? []) {
@@ -31,15 +42,6 @@ export async function getDashboardData(
     else if (slug === 'away') counts.away++
     else if (slug === 'active') counts.active++
   }
-
-  // Current term
-  const { data: currentTerm } = await supabase
-    .from('terms')
-    .select('id, name, starts_on, ends_on')
-    .eq('group_id', groupId)
-    .eq('status', 'active')
-    .limit(1)
-    .single()
 
   // Find the latest term that has position assignments
   // (the "current" term from seed may not have assignments — the CSV data does)

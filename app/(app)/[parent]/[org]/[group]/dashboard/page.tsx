@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/ui/page-header'
 import { getDashboardData } from '@/dal/dashboard'
 import { getGroupContext } from '@/dal/group-context'
 import { getMyAssignments } from '@/dal/requirements'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getAuthUser } from '@/lib/supabase/server'
 
 export default async function DashboardPage({
   params,
@@ -16,9 +16,7 @@ export default async function DashboardPage({
 }) {
   const { parent: parentSlug, org: orgSlug, group: groupSlug } = await params
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser()
   if (!user) redirect('/login')
 
   const ctx = await getGroupContext(supabase, { parentSlug, orgSlug, groupSlug }, user.id)
