@@ -9,7 +9,13 @@ this document wins.
 - **Next task:** 8.0 (BLOCKED: dev DB paused — owner must restore at
   supabase.com/dashboard/project/grojoxrglzkxpenizmax; then 8.0 lands before any
   other DB work). 4.3 still pending (production launch; now urgent for fall rush).
-- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 4.1, 4.2, Phase 5, Phase 6, 7.1, 7.2, 7.3, 7.4, 7.5, 8.1, 8.2
+- **Completed:** 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.1, 1.2, 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.3, 4.1, 4.2, Phase 5, Phase 6, 7.1, 7.2, 7.3, 7.4, 7.5, 8.1, 8.2, 8.3
+  Task 8.3: notification hrefs are now group-prefixed. Pure `buildGroupHref`
+  (`lib/utils/hrefs.ts`, unit-tested) + `getGroupSlugPathDal` (dal/orgs.ts);
+  trigger functions resolve the full `/[parent]/[org]/[group]/<feature>` link
+  internally (call sites still pass '/requirements' as the feature path); cron
+  resolves slug paths once per distinct group; digest email links to the app
+  root (a digest can span groups). Previously every bell click 404'd.
   Task 8.2: group picker page (`[org]/page.tsx`) now calls `getGroupPickerDataDal`
   (dal/orgs.ts) which resolves the person via `auth_user_id` — the page previously
   queried memberships by the auth uid and showed claimed users zero groups; page

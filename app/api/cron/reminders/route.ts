@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { NOTIFICATION_TYPES } from '@/lib/constants/notifications'
+import { buildGroupHref } from '@/lib/utils/hrefs'
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization')
@@ -46,6 +47,32 @@ export async function GET(request: Request) {
   )
 
   if (toNotify.length > 0) {
+    // Resolve each group's slug path once so hrefs are group-prefixed
+    const groupIds = [
+      ...new Set(toNotify.map((a) => (a.requirements as unknown as ReqData).group_id)),
+    ]
+    const { data: groupRows } = await supabase
+      .from('groups')
+      .select('id, slug, organizations(slug, parent_organizations(slug))')
+      .in('id', groupIds)
+
+    const hrefByGroup = new Map<string, string>()
+    for (const g of groupRows ?? []) {
+      const org = g.organizations as unknown as {
+        slug: string
+        parent_organizations: { slug: string } | null
+      } | null
+      if (org?.parent_organizations) {
+        hrefByGroup.set(
+          g.id,
+          buildGroupHref(
+            { parentSlug: org.parent_organizations.slug, orgSlug: org.slug, groupSlug: g.slug },
+            '/requirements'
+          )
+        )
+      }
+    }
+
     const rows = toNotify.map((a) => {
       const req = a.requirements as unknown as ReqData
       const isPast = req.due_at < today
@@ -57,7 +84,7 @@ export async function GET(request: Request) {
         title: isPast
           ? `Overdue: "${req.title}" was due ${req.due_at}`
           : `Due soon: "${req.title}" is due ${req.due_at}`,
-        href: '/requirements',
+        href: hrefByGroup.get(req.group_id) ?? '/',
       }
     })
 
@@ -120,7 +147,7 @@ export async function GET(request: Request) {
             html: `<p>Hi ${person.full_name},</p>
 <p>You have upcoming requirements:</p>
 <ul>${listHtml}</ul>
-<p><a href="${appUrl}/requirements">View your requirements</a></p>`,
+<p><a href="${appUrl}">Open the app to view your requirements</a></p>`,
           })
 
           await supabase

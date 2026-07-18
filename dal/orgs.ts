@@ -1,4 +1,32 @@
 import type { DbClient } from '@/dal/types'
+import type { GroupSlugPath } from '@/lib/utils/hrefs'
+
+/**
+ * Resolves a group's URL slugs (parent org / org / group) for building
+ * group-scoped hrefs. Returns null if the chain is incomplete.
+ */
+export async function getGroupSlugPathDal(
+  supabase: DbClient,
+  groupId: string
+): Promise<GroupSlugPath | null> {
+  const { data } = await supabase
+    .from('groups')
+    .select('slug, organizations(slug, parent_organizations(slug))')
+    .eq('id', groupId)
+    .maybeSingle()
+
+  const org = data?.organizations as {
+    slug: string
+    parent_organizations: { slug: string } | null
+  } | null
+  if (!data || !org?.parent_organizations) return null
+
+  return {
+    parentSlug: org.parent_organizations.slug,
+    orgSlug: org.slug,
+    groupSlug: data.slug,
+  }
+}
 
 export interface GroupPickerGroup {
   id: string
