@@ -131,6 +131,76 @@ export async function getGroupPickerDataDal(
   }
 }
 
+export interface MyOrganization {
+  id: string
+  name: string
+  slug: string
+  parentSlug: string | null
+  parentName: string | null
+  logoUrl: string | null
+  groups: { name: string; slug: string }[]
+}
+
+/**
+ * The organizations a person belongs to (via active, non-expelled group
+ * memberships), with the groups they hold in each — drives the post-login
+ * organization picker.
+ */
+export async function getMyOrganizationsDal(
+  supabase: DbClient,
+  authUserId: string
+): Promise<MyOrganization[]> {
+  const { data: personRow } = await supabase
+    .from('persons')
+    .select('id')
+    .eq('auth_user_id', authUserId)
+    .maybeSingle()
+  if (!personRow) return []
+
+  const { data: memberships } = await supabase
+    .from('group_memberships')
+    .select(
+      'group_id, status_definitions(slug), groups(id, name, slug, organizations(id, name, slug, logo_url, parent_organizations(name, slug)))'
+    )
+    .eq('person_id', personRow.id)
+    .is('ended_at', null)
+
+  const orgs = new Map<string, MyOrganization>()
+  for (const m of memberships ?? []) {
+    if ((m.status_definitions as { slug: string } | null)?.slug === 'expelled') continue
+    const g = m.groups as unknown as {
+      id: string
+      name: string
+      slug: string
+      organizations: {
+        id: string
+        name: string
+        slug: string
+        logo_url: string | null
+        parent_organizations: { name: string; slug: string } | null
+      } | null
+    } | null
+    if (!g?.organizations) continue
+    const o = g.organizations
+    if (!orgs.has(o.id)) {
+      orgs.set(o.id, {
+        id: o.id,
+        name: o.name,
+        slug: o.slug,
+        parentSlug: o.parent_organizations?.slug ?? null,
+        parentName: o.parent_organizations?.name ?? null,
+        logoUrl: o.logo_url,
+        groups: [],
+      })
+    }
+    const entry = orgs.get(o.id)!
+    if (!entry.groups.some((eg) => eg.slug === g.slug)) {
+      entry.groups.push({ name: g.name, slug: g.slug })
+    }
+  }
+  return [...orgs.values()].sort((a, b) => a.name.localeCompare(b.name))
+}
+
 /**
  * Resolves where to send a newly-logged-in user.
  *

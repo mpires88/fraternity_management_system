@@ -6,6 +6,21 @@ this document wins.
 
 ## Progress
 
+- **Login flow + platform-admin controls (user-directed 2026-07-19):** root
+  `/` is now the post-login lander — single org goes straight in (dashboard
+  or group picker), multiple orgs render an organization picker
+  (`getMyOrganizationsDal`); membership-less platform admins land on
+  /platform-admin. Platform admins get a sidebar control strip
+  (`AdminSwitcher`): jump to any organization, any group, and a **view-as**
+  selector (yourself / officer / member). Mechanics: migration
+  20260719000007 adds `is_platform_admin()` + additive select policies on
+  organizations/groups (verified live: admin persona sees all 3 groups,
+  member still sees 1; RLS suite 24 green); `getGroupContext` synthesizes a
+  virtual role — "Platform Admin" (full) for groups the admin doesn't belong
+  to, or an officer/member preview role from the `viewAs` cookie (context
+  memo keys on it). View-as is a UI/permission PREVIEW — RLS still governs
+  all data underneath. Note: cross-org page DATA may render empty until
+  feature-table policies grow admin branches; layout/nav is the goal here.
 - **Sidebar layout preview (user-directed 2026-07-19):** navigation now shows
   the full module layout ahead of feature wiring, honoring the no-404 rule via
   `ModulePreview` placeholder pages (each states its phase and what will live

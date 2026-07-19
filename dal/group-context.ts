@@ -1,3 +1,4 @@
+import { cookies } from 'next/headers'
 import { cache } from 'react'
 import type { DbClient } from '@/dal/types'
 import type { ActiveRole, ParentOrgInfo } from '@/lib/context/org-context'
@@ -34,25 +35,84 @@ const requestMemo = cache(() => new Map<string, Promise<GroupContextData | null>
 /**
  * Loads context for a group within an org under a parent.
  * URL: /[parentSlug]/[orgSlug]/[groupSlug]/...
+ *
+ * Platform admins get a synthesized "Platform Admin" role for groups they
+ * don't belong to, and may preview the UI as an officer or plain member via
+ * the viewAs cookie — display/permission preview only; RLS still applies to
+ * every query they make.
  */
-export function getGroupContext(
+export async function getGroupContext(
   supabase: DbClient,
   slugs: { parentSlug: string; orgSlug: string; groupSlug: string },
   userId: string
 ): Promise<GroupContextData | null> {
-  const key = `${slugs.parentSlug}|${slugs.orgSlug}|${slugs.groupSlug}|${userId}`
+  const cookieStore = await cookies()
+  const viewAsCookie = cookieStore.get('viewAs')?.value ?? ''
+  const viewAs = viewAsCookie === 'officer' || viewAsCookie === 'member' ? viewAsCookie : null
+
+  const key = `${slugs.parentSlug}|${slugs.orgSlug}|${slugs.groupSlug}|${userId}|${viewAs ?? ''}`
   const memo = requestMemo()
   const hit = memo.get(key)
   if (hit) return hit
-  const pending = loadGroupContext(supabase, slugs, userId)
+  const pending = loadGroupContext(supabase, slugs, userId, viewAs)
   memo.set(key, pending)
   return pending
+}
+
+/** Synthetic role for platform-admin browsing and view-as previews. */
+function virtualRole(groupId: string, accessLevel: 'full' | 'limited', name: string): ActiveRole {
+  const full = accessLevel === 'full'
+  return {
+    membership: {
+      id: `virtual-${accessLevel}`,
+      group_id: groupId,
+      person_id: 'virtual',
+      role_type_id: null,
+      status_id: null,
+      chapter_email: null,
+      joined_at: null,
+      started_at: null,
+      ended_at: null,
+      notes: null,
+    } as unknown as OrgMembership,
+    roleType: {
+      id: `virtual-role-${accessLevel}`,
+      group_id: groupId,
+      name,
+      slug: `virtual-${accessLevel}`,
+      access_level: accessLevel,
+      description: null,
+      color: null,
+      display_order: null,
+      is_default: false,
+      can_vote: true,
+      can_hold_office: full,
+      can_attend_events: true,
+      can_speak_at_meetings: true,
+      can_view_roster: true,
+      can_view_documents: true,
+      can_view_financials: full,
+      can_view_minutes: true,
+      can_submit_expenses: full,
+    } as unknown as RoleType,
+    statusDefinition: {
+      id: 'virtual-status-active',
+      name: 'Active',
+      slug: 'active',
+      group_id: null,
+      description: null,
+      color: null,
+      display_order: null,
+      is_base: true,
+    } as unknown as StatusDefinition,
+  }
 }
 
 async function loadGroupContext(
   supabase: DbClient,
   slugs: { parentSlug: string; orgSlug: string; groupSlug: string },
-  userId: string
+  userId: string,
+  viewAs: 'officer' | 'member' | null = null
 ): Promise<GroupContextData | null> {
   // Independent lookups first: parent org, person, platform-admin flag
   const [parentOrgRes, personRes, adminRes] = await Promise.all([
@@ -102,6 +162,8 @@ async function loadGroupContext(
     .maybeSingle()
   if (!group) return null
 
+  const isAdmin = !!adminRes.data
+
   // Active roles in this group
   const { data: membershipRows } = await supabase
     .from('group_memberships')
@@ -110,9 +172,9 @@ async function loadGroupContext(
     .eq('group_id', group.id)
     .is('ended_at', null)
 
-  if (!membershipRows || membershipRows.length === 0) return null
+  if ((!membershipRows || membershipRows.length === 0) && !isAdmin) return null
 
-  const roles: ActiveRole[] = membershipRows
+  let roles: ActiveRole[] = (membershipRows ?? [])
     .map((row) => {
       const r = row as unknown as OrgMembership & {
         role_types: RoleType
@@ -129,7 +191,19 @@ async function loadGroupContext(
     })
     .filter((r): r is ActiveRole => r !== null)
 
-  if (roles.length === 0) return null
+  if (roles.length === 0 && !isAdmin) return null
+
+  // Platform-admin affordances: browse any group; preview as officer/member.
+  // Display + UI-permission preview only — RLS still governs data access.
+  if (isAdmin) {
+    if (viewAs === 'member') {
+      roles = [virtualRole(group.id, 'limited', 'Member (view as)')]
+    } else if (viewAs === 'officer') {
+      roles = [virtualRole(group.id, 'full', 'Officer (view as)')]
+    } else if (roles.length === 0) {
+      roles = [virtualRole(group.id, 'full', 'Platform Admin')]
+    }
+  }
 
   const seenGroups = new Set<string>()
   const allGroups = (allMembershipRows ?? [])

@@ -23,6 +23,7 @@ import {
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { AdminSwitcher } from '@/components/layout/admin-switcher'
 import { NotificationBell } from '@/components/layout/notification-bell'
 import { ThemeSelector } from '@/components/layout/theme-selector'
 import { ThemeToggle } from '@/components/layout/theme-toggle'
@@ -142,6 +143,9 @@ export function AppSidebar() {
           </div>
         )}
       </div>
+
+      {/* Platform-admin controls: org / group / view-as */}
+      {isPlatformAdmin && <AdminSwitcher />}
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-1">
