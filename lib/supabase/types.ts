@@ -39,6 +39,222 @@ export type Database = {
   }
   public: {
     Tables: {
+      budget_line_items: {
+        Row: {
+          amount: number
+          category: string | null
+          created_at: string
+          description: string
+          display_order: number | null
+          id: string
+          notes: string | null
+          proposal_id: string
+        }
+        Insert: {
+          amount: number
+          category?: string | null
+          created_at?: string
+          description: string
+          display_order?: number | null
+          id?: string
+          notes?: string | null
+          proposal_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          created_at?: string
+          description?: string
+          display_order?: number | null
+          id?: string
+          notes?: string | null
+          proposal_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_line_items_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "budget_proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_proposals: {
+        Row: {
+          budget_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          position_id: string | null
+          status: string
+          subgroup_id: string | null
+          submitted_at: string | null
+          submitted_by: string
+          updated_at: string
+        }
+        Insert: {
+          budget_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          position_id?: string | null
+          status?: string
+          subgroup_id?: string | null
+          submitted_at?: string | null
+          submitted_by: string
+          updated_at?: string
+        }
+        Update: {
+          budget_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          position_id?: string | null
+          status?: string
+          subgroup_id?: string | null
+          submitted_at?: string | null
+          submitted_by?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_proposals_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_proposals_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "positions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_proposals_subgroup_id_fkey"
+            columns: ["subgroup_id"]
+            isOneToOne: false
+            referencedRelation: "subgroups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budget_proposals_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budgets: {
+        Row: {
+          approval_mode: string
+          approved_at: string | null
+          approved_by: string | null
+          approver_group_id: string | null
+          approver_position_id: string | null
+          created_at: string
+          created_by: string
+          group_id: string
+          id: string
+          poll_id: string | null
+          ratified_at: string | null
+          status: string
+          submitted_at: string | null
+          term_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          approval_mode?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          approver_group_id?: string | null
+          approver_position_id?: string | null
+          created_at?: string
+          created_by: string
+          group_id: string
+          id?: string
+          poll_id?: string | null
+          ratified_at?: string | null
+          status?: string
+          submitted_at?: string | null
+          term_id: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          approval_mode?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          approver_group_id?: string | null
+          approver_position_id?: string | null
+          created_at?: string
+          created_by?: string
+          group_id?: string
+          id?: string
+          poll_id?: string | null
+          ratified_at?: string | null
+          status?: string
+          submitted_at?: string | null
+          term_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budgets_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budgets_approver_group_id_fkey"
+            columns: ["approver_group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budgets_approver_position_id_fkey"
+            columns: ["approver_position_id"]
+            isOneToOne: false
+            referencedRelation: "positions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budgets_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budgets_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budgets_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "polls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budgets_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       claim_tokens: {
         Row: {
           claimed_at: string | null
@@ -406,6 +622,129 @@ export type Database = {
         }
         Relationships: []
       }
+      event_prospect_attendance: {
+        Row: {
+          checked_in_by: string
+          created_at: string
+          event_id: string
+          id: string
+          prospect_id: string
+        }
+        Insert: {
+          checked_in_by: string
+          created_at?: string
+          event_id: string
+          id?: string
+          prospect_id: string
+        }
+        Update: {
+          checked_in_by?: string
+          created_at?: string
+          event_id?: string
+          id?: string
+          prospect_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_prospect_attendance_checked_in_by_fkey"
+            columns: ["checked_in_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_prospect_attendance_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_prospect_attendance_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          ends_at: string | null
+          group_id: string
+          id: string
+          kind: string
+          location: string | null
+          starts_at: string
+          term_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          ends_at?: string | null
+          group_id: string
+          id?: string
+          kind?: string
+          location?: string | null
+          starts_at: string
+          term_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          ends_at?: string | null
+          group_id?: string
+          id?: string
+          kind?: string
+          location?: string | null
+          starts_at?: string
+          term_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "event_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "events_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       facilities: {
         Row: {
           address: string | null
@@ -611,6 +950,358 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      housing_lotteries: {
+        Row: {
+          closes_at: string | null
+          created_at: string
+          created_by: string
+          facility_id: string
+          group_id: string
+          id: string
+          opens_at: string | null
+          pick_window_hours: number | null
+          points_config: Json
+          status: string
+          term_id: string
+          updated_at: string
+        }
+        Insert: {
+          closes_at?: string | null
+          created_at?: string
+          created_by: string
+          facility_id: string
+          group_id: string
+          id?: string
+          opens_at?: string | null
+          pick_window_hours?: number | null
+          points_config?: Json
+          status?: string
+          term_id: string
+          updated_at?: string
+        }
+        Update: {
+          closes_at?: string | null
+          created_at?: string
+          created_by?: string
+          facility_id?: string
+          group_id?: string
+          id?: string
+          opens_at?: string | null
+          pick_window_hours?: number | null
+          points_config?: Json
+          status?: string
+          term_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "housing_lotteries_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "housing_lotteries_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "housing_lotteries_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "housing_lotteries_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      housing_lottery_entrants: {
+        Row: {
+          draft_order: number | null
+          id: string
+          lottery_id: string
+          person_id: string
+          points_breakdown: Json | null
+          points_snapshot: number
+          status: string
+          turn_started_at: string | null
+        }
+        Insert: {
+          draft_order?: number | null
+          id?: string
+          lottery_id: string
+          person_id: string
+          points_breakdown?: Json | null
+          points_snapshot?: number
+          status?: string
+          turn_started_at?: string | null
+        }
+        Update: {
+          draft_order?: number | null
+          id?: string
+          lottery_id?: string
+          person_id?: string
+          points_breakdown?: Json | null
+          points_snapshot?: number
+          status?: string
+          turn_started_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "housing_lottery_entrants_lottery_id_fkey"
+            columns: ["lottery_id"]
+            isOneToOne: false
+            referencedRelation: "housing_lotteries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "housing_lottery_entrants_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      housing_lottery_picks: {
+        Row: {
+          entrant_id: string
+          id: string
+          lottery_id: string
+          pick_number: number
+          picked_at: string
+          room_id: string
+        }
+        Insert: {
+          entrant_id: string
+          id?: string
+          lottery_id: string
+          pick_number: number
+          picked_at?: string
+          room_id: string
+        }
+        Update: {
+          entrant_id?: string
+          id?: string
+          lottery_id?: string
+          pick_number?: number
+          picked_at?: string
+          room_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "housing_lottery_picks_entrant_id_fkey"
+            columns: ["entrant_id"]
+            isOneToOne: false
+            referencedRelation: "housing_lottery_entrants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "housing_lottery_picks_lottery_id_fkey"
+            columns: ["lottery_id"]
+            isOneToOne: false
+            referencedRelation: "housing_lotteries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "housing_lottery_picks_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      housing_point_adjustments: {
+        Row: {
+          amount: number
+          created_at: string
+          group_id: string
+          id: string
+          logged_by: string
+          person_id: string
+          reason: string
+          term_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          group_id: string
+          id?: string
+          logged_by: string
+          person_id: string
+          reason: string
+          term_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          group_id?: string
+          id?: string
+          logged_by?: string
+          person_id?: string
+          reason?: string
+          term_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "housing_point_adjustments_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "housing_point_adjustments_logged_by_fkey"
+            columns: ["logged_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "housing_point_adjustments_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "housing_point_adjustments_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      issues: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          description: string | null
+          escalated_at: string | null
+          escalated_by: string | null
+          escalated_to_group_id: string | null
+          facility_id: string | null
+          group_id: string
+          id: string
+          kind: string
+          location_note: string | null
+          photo_paths: string[] | null
+          priority: string
+          reported_by: string
+          resolution_note: string | null
+          resolved_at: string | null
+          room_id: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          escalated_at?: string | null
+          escalated_by?: string | null
+          escalated_to_group_id?: string | null
+          facility_id?: string | null
+          group_id: string
+          id?: string
+          kind?: string
+          location_note?: string | null
+          photo_paths?: string[] | null
+          priority?: string
+          reported_by: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          room_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          description?: string | null
+          escalated_at?: string | null
+          escalated_by?: string | null
+          escalated_to_group_id?: string | null
+          facility_id?: string | null
+          group_id?: string
+          id?: string
+          kind?: string
+          location_note?: string | null
+          photo_paths?: string[] | null
+          priority?: string
+          reported_by?: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          room_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "issues_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "issues_escalated_by_fkey"
+            columns: ["escalated_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "issues_escalated_to_group_id_fkey"
+            columns: ["escalated_to_group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "issues_facility_id_fkey"
+            columns: ["facility_id"]
+            isOneToOne: false
+            referencedRelation: "facilities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "issues_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "issues_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "issues_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
             referencedColumns: ["id"]
           },
         ]
@@ -1437,6 +2128,258 @@ export type Database = {
           },
         ]
       }
+      prospect_feedback: {
+        Row: {
+          author_person_id: string
+          body: string
+          created_at: string
+          id: string
+          prospect_id: string
+          rating: number | null
+        }
+        Insert: {
+          author_person_id: string
+          body: string
+          created_at?: string
+          id?: string
+          prospect_id: string
+          rating?: number | null
+        }
+        Update: {
+          author_person_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          prospect_id?: string
+          rating?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_feedback_author_person_id_fkey"
+            columns: ["author_person_id"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospect_feedback_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospects: {
+        Row: {
+          added_by: string
+          converted_person_id: string | null
+          created_at: string
+          email: string | null
+          full_name: string
+          group_id: string
+          id: string
+          phone: string | null
+          poll_id: string | null
+          school_year: string | null
+          status: string
+          term_id: string
+          updated_at: string
+        }
+        Insert: {
+          added_by: string
+          converted_person_id?: string | null
+          created_at?: string
+          email?: string | null
+          full_name: string
+          group_id: string
+          id?: string
+          phone?: string | null
+          poll_id?: string | null
+          school_year?: string | null
+          status?: string
+          term_id: string
+          updated_at?: string
+        }
+        Update: {
+          added_by?: string
+          converted_person_id?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          group_id?: string
+          id?: string
+          phone?: string | null
+          poll_id?: string | null
+          school_year?: string | null
+          status?: string
+          term_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospects_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospects_converted_person_id_fkey"
+            columns: ["converted_person_id"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospects_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospects_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "polls"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospects_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reimbursements: {
+        Row: {
+          amount: number
+          applied_progress_entry_id: string | null
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          description: string
+          external_ref: string | null
+          group_id: string
+          id: string
+          line_item_id: string | null
+          occurred_on: string
+          proposal_id: string | null
+          receipt_paths: string[] | null
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          submitted_by: string
+          term_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          applied_progress_entry_id?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          description: string
+          external_ref?: string | null
+          group_id: string
+          id?: string
+          line_item_id?: string | null
+          occurred_on: string
+          proposal_id?: string | null
+          receipt_paths?: string[] | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          submitted_by: string
+          term_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          applied_progress_entry_id?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          description?: string
+          external_ref?: string | null
+          group_id?: string
+          id?: string
+          line_item_id?: string | null
+          occurred_on?: string
+          proposal_id?: string | null
+          receipt_paths?: string[] | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          submitted_by?: string
+          term_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reimbursements_applied_progress_entry_id_fkey"
+            columns: ["applied_progress_entry_id"]
+            isOneToOne: false
+            referencedRelation: "requirement_progress_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reimbursements_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reimbursements_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reimbursements_line_item_id_fkey"
+            columns: ["line_item_id"]
+            isOneToOne: false
+            referencedRelation: "budget_line_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reimbursements_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "budget_proposals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reimbursements_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reimbursements_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reimbursements_term_id_fkey"
+            columns: ["term_id"]
+            isOneToOne: false
+            referencedRelation: "terms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       requirement_assignments: {
         Row: {
           completed_at: string | null
@@ -2251,11 +3194,17 @@ export type Database = {
         Args: { p_resource_id: string; p_resource_type: string }
         Returns: boolean
       }
+      current_lottery_turn: { Args: { p_lottery_id: string }; Returns: string }
       get_my_admin_group_ids: { Args: never; Returns: string[] }
       get_my_group_ids: { Args: never; Returns: string[] }
+      get_my_module_admin_group_ids: {
+        Args: { p_module: string }
+        Returns: string[]
+      }
       get_my_org_ids: { Args: never; Returns: string[] }
       get_my_organization_ids: { Args: never; Returns: string[] }
       get_my_person_id: { Args: never; Returns: string }
+      get_my_position_ids: { Args: never; Returns: string[] }
       is_person_in_group: {
         Args: { p_group_id: string; p_person_id: string }
         Returns: boolean

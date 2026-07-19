@@ -161,6 +161,103 @@ describe('plain member', () => {
   })
 })
 
+describe('schema-first tables (phases 9–13)', () => {
+  it('anon sees none of the new tables', async () => {
+    for (const table of ['events', 'prospects', 'budgets', 'issues', 'housing_lotteries']) {
+      const { data } = await anon.from(table).select('id')
+      expect(data ?? [], table).toHaveLength(0)
+    }
+  })
+
+  it('outsider sees none of the new tables', async () => {
+    for (const table of ['events', 'prospects', 'budgets', 'issues', 'reimbursements']) {
+      const { data } = await outsider.from(table).select('id')
+      expect(data ?? [], table).toHaveLength(0)
+    }
+  })
+
+  it('member cannot create a prospect (rush-module gate)', async () => {
+    const { data: myGroups } = await member.rpc('get_my_group_ids')
+    const { error } = await member.from('prospects').insert({
+      group_id: myGroups![0],
+      term_id: '00000000-0000-0000-0000-000000000000',
+      full_name: 'RLS test — must be rejected',
+      added_by: '00000000-0000-0000-0000-000000000000',
+    })
+    expect(error).not.toBeNull()
+  })
+
+  it('member cannot create a budget (treasurer gate)', async () => {
+    const { data: myGroups } = await member.rpc('get_my_group_ids')
+    const { error } = await member.from('budgets').insert({
+      group_id: myGroups![0],
+      term_id: '00000000-0000-0000-0000-000000000000',
+      created_by: '00000000-0000-0000-0000-000000000000',
+    })
+    expect(error).not.toBeNull()
+  })
+
+  it('member cannot add lottery point adjustments (house-manager gate)', async () => {
+    const { data: myGroups } = await member.rpc('get_my_group_ids')
+    const { data: auth } = await member.auth.getUser()
+    const { data: me } = await member
+      .from('persons')
+      .select('id')
+      .eq('auth_user_id', auth.user!.id)
+      .single()
+    const { error } = await member.from('housing_point_adjustments').insert({
+      group_id: myGroups![0],
+      person_id: me!.id,
+      amount: 100,
+      reason: 'RLS test — must be rejected',
+      logged_by: me!.id,
+    })
+    expect(error).not.toBeNull()
+  })
+
+  it('member CAN report an issue; cannot triage it; officer cleans up', async () => {
+    const { data: myGroups } = await member.rpc('get_my_group_ids')
+    const { data: auth } = await member.auth.getUser()
+    const { data: me } = await member
+      .from('persons')
+      .select('id')
+      .eq('auth_user_id', auth.user!.id)
+      .single()
+    const { data: issue, error } = await member
+      .from('issues')
+      .insert({
+        group_id: myGroups![0],
+        kind: 'operations',
+        title: 'RLS suite round-trip issue',
+        reported_by: me!.id,
+      })
+      .select('id')
+      .single()
+    expect(error).toBeNull()
+
+    const { data: updated } = await member
+      .from('issues')
+      .update({ status: 'acknowledged' })
+      .eq('id', issue!.id)
+      .select('id')
+    expect(updated ?? []).toHaveLength(0)
+
+    const { error: delError } = await officer.from('issues').delete().eq('id', issue!.id)
+    expect(delError).toBeNull()
+  })
+
+  it('module helper: officer resolves module groups, member resolves none', async () => {
+    const { data: officerRush } = await officer.rpc('get_my_module_admin_group_ids', {
+      p_module: 'rush',
+    })
+    expect(officerRush?.length).toBeGreaterThan(0)
+    const { data: memberRush } = await member.rpc('get_my_module_admin_group_ids', {
+      p_module: 'rush',
+    })
+    expect(memberRush ?? []).toHaveLength(0)
+  })
+})
+
 describe('officer (full access)', () => {
   it('is a group admin', async () => {
     const { data } = await officer.rpc('get_my_admin_group_ids')

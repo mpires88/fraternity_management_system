@@ -6,6 +6,26 @@ this document wins.
 
 ## Progress
 
+- **Schema-first batch (user-directed 2026-07-19):** the schema+RLS portions
+  of Phases 9–13 are DONE ahead of feature code, implementing the layout-pass
+  decisions (full rationale in assistant memory `phases-8-15-roadmap.md`).
+  Migrations 20260719000001–06: module permission helpers
+  (`get_my_module_admin_group_ids` activating is_rush_chair/is_treasurer/
+  is_house_manager, `get_my_position_ids`); generic `events` (kind +
+  event_categories link) + `prospects`/`event_prospect_attendance`/
+  `prospect_feedback` (neutral recruitment naming; feedback has NO audit
+  trigger by design); `budgets`/`budget_proposals`/`budget_line_items`
+  (multi-budget per term, cross-group `approver_group_id`, general proposal)
+  + `reimbursements` (officer-area routing, credit-via-payments-engine,
+  `receipts` bucket); housing re-scope (facilities.managed_by_group_id,
+  org-wide reads, house-manager writes, audit triggers);
+  `housing_point_adjustments` + `housing_lotteries`/`_entrants`/`_picks`
+  (DB-enforced turns via `current_lottery_turn` + SECURITY DEFINER triggers
+  bridging picks → room_assignments); generalized `issues` (kind,
+  reported_by, assigned_to, escalation) + `issue-photos` bucket; comments
+  CHECK + `can_read_comments` extended with 'budget' (two-group) and 'issue'
+  (two-group). RLS persona suite extended to 24 tests, all green live.
+  Feature code (DAL/actions/UI) still lands with its phases.
 - **Next task:** Phase 8 COMPLETE (incl. follow-ups 8.13, 8.14). Next: 4.3
   (production launch — urgent for fall rush; import scripts updated for the
   person_sensitive_details split AND the pledge_classes drop), then Phases
