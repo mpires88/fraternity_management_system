@@ -6,6 +6,17 @@ this document wins.
 
 ## Progress
 
+- **Sidebar layout preview (user-directed 2026-07-19):** navigation now shows
+  the full module layout ahead of feature wiring, honoring the no-404 rule via
+  `ModulePreview` placeholder pages (each states its phase and what will live
+  there). New group-flag-gated entries: Events, Recruitment (label from group
+  terminology — chapter shows "Rush"), Housing, Issues top-level; new Money
+  section (Budget, Reimbursements) gated on the `budget` flag. `OrgFeatures`
+  gains `recruitment`/`issues` keys (legacy `rush` marked deprecated). Dev
+  flags set: chapter all modules ("Rush" terminology), SNHC +issues, alumni
+  +events/budget. Note: `useOrg().org` is the GROUP (legacy naming) — module
+  flags read from group features. When a phase's real page lands, it replaces
+  the preview in place.
 - **Schema-first batch (user-directed 2026-07-19):** the schema+RLS portions
   of Phases 9–13 are DONE ahead of feature code, implementing the layout-pass
   decisions (full rationale in assistant memory `phases-8-15-roadmap.md`).

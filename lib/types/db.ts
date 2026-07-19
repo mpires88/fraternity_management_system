@@ -38,7 +38,10 @@ export type OrgFeatures = {
   elections: boolean
   voting: boolean
   house: boolean
+  /** @deprecated legacy key — the module flag is `recruitment` */
   rush: boolean
+  recruitment: boolean
+  issues: boolean
   tasks: boolean
   subgroups: boolean
 }

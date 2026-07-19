@@ -1,18 +1,24 @@
 'use client'
 
 import {
+  Calendar,
   ChevronDown,
   ChevronRight,
   CircleUser,
   ClipboardCheck,
   FileText,
   GitBranch,
+  Home,
   LayoutDashboard,
   LogOut,
+  Receipt,
   Settings,
   Shield,
+  UserPlus,
   Users,
   Vote,
+  Wallet,
+  Wrench,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -37,6 +43,11 @@ export function AppSidebar() {
     ? `/${parentOrg.slug}/${org.slug}/${group.slug}`
     : `/${org.slug}/${org.slug}/${group.slug}`
 
+  // "org" from useOrg() is the current group (legacy naming) — module flags
+  // live on the group's features jsonb
+  const recruitmentLabel =
+    (group.terminology as Record<string, string> | null)?.recruitment ?? 'Recruitment'
+
   const groups: NavGroup[] = [
     {
       label: 'Members',
@@ -49,6 +60,20 @@ export function AppSidebar() {
           ? [{ label: 'Subgroups', href: `${base}/subgroups`, icon: <GitBranch size={15} /> }]
           : []),
       ],
+    },
+    {
+      label: 'Money',
+      icon: <Wallet size={16} />,
+      items: isEnabled(org, 'budget')
+        ? [
+            { label: 'Budget', href: `${base}/budget`, icon: <Wallet size={15} /> },
+            {
+              label: 'Reimbursements',
+              href: `${base}/reimbursements`,
+              icon: <Receipt size={15} />,
+            },
+          ]
+        : [],
     },
   ].filter((g) => g.items.length > 0)
 
@@ -135,6 +160,24 @@ export function AppSidebar() {
           pathname={pathname}
         />
 
+        {isEnabled(org, 'events') && (
+          <NavLink
+            href={`${base}/events`}
+            icon={<Calendar size={16} />}
+            label="Events"
+            pathname={pathname}
+          />
+        )}
+
+        {isEnabled(org, 'recruitment') && (
+          <NavLink
+            href={`${base}/recruitment`}
+            icon={<UserPlus size={16} />}
+            label={recruitmentLabel}
+            pathname={pathname}
+          />
+        )}
+
         <NavLink
           href={`${base}/polls`}
           icon={<Vote size={16} />}
@@ -148,6 +191,24 @@ export function AppSidebar() {
           label="Documents"
           pathname={pathname}
         />
+
+        {isEnabled(org, 'house') && (
+          <NavLink
+            href={`${base}/housing`}
+            icon={<Home size={16} />}
+            label="Housing"
+            pathname={pathname}
+          />
+        )}
+
+        {isEnabled(org, 'issues') && (
+          <NavLink
+            href={`${base}/issues`}
+            icon={<Wrench size={16} />}
+            label="Issues"
+            pathname={pathname}
+          />
+        )}
 
         {/* Grouped sections */}
         {groups.map((group) => (
