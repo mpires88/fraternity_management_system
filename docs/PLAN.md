@@ -34,7 +34,7 @@ this document wins.
   the preview in place.
 - **Schema-first batch (user-directed 2026-07-19):** the schema+RLS portions
   of Phases 9–13 are DONE ahead of feature code, implementing the layout-pass
-  decisions (full rationale in assistant memory `phases-8-15-roadmap.md`).
+  decisions (full rationale in §14).
   Migrations 20260719000001–06: module permission helpers
   (`get_my_module_admin_group_ids` activating is_rush_chair/is_treasurer/
   is_house_manager, `get_my_position_ids`); generic `events` (kind +
@@ -55,11 +55,11 @@ this document wins.
 - **Next task:** Phase 8 COMPLETE (incl. follow-ups 8.13, 8.14). Next: 4.3
   (production launch — urgent for fall rush; import scripts updated for the
   person_sensitive_details split AND the pledge_classes drop), then Phases
-  9–15 per the roadmap in assistant memory (`phases-8-15-roadmap.md`).
-  **4.3 prep to-do:** export-v3/import-v3 do NOT yet cover positions,
-  position_assignments, subgroups, subgroup_members, facilities, rooms — the
-  legacy importers that originally loaded those are deleted (8.14), so add
-  these tables to the v3 export/import pair before running against production.
+  9–15 per §14.
+  **4.3 prep DONE (2026-07-19):** export-v3/import-v3 now cover all 21 tables
+  including system_position_roles, positions, facilities, rooms, subgroups,
+  position_assignments, subgroup_members. Verified: export pulls correct row
+  counts, idempotent re-import succeeds with 0 errors.
   Task 8.14 (script cleanup, user-approved): deleted the eight dead pre-v3
   scripts (backfill-names, backfill-address-emergency, import-airtable-housing,
   import-positions, import-roster, migrate-emergency-contacts,
@@ -713,10 +713,9 @@ Keep the mechanism national-org-generic; only the seed data is Sigma Nu-specific
 ## 13. Phase 8 — Hardening (user-approved 2026-07-17)
 
 Fixes from a full code review + multi-tenant isolation audit + performance audit.
-Full task details (schemas, file refs, accept criteria) live in the session plan
-mirrored to the assistant memory file `phases-8-15-roadmap.md`; Phases 9–15 (officer
-permissions, rush, budgets, housing lottery, service requests, housing extras, term
-rollover) are planned there and are NOT yet part of this document's build order.
+Phases 9–15 (officer permissions, recruitment, budgets, housing lottery, issues,
+housing extras, term rollover) are §14 of this document — canonical as of
+2026-07-19.
 
 - **8.0 Claim-token security fix (CRITICAL — first).** Drop the
   `claim_tokens_select_by_token USING(true)` policy; look tokens up server-side via
@@ -761,3 +760,653 @@ rollover) are planned there and are NOT yet part of this document's build order.
 - **8.12 Person PII minimization.** Move DOB/address/emergency-contact columns to
   `person_sensitive_details` (RLS: self + shared-group admins); update profile/
   roster DALs + UI.
+
+---
+
+## 14. Phases 9–15 — approved feature roadmap (ported 2026-07-19; canonical here)
+
+Planned 2026-07-17/19 with the user through a full schema layout pass — every
+table below was individually challenged for necessity, redundancy, and naming
+before approval. **The schema+RLS portions of Phases 9–13 are ALREADY LIVE**
+(migrations 20260719000001–07, applied to dev; RLS persona suite green).
+Implementers: do NOT create those tables again — write only the
+DAL/actions/lib/UI portions against the live schema (ground truth:
+`lib/supabase/types.ts`), and extend `npm run test:rls` with every new
+surface. HARD RULE (user, 2026-07-19): no NEW tables or storage buckets beyond
+the ones specified here without explicit user discussion and approval first.
+⚠ The Phase 14.2 signing tables (`document_packages`,
+`document_signatures`) are specified below but NOT yet created and NOT yet
+user-reviewed — they require that discussion before migrating.
+
+**User decisions locked in (Q&A):**
+- Rush: prospect roster + bid pipeline, rush events with per-prospect check-in,
+  brother feedback; **on bid acceptance feedback is wiped and the prospect converts
+  to the roster** (auto-create person + candidate membership + claim invite; also
+  auto-add to a candidate-class subgroup). Bid decisions = secret ballot via the
+  existing polls engine. No public interest form.
+- Budgets: each `has_budget` position holder submits a line-item proposal; compiled
+  into one group budget; approval = designated-approver pass then *optionally* a
+  formal vote — configurable per budget (`approver` / `vote` / `approver_then_vote`).
+- Lottery points: composite — app activity + seniority + manual adjustments (with
+  reasons). Seniority = time since `group_memberships.started_at`. Computed **fresh
+  per lottery** with a configurable lookback; no career ledger.
+- Lottery flow: live draft in points order; skip rule configurable — skipped brothers
+  may pick any time after their slot; optional per-turn timer (X hours) auto-skips.
+- Service requests: chapter house manager triages; escalation to SNHC via the seeded
+  `group_relationships` "SNHC oversees Chapter".
+- Alumni chapter: create as a third group in Phase 8 (data-only; `groups.group_type`
+  is unconstrained text).
+- Fold-ins (all approved): poll/document notification triggers + automated RLS
+  persona tests (Phase 8); position-based module permissions (Phase 9); term
+  rollover wizard (Phase 15); housing extras = **both** room swaps/moves UI and
+  housing contracts (Phase 14).
+
+### Phase 9 — Position-based module permissions
+
+Today every management surface gates on `access_level === 'full'`; the rush chair,
+treasurer, and house manager would each need full admin. The schema already carries
+`system_position_roles.is_rush_chair / is_treasurer / is_house_manager` — unused.
+Minimal design: module rights = full-access role **OR** active holder of a position
+whose system role has the module flag. Existing features stay admin-gated (unchanged).
+
+**9.1 Migration `module_permissions.sql`.**
+One SECURITY DEFINER helper (pattern: `get_my_admin_group_ids` in `20260708000001`):
+```sql
+get_my_module_admin_group_ids(p_module text) RETURNS SETOF uuid
+-- groups from get_my_admin_group_ids()
+-- UNION groups where I hold an active position_assignment (term_end IS NULL)
+--   whose positions.system_role_id → system_position_roles has the flag
+--   matching p_module ('rush'|'treasurer'|'house_manager')
+```
+Later phases' write policies call it with their module name.
+*Accept:* SQL role-play — persona holding a rush-chair position (non-admin role) is
+returned for `'rush'`, not `'treasurer'`.
+
+**9.2 App-layer surface.**
+Extend `lib/utils/permissions.ts` (unit-tested — extend, don't reimplement) +
+`getGroupContext`/`useOrg` to expose `moduleRoles: { rush, treasurer, houseManager }`
+resolved from active position assignments; a `canManage(module)` helper =
+`access_level === 'full' || moduleRoles[module]`. UI in later phases gates on it.
+*Accept:* unit tests for flag resolution; rush-chair persona sees (future) manage UI
+without full admin — verified concretely in Phase 10.
+
+---
+
+### Phase 10 — Recruitment ("rush": prospects, events, feedback, bid votes, conversion)
+
+Adapts SPEC Part 14 to v3. Group-generic; sidebar gated by the `recruitment`
+feature flag (pattern: Members/Subgroups gating in
+`components/layout/app-sidebar.tsx`), display name via group terminology
+("Rush" for Sigma Nu, "Recruitment" for NPC, "Intake" for NPHC).
+
+**NAMING DECISION (user-approved 2026-07-18): tradition-neutral identifiers.**
+Tables are `prospects`, `prospect_feedback`, `events`,
+`event_prospect_attendance`; the pipeline column is `status` (not bid_status);
+the feature flag is `recruitment`; route is `/recruitment`. "Rush"/"bid" appear
+only in per-group terminology and UI copy. Exception: the module-permission key
+stays `'rush'` because it maps to the existing
+`system_position_roles.is_rush_chair` column.
+
+**DESIGN DECISION (user-approved 2026-07-18): `events` is GENERIC, not
+rush-scoped.** One events table for the whole platform — recruitment is its
+first consumer; the future events/calendar module and meetings reuse it.
+Durable calendar facts (title/time/place) persist; everything
+prospect-sensitive hangs off `prospects` and cascades away on purge.
+Prospect attendance and (future) member attendance are sibling tables on the
+same event — different subjects, different retention — never one polymorphic
+table.
+
+**Why prospects are NOT persons-with-a-status (challenged and settled
+2026-07-18):** persons are permanent platform identities; prospects are
+purgeable pipeline records (~100 PNMs/term, most never join — PII retention
+liability). Persons-based prospects would also be invisible under
+`persons_select` RLS (no shared membership) or would contaminate every
+member-facing feature with "…except prospects" filters. Acceptance is the
+promotion ritual into persons.
+
+**Privacy stance (drives the schema):** feedback lives only in recruitment
+context, is **hard-deleted on bid acceptance** and purgeable per term.
+`prospect_feedback` therefore gets **NO `log_data_change()` audit trigger** —
+an audit copy would defeat the purge. Prospect/pipeline tables do get audit
+triggers. Consistent with PLAN.md §12.
+
+**10.1 Migration `recruitment.sql`** (pattern: `20260706000002` RLS/audit style,
+`20260707000004` poll-link):
+- `events` (GENERIC): `group_id`, `term_id null`, `title`, `description`,
+  `starts_at`, `ends_at null`, `location null`,
+  `kind` (`'recruitment'` now; `'meeting'`/`'social'`/`'service'` when the events
+  module lands), `category_id → event_categories null` (the kept table finally
+  gets its consumer), `created_by`, timestamps.
+- `prospects`: `group_id`, `term_id`, `full_name`, `email null`, `phone null`,
+  `school_year null`, `status` (`prospect/offered/accepted/declined/withdrawn`),
+  `poll_id → polls null` (mirrors `documents.poll_id`), `converted_person_id null`,
+  `added_by`, timestamps; unique `(group_id, term_id, lower(email))` where not null.
+- `event_prospect_attendance`: `event_id (cascade)`, `prospect_id (cascade)`,
+  `checked_in_by`, `created_at`; unique `(event_id, prospect_id)`. Cascades away
+  with the prospect — the purge story stays airtight.
+- `prospect_feedback`: `prospect_id (cascade)`, `author_person_id`, `body`,
+  `rating int null CHECK 1..5`, `created_at`. Flat, append-only; NOT the polymorphic
+  comments table (purge isolation); **no audit trigger**.
+- RLS: selects = group members. Prospect/event writes =
+  `get_my_module_admin_group_ids('rush')`; attendance insert also open to members
+  (any member checks a prospect in); feedback insert own
+  (`author_person_id = get_my_person_id()`), delete own or recruitment-admin; no
+  update.
+- Audit triggers on prospects/events/attendance only.
+*Accept:* member can add feedback + check in but not change prospect `status`;
+rush-chair persona (non-admin) can; feedback delete leaves no trace in
+`data_change_log`.
+
+**10.2 DAL + validations.** `dal/recruitment.ts`: `getProspectsForTermDal`
+(attendance + feedback counts), `getProspectDetailDal`, prospect CRUD,
+`checkInProspectDal`, `addFeedbackDal`, `deleteFeedbackDal`,
+`purgeProspectFeedbackDal`, `linkPollToProspectDal`, `setProspectStatusDal`;
+`dal/events.ts` (generic): event CRUD scoped by kind. Zod in
+`lib/validations/recruitment.ts`.
+
+**10.3 Bid votes via polls engine.**
+`createBidVote` (rush-manage gate): one poll per prospect — `vote_privacy: 'private'`,
+supermajority default (`method_settings` threshold), `allow_abstain`, participants =
+active members — via `createPollDal`, then `linkPollToProspectDal`. Batch "open votes
+for all undecided" for bid night. On close (mirror document-poll close in
+`actions/polls.action.ts`): calculator `passed` → prospect `status='offered'`;
+failed stays `prospect` (terminal status is a human call).
+*Accept:* 3-prospect bid night: secret ballots, closing marks passed ones `offered`;
+individual ballots invisible to members.
+
+**10.4 Bid acceptance → conversion + wipe + candidate class.**
+`convertProspect` (rush-manage gate; prospect must be `offered`): compose Phase 7
+machinery — create/match person by email, create `group_memberships` with
+dialog-chosen candidate `role_type_id`/`status_id` (never hardcoded), issue claim
+token + invite (pattern: `actions/members/invite-member.action.ts` post-8.5), **add
+to a candidate-class subgroup** (pick-or-create in the dialog, `subgroup_type:
+'new_member_class'` — the type value was renamed from pledge_class in task 8.13,
+and the label comes from `getSubgroupTypeLabel(type, terminology)` — epsilon-theta
+groups render "Candidate Class") so requirement targeting works day
+one. Same action: `purgeProspectFeedbackDal`, prospect `status='accepted'`,
+`converted_person_id`. Prospect row survives as pipeline record. Also
+`purgeTermRecruitmentData` (end-of-term feedback wipe for all the term's
+prospects).
+*Accept:* converting creates a claimable candidate membership (claim link works in
+incognito), member appears in the candidate-class subgroup, feedback rows gone;
+declined prospects keep feedback until term purge.
+
+**10.5 Recruitment UI.**
+`/[parent]/[org]/[group]/recruitment`: pipeline board/table by `status` (attendance +
+feedback counts, add/edit dialog); prospect detail (info, attendance, feedback
+stream + add box, bid-vote status, convert button); events tab with roster-style
+check-in checkboxes (pattern: attendance UI from task 2.1 in
+`components/requirements/`). Manage controls gated `canManage('rush')`.
+*Accept (phase exit):* full cycle in the running app — add prospects, phone check-in,
+feedback, secret bid vote, convert, candidate claims account; converted member's
+profile shows no rush artifacts; a rush-chair persona without full admin ran it all.
+
+---
+
+### Phase 11 — Budgets (group-generic structured data)
+
+**DESIGN DECISIONS (layout pass with user, 2026-07-18):**
+- **Budgets are NOT documents.** Challenged and settled: `documents` (kind
+  'budget') stays for uploaded narratives/spreadsheets ONLY; the structured
+  workflow (proposals, line items, computed totals, ratification) lives in
+  these tables. Don't branch documents RLS on kind.
+- **Multiple budgets per group per term.** Real world: each semester has at
+  least an operating/officer-expenses budget AND a house bill. Uniqueness is
+  `(group_id, term_id, title)` — title is load-bearing ("Operating Budget",
+  "Officer Expenses", "House Bill").
+- **Cross-group approval.** The approving body can be a DIFFERENT group (SNHC
+  approves the house bill AND the rush/recruitment budget; exec approves
+  officer expenses). New
+  `approver_group_id null → groups` (null = own group). Mirrors the
+  facility_issues two-group pattern: select RLS = owning OR approver group;
+  approve/ratify actions gate on the APPROVER group's treasurer/admins; a
+  vote-mode ratification poll is created IN the approver group (their members
+  ballot). UI suggests the approver from `group_relationships`.
+- **General proposal.** A budget may have no per-position proposals (SNHC
+  house bill): proposals CHECK is AT MOST one of position_id/subgroup_id —
+  both null = the budget's general proposal, owned by `submitted_by`.
+- **`category` stays plain text** — no lookup table until a second consumer
+  needs shared categories (the event_categories lesson in reverse).
+- **Poll-link direction rule:** domain tables point AT polls
+  (`budgets.poll_id`, `prospects.poll_id`); never add more per-feature FK
+  columns onto `polls` (polls.document_id is historical, not a pattern).
+- Names already tradition-neutral; the permission key `'treasurer'` maps to
+  the existing `system_position_roles.is_treasurer` column.
+
+**11.1 Migration `budgets.sql`** (pattern: `20260707000004` lifecycle+poll-link+
+comment-gate; `20260706000002` RLS/audit):
+- `budgets`: `group_id`, `term_id`, `title`, `status`
+  (`drafting→in_review→approved→ratified`, + `archived`), `approval_mode`
+  (`approver`/`vote`/`approver_then_vote`), `approver_group_id null → groups`
+  (null = own group; SNHC for the house bill), `approver_position_id null`
+  (null = any approver-group admin), `submitted_at/approved_at/approved_by`,
+  `poll_id`, `ratified_at`, `created_by`, timestamps,
+  `UNIQUE (group_id, term_id, title)`.
+- `budget_proposals`: `budget_id`, `position_id null`, `subgroup_id null` (CHECK
+  AT MOST one set — both null = general proposal; UNIQUE per budget on each),
+  `submitted_by`, `status` (`draft`/`submitted`/`returned`), `submitted_at`,
+  `notes`.
+- `budget_line_items`: `proposal_id`, `description`, `amount NUMERIC(10,2) ≥ 0`,
+  `category`, `notes`, `display_order`. No stored totals — computed in lib.
+- Helper `get_my_position_ids()` (SECURITY DEFINER, active holders). RLS: selects
+  = owning group OR approver group; budget management writes
+  `get_my_module_admin_group_ids('treasurer')` on the owning group;
+  approve/ratify on the approver group (own group when approver_group_id is
+  null); proposal/line-item writes treasurer-or-holder, gated on lifecycle
+  (`budgets.status='drafting'` / proposal `status='draft'` for holders).
+- Audit triggers all three; add `'budget'` to comments CHECK +
+  `can_read_comments` (read gate grants BOTH owning and approver groups).
+*Accept:* RLS blocks a holder editing someone else's proposal; own draft succeeds;
+treasurer persona (non-admin) can compile; an SNHC admin can see + approve a
+chapter house-bill budget whose approver_group_id is SNHC, and a plain chapter
+member cannot approve it.
+
+**11.2 Pure lib + validations.** `lib/utils/budgets.ts`: `rollupBudget` (per-proposal/
+per-category/grand totals), `nextBudgetStatus` state machine for all three approval
+modes — unit-tested matrix (pattern: `lib/utils/voting/calculator.test.ts`). Zod in
+`lib/validations/budget.ts`.
+
+**11.3 DAL + actions.** `dal/budgets.ts` (pattern `dal/documents.ts` incl.
+`linkPollToDocumentDal` wiring): get/create, proposal upsert/submit/return, line-item
+CRUD, `compileBudgetDal` (→ `in_review`; amalgamation computed, no snapshot),
+`approveBudgetDal`, `linkPollToBudgetDal`, `ratifyBudgetDal`.
+`actions/budgets.action.ts` (validated org helpers + `personId`). `createBudgetPoll`
+creates a supermajority poll IN the approver group (participants = that group's
+active members — SNHC ballots on the house bill, the chapter on its own
+operating budget) + links via `budgets.poll_id`; budget-linked poll close runs
+`supermajority` → ratify on `passed`. Notifications:
+`BUDGET_PROPOSAL_SUBMITTED` (treasurer/admins), `BUDGET_RETURNED` (holder),
+`BUDGET_RATIFIED` (group).
+*Accept:* full happy path drafting→in_review→approved→poll→ratified via actions;
+returned proposal editable again.
+
+**11.4 Budget UI.** `/[parent]/[org]/[group]/budget`: proposal cards with totals +
+status chips; "My proposal" line-item editor for holders; manage controls
+(`canManage('treasurer')`): compile, return, approve, create ratification poll;
+linked-poll result; comments thread (`resource_type: 'budget'`, reuse documents
+comment components). Sidebar link. Patterns: `components/requirements/`,
+`components/documents/`, `components/polls/`.
+*Accept (phase exit):* two holders submit; treasurer compiles + approves; linked
+supermajority poll passes; budget Ratified, proposals read-only; comment round-trips.
+
+**11.5 Reimbursements (UNPARKED — user-approved 2026-07-18).**
+Real-world flow: a non-officer brother buys food/tickets for an event, submits
+a reimbursement with receipts + which officer's budget it belongs to; that
+officer approves; the treasurer then pays it out OR applies it as a credit
+against the brother's other obligations (eventually synced to QuickBooks).
+
+- Migration `reimbursements.sql`: `reimbursements` — `group_id`, `term_id null`,
+  `submitted_by → persons`, `amount NUMERIC(10,2) > 0`, `description`,
+  `occurred_on date`, `receipt_paths text[]` (new `receipts` storage bucket,
+  authenticated-only, policies cloned from profile-photos but private),
+  `proposal_id null → budget_proposals` (the officer's budget area — submitter
+  picks the area, app resolves the responsible officer = current holder of the
+  proposal's position), `line_item_id null → budget_line_items` (pinned by the
+  officer at approval — enables spent-vs-budgeted per line, computed never
+  stored), `status`
+  (`submitted → approved → reimbursed | credited`, `rejected` at either stage),
+  `approved_by/approved_at` (officer), `resolved_by/resolved_at/resolution_note`
+  (treasurer), `applied_progress_entry_id null → requirement_progress_entries`
+  (set when credited), `external_ref text null` (future QuickBooks txn/credit
+  memo id — `persons.quickbooks_customer_id`/`vendor_id` already exist as the
+  account link), timestamps. **Audit trigger YES** — financial dispute records
+  are exactly what data_change_log is for (opposite call from prospect_feedback).
+- RLS: insert = any group member with `submitted_by = get_my_person_id()`;
+  select = own rows OR treasurer-gate OR holder of the linked proposal's
+  position; approve = proposal position holder or treasurer; resolve =
+  `get_my_module_admin_group_ids('treasurer')`.
+- **Credit application reuses the payments engine:** "apply as credit" creates
+  a `requirement_progress_entry` on a chosen payment assignment (e.g. dues),
+  note links back to the reimbursement, and the existing
+  `recomputeAssignmentProgress` auto-completes the obligation when covered. No
+  separate ledger/balance table — an approved-but-unresolved reimbursement IS
+  the outstanding credit, visible in the treasurer queue. §12 guardrail: the
+  app records state; money moves in QuickBooks/the bank.
+- Notifications: `REIMBURSEMENT_SUBMITTED` (to the area officer),
+  `REIMBURSEMENT_TO_TREASURER` (on officer approval), `REIMBURSEMENT_RESOLVED`
+  (to submitter, says reimbursed vs credited).
+- UI: submit form (amount, receipts, officer-area picker) on the budget page or
+  profile; officer queue on their proposal view; treasurer queue with
+  pay/credit actions (credit flow picks the target payment assignment).
+*Accept:* non-officer submits with receipt photo; area officer approves and pins
+a line item; treasurer applies as credit → the brother's dues assignment
+progress rises with a linked entry; a second request is marked reimbursed;
+RLS blocks a random member from reading someone else's reimbursement.
+
+---
+
+### Phase 12 — Housing: v3 re-scope, points, live lottery
+
+**DESIGN DECISIONS (layout pass with user, 2026-07-18/19):**
+- **The lottery is OPTIONAL — one producer of room assignments, never the only
+  path.** `room_assignments` is the canonical, method-agnostic table. Real
+  world: summer boarders are assigned rooms directly by the house manager —
+  paperwork collected first, room given based on the price paid, points
+  irrelevant. Other organizations may never run a draft at all and decide
+  rooms their own way. Direct assignment (task 14.1 UI + 12.1 write policies)
+  is first-class; a term with no `housing_lotteries` row is perfectly normal.
+  Nothing in the schema may assume assignments came from a draft.
+- **Summer boarding flow = composition, no new tables:** paperwork gating is a
+  requirements packet (task + payment requirements, same pattern as 14.2
+  housing contracts); once complete, the house manager direct-assigns via
+  14.1; the rate lives with the contract/payment requirement, and
+  `room_assignments.notes` can carry the price tier.
+- **All four lottery tables challenged and kept (2026-07-19), zero merges:**
+  adjustments ledger kept as the *accountable* escape hatch (formula can't see
+  house tradition; first lottery has no history; required reason + audit
+  trigger beats invisible fudging) and NOT merged into
+  requirement_progress_entries (different semantics); lotteries not polls
+  (sequential public ordered picks ≠ simultaneous secret equal ballots) and
+  not events (process, not calendar entry); entrants materialized because the
+  activation-time snapshot/order freeze IS the feature; picks not merged into
+  room_assignments (immutable draft history vs mutable roster — one table
+  can't be append-only and editable; opposite RLS write rules). Names are
+  already tradition-neutral; "Room Draw" etc. is a terminology label if a
+  tenant wants it.
+
+**12.1 Migration `housing_v3.sql` — re-scope facilities/rooms/room_assignments.**
+Standalone prereq (Phases 13–14 also depend on it). `rooms` holds real Airtable
+data — additive changes + policy swap only; snapshot row counts before/after.
+- `ALTER TABLE facilities ADD COLUMN managed_by_group_id → groups`; backfill to the
+  org's `housing_corp` group. Keep legacy columns for now.
+- Drop the three old select policies; recreate: selects org-scoped via
+  `get_my_organization_ids()` — **the rebuilt version from 8.9** (the original
+  still reads the dropped `org_memberships` table) — so chapter AND SNHC see house
+  + occupancy; writes
+  (`facilities_update`, `rooms_*`, `room_assignments_*`) gated on
+  `managed_by_group_id IN (get_my_module_admin_group_ids('house_manager'))` (join
+  through `facility_id`). Room self-picks flow through the lottery trigger (12.3).
+- Audit triggers on rooms + room_assignments.
+*Accept:* chapter member reads rooms, cannot insert `room_assignments`; SNHC admin
+and house-manager persona can; `rooms` row count unchanged.
+
+**12.2 Points: adjustments ledger + pure calculator.**
+Only manual adjustments materialized; activity points computed on read.
+- `housing_point_adjustments`: `group_id`, `person_id`, `term_id null`,
+  `amount NUMERIC` (signed), `reason TEXT NOT NULL`, `logged_by`, `created_at`.
+  Select group members / writes house-manager gate / audit trigger.
+  (Pattern: `20260707000001_progress_entries.sql`.)
+- `lib/utils/housing/points.ts` (pure, unit-tested): `computePoints(inputs, config)`
+  → `{ total, breakdown }`; weights for quota hours, attendance, completions,
+  seniority-per-year; lookback terms. Defaults in `lib/constants/`; per-lottery
+  override in `housing_lotteries.points_config`.
+- `dal/housing.ts`: `getPointsInputsDal` (approved progress entries, attendance,
+  completions, `started_at` seniority, adjustments), adjustment CRUD. Actions:
+  `addPointAdjustment`, `getStandings`.
+*Accept:* unit tests cover weight combos + negative adjustments; standings sorted
+with breakdown for dev roster.
+
+**12.3 Migration `housing_lottery.sql` — draft tables + DB-enforced turns.**
+(Pattern: `20260707000003_voting.sql`.)
+- `housing_lotteries`: `group_id`, `facility_id`, `term_id`, `status`
+  (`draft/published/active/completed/cancelled`), `opens_at/closes_at`,
+  `points_config jsonb` (incl. `pick_window_hours null` turn timer), `created_by`,
+  `UNIQUE (group_id, facility_id, term_id)`.
+- `housing_lottery_entrants`: `lottery_id`, `person_id`, `points_snapshot`,
+  `points_breakdown jsonb` (frozen at activation), `draft_order`,
+  `turn_started_at`, `status` (`eligible/skipped/picked/withdrawn`); unique person
+  and order.
+- `housing_lottery_picks`: `lottery_id`, `entrant_id`, `room_id`, `pick_number`,
+  `picked_at`; unique entrant and pick_number. No UPDATE/DELETE (immutable).
+- `current_lottery_turn(lottery_id)` SECURITY DEFINER: first unpicked by order,
+  lazily treating expired `turn_started_at + pick_window_hours` as skipped (no cron).
+  Picks INSERT policy: lottery `active` AND own entrant row AND (current turn OR turn
+  already passed — skipped pick any time after) — OR house-manager gate (on-behalf).
+- BEFORE INSERT trigger: capacity check (`COALESCE(ideal_capacity, capacity)` —
+  verify against real data), assigns `pick_number`. AFTER INSERT SECURITY DEFINER
+  trigger: entrant → `picked`, stamps next `turn_started_at`, inserts
+  `room_assignments`. Single write path.
+- Entrants/lottery RLS: select group members; writes house-manager gate. Audit
+  triggers.
+*Accept:* seeded 3-entrant lottery: out-of-turn pick rejected by RLS; in-turn creates
+`room_assignments`; second pick violates unique.
+
+**12.4 Lottery DAL/actions + officer UI.**
+`dal/housing.ts`: `createLotteryDal`, `setEntrantsDal`, `activateLotteryDal`
+(snapshot standings + order in one pass), `skipEntrantDal`, `completeLotteryDal`,
+`getLotteryBoardDal` (one payload: lottery + entrants + picks + remaining rooms).
+Officer UI `/[group]/housing/lottery` (gate `canManage('houseManager')`): create
+(facility, term, window, weights, timer), standings preview with breakdown + inline
+adjustments, publish, activate, skip / pick-on-behalf, complete.
+*Accept:* create→preview→publish→activate on real rooms data; order stable.
+
+**12.5 Member draft-day UI + notifications.**
+**Polling, not Realtime**: `getLotteryBoard` polled every 3–5 s via
+`useLotteryBoard(lotteryId)` hook (pause on `document.hidden`; hook isolates fetch so
+Realtime can swap in later). Board: order with picked/current/upcoming, room grid
+(number, sqft, beds, capacity), timer countdown, "you're up" banner, pick confirm →
+`makePick` (RLS is the enforcement; action translates failures). Notifications
+`LOTTERY_YOUR_TURN` (post-pick + on activate), `LOTTERY_COMPLETED`.
+*Accept (phase exit):* two browsers, consecutive users: A picks, B updates within one
+interval; B cannot take a full room; results view shows final assignments.
+
+---
+
+### Phase 13 — Issues (generalized service requests + cross-group escalation)
+
+Depends only on 12.1 (can leapfrog 12.2–12.5 if priorities shift).
+
+**DESIGN DECISION (layout pass with user, 2026-07-19): the table is `issues`,
+not `facility_issues`.** Same playbook as events/subgroups: one generic table,
+`kind` carries the variation (`maintenance` is just the first kind), links
+that only apply to some kinds are nullable (`facility_id`, `room_id`).
+Members can raise maintenance problems, safety concerns, equipment/tech
+problems, or general operational issues through one pipeline: reported by a
+member, assigned to a person, optionally escalated to another group.
+
+**13.1 Migration `issues.sql`** (generalizes SPEC Part 11 house_issues):
+- `issues`: `group_id` (reporting group),
+  `kind` (`maintenance/safety/equipment/operations/other` — CHECK with `other`
+  catch-all, house style like documents.kind), `facility_id null`,
+  `room_id null` (facility/room only meaningful for facility-ish kinds),
+  `location_note`, `title`, `description`, `photo_paths text[]`, `priority`
+  (`low/medium/high/emergency`), `status`
+  (`open/acknowledged/in_progress/resolved/wont_fix`),
+  `reported_by → persons` (who submitted), `assigned_to → persons null`
+  (who owns it), `escalated_to_group_id null` + `escalated_at/escalated_by`,
+  `resolution_note`, `resolved_at`, timestamps.
+- RLS: select = reporting OR escalated group; insert = reporting-group member with
+  `reported_by = get_my_person_id()`; update = group admins of either group OR
+  `get_my_module_admin_group_ids('house_manager')` (house managers triage
+  without full admin; non-facility kinds triaged by admins); delete =
+  reporting-group admins. Audit trigger.
+- Storage bucket `issue-photos` (clone `20260708000003_profile_photos_storage.sql`
+  policies; authenticated-only reads).
+- Comments: add `'issue'` to CHECK + gate case granting both groups.
+*Accept:* SNHC admin sees an escalated maintenance issue and can comment;
+non-escalated invisible; an `operations` issue with no facility/room round-trips.
+
+**13.2 DAL + actions + notifications.** `dal/issues.ts`: lists (ours +
+escalated-to-us, filter by kind), detail, create, status update (Zod requires
+`resolution_note` for resolved/wont_fix), assign, `escalateIssueDal` via
+`getOverseeingGroupDal` (`group_relationships` child = groupId, active, slug
+`'oversees'`) — first behavioral use of the oversight edge. Actions:
+`reportIssue` (client Storage upload like profile photos), `updateIssueStatus`,
+`assignIssue`, `escalateIssue`. Notifications: `ISSUE_REPORTED` (managers;
+immediate for emergency), `ISSUE_STATUS_CHANGED` (reporter), `ISSUE_ASSIGNED`
+(assignee), `ISSUE_ESCALATED` (escalated group's managers).
+*Accept:* report→acknowledge→assign→escalate→resolve round trip with correct
+notifications, including the assignee's.
+
+**13.3 UI.** `/[parent]/[org]/[group]/issues`: member view (my issues + report
+form: kind picker; facility/room picker appears for facility kinds; photos,
+priority) and manage queue (admins + `canManage('houseManager')`: filters by
+kind/status/priority, assign, transitions, escalate). Same page in SNHC context
+shows their escalated queue — group-generic, no `group_type` branching.
+Comments on detail. Sidebar link.
+*Accept (phase exit):* phone-viewport maintenance report with photo; house
+manager acknowledges, assigns + escalates; SNHC resolves with note; reporter's
+bell link navigates correctly; a non-facility issue flows through the same
+queue without facility fields.
+
+---
+
+### Phase 14 — Housing extras: room management + housing contracts + signing
+
+**14.1 Room assignment management (direct assignment — first-class, NOT just
+post-lottery).**
+Depends only on 12.1 (write policies) — can ship before or without the lottery
+tasks. This is the primary path for summer boarders (assign by price once
+paperwork is in) and for any organization that decides rooms without a draft.
+SNHC/house-manager UI on `/[group]/housing`: occupancy view per facility/term
+(rooms × assignments), actions — assign a vacancy directly, end an assignment
+(`ends_on`), swap two residents (one action, both rows). DAL on existing
+`room_assignments` (writes already gated by 12.1). Audit trail comes free from
+12.1's trigger.
+*Accept:* house manager direct-assigns a summer boarder to a room with a note;
+swap two residents; occupancy view and both member profiles reflect it;
+a mid-term move-out frees the room in the next lottery's room grid.
+
+**14.2 Migration `document_signing.sql` — signing schema.**
+Adapted from the business-data-platform's `document_packages` / `document_signatures`
+schema, simplified for chapter-level use (no PKI/certificates, no external e-sign
+providers). Supports multi-signer sequential or parallel workflows on any document.
+- `document_packages`: `id`, `document_id → documents`, `group_id → groups`,
+  `signing_status` (`draft/sealed/pending_signatures/fully_signed/declined/expired/
+  canceled`), `signing_order` (`parallel/sequential`), `signing_deadline date null`,
+  `sealed_at/sealed_by` (frozen for signing), `completed_at`, `version int DEFAULT 1`,
+  `superseded_by uuid null → document_packages`, `created_by → persons`, timestamps.
+  UNIQUE `(document_id, version)`.
+- `document_signatures`: `id`, `package_id → document_packages ON DELETE CASCADE`,
+  `signer_person_id → persons`, `signer_email`, `signer_name`, `signer_role text null`
+  (e.g. 'resident', 'house_manager'), `sign_order int` (for sequential),
+  `status` (`requested/viewed/signed/declined/expired/revoked`),
+  `document_hash_at_request text` (SHA-256 of the sealed document),
+  `document_hash_at_signing text null` (SHA-256 at sign time — tamper detection),
+  `consent_text text` (the "I agree to..." statement shown at signing),
+  `ip_address inet null`, `user_agent text null`,
+  `signed_at timestamptz null`, `viewed_at timestamptz null`, timestamps.
+  UNIQUE `(package_id, signer_person_id)`.
+- Immutability triggers (pattern: business-data-platform):
+  - `prevent_package_reparenting()` — cannot change `document_id` after creation.
+  - `guard_signature_columns()` — signers cannot modify `document_hash_*`,
+    `ip_address`, `user_agent` after signing; only service_role or admin can.
+  - `lock_signed_document()` — BEFORE UPDATE on `documents`: reject body/file
+    changes if any linked `document_packages` has `signing_status` in
+    (`sealed`, `pending_signatures`, `fully_signed`).
+- RLS: selects = group members; package create/seal = house-manager gate
+  (`get_my_module_admin_group_ids('house_manager')`); signature status updates
+  (viewed/signed/declined) = own row only
+  (`signer_person_id = get_my_person_id()` AND package `pending_signatures`).
+  Audit triggers on both tables.
+*Accept:* member cannot seal a package; signer can sign own row; signed document
+body cannot be edited; hash mismatch detectable; RLS suite extended.
+
+**14.3 Signing DAL + actions + notifications.**
+`dal/document-signing.ts`: `createPackageDal`, `sealPackageDal` (compute SHA-256 of
+document body/file, stamp `sealed_at`, set `document_hash_at_request` on all
+signature rows, transition `draft→sealed→pending_signatures`),
+`viewSignatureDal` (status→viewed, stamp `viewed_at`),
+`signDal` (status→signed, stamp `signed_at`, capture IP/user-agent/consent text,
+compute `document_hash_at_signing`, verify matches `_at_request` — reject on
+mismatch; if all signatures signed → package `fully_signed` + `completed_at`),
+`declineSignatureDal` (status→declined, package→declined),
+`getPackageStatusDal` (one payload: package + all signature rows + document title).
+Actions: `createSigningPackage`, `sealForSigning`, `recordSignatureView`,
+`signDocument`, `declineDocument`. Zod validations.
+Notifications: `SIGNATURE_REQUESTED` (each signer, sequential = only current;
+parallel = all at seal), `DOCUMENT_SIGNED` (package creator when each signer
+completes), `DOCUMENT_FULLY_SIGNED` (all signers + creator),
+`SIGNATURE_DECLINED` (creator).
+*Accept:* seal→view→sign round trip; IP + user agent captured; hash verified;
+sequential signing sends notification only to current signer; decline notifies
+creator.
+
+**14.4 Housing contracts (composition using signing).**
+"Create housing contract packet" guided action for a facility/term: uploads the
+license agreement as a `documents` row, creates a `document_packages` with
+`signing_order: 'parallel'`, adds `document_signatures` rows for each current
+resident (resolved from `room_assignments` for the term) with
+`signer_role: 'resident'` + a manager counter-signature row. Also creates a
+`payment` requirement for room & board targeted at the house-residents subgroup
+(tracking only, per §12 guardrail). A contracts panel shows per-resident
+signing + payment status.
+*Accept:* packet creation targets exactly the current residents; each resident
+sees a "Sign housing agreement" action; house manager counter-signs; statuses
+roll up on the panel; a resident sees the payment obligation on their
+requirements page.
+
+**14.5 Signing UI.**
+Signing happens inline on the document detail page (`/[group]/documents/[id]`):
+- Signer view: document content (read-only when sealed), consent statement,
+  "I agree — Sign" button (confirmation dialog with consent text, captures
+  IP/user-agent on submit). Status badge (requested/viewed/signed).
+- Manager view: seal button, signing progress (who signed, who hasn't, timestamps),
+  resend notification, cancel package.
+- Signature audit trail: expandable log showing each signer's name, role, status,
+  signed_at, IP (visible to admins only).
+Patterns: document detail components in `components/documents/`.
+*Accept (phase exit):* full cycle — upload contract, seal, residents sign from their
+document view, manager counter-signs, fully_signed status; audit trail shows
+all timestamps and IPs; resident who declines triggers notification to creator.
+
+---
+
+### Phase 15 — Term rollover wizard
+
+A guided, **stateless** checklist page (state computed from data, nothing stored) for
+group admins at `/[group]/admin` (new tab): the end-of-term transition in order —
+1. Officer elections held (links to polls; manual check-off is fine for v1).
+2. Position turnover — the one new mutation: bulk action ending current
+   `position_assignments` (`term_end`) and creating next-term holders (pattern:
+   `components/admin/admin-panel.tsx`).
+3. Create + activate next term (exists — task 0.7 flow).
+4. Clone requirements from previous term (exists — `cloneRequirementsFromTerm`, 1.5).
+5. Archive recruitment: term purge of feedback (Phase 10's
+   `purgeTermRecruitmentData`).
+6. Open next budget cycle (create the new term's `budgets` row, Phase 11).
+Each step shows computed done/not-done and deep-links to the feature.
+*Accept:* running the wizard end-to-end in dev transitions Fall→Spring: new term
+active, officers turned over, requirements cloned, rush feedback purged, new budget
+in `drafting`.
+
+---
+
+### Adopted defaults (flag in PRs; user may veto)
+
+- 8.4 digest email: `COALESCE(personal_email, school_email)`.
+- 8.8 RLS suite runs against dev DB via `npm run test:rls`, excluded from
+  `npm run check`.
+- 9: module flags limited to the three existing `system_position_roles` booleans; no
+  new permission tables. Existing features stay admin-gated.
+- 10: rush feedback visible to all group members; append-only. Bid votes default
+  supermajority secret ballot. Prospect row survives conversion; only feedback
+  purged; term purge is manual, not cron.
+- 11: `approver_position_id NULL` = any group admin; `approval_mode` default
+  `'approver'`. Proposals support `subgroup_id` in schema; positions-only UI in v1.
+- 12.1: org-wide select scope for housing (skip `can_view_housing` jsonb in RLS);
+  keep legacy `facilities.managed_by_org_id` for now.
+- 14.2–14.5: platform-native signing (simplified from business-data-platform — no PKI,
+  no external providers); identity = session auth + IP/user-agent capture; no photo-ID
+  verification in v1. Housing contracts compose signing + requirements (payment tracking
+  only, per §12 guardrail).
+
+### Execution protocol & verification
+
+- First implementation step: append Phases 8–15 to `docs/PLAN.md` (user approval of
+  this plan authorizes the scope edit); continue ledger discipline — one task per
+  commit, `npm run check` green, schema tasks: `supabase db push` →
+  `npm run types:db` → regenerate `schema-reference.sql`.
+- Every accept criterion exercised in the running app per `docs/DEV.md` (test
+  personas; **never email real roster addresses from dev** — rush invite testing on
+  test/owner inboxes only; RLS verified as the restricted user, plus the 8.8 suite).
+- Phase-exit E2E checks: 10.5, 11.4, 12.5, 13.3, 14.5 accepts, 15 wizard run.
+
+### Critical files
+
+- `actions/utils/action-helpers.ts`, `actions/utils/action-core.ts` — 8.1 refactor
+- `supabase/migrations/20260708000001_auth_user_id_decoupling.sql` — RLS helper
+  patterns (9.1 models on it)
+- `supabase/migrations/20260707000004_documents_comments.sql` — lifecycle +
+  poll-link + comment-gate pattern (budgets, issues)
+- `dal/polls.ts`, `actions/polls.action.ts` — poll wiring reused for bid votes and
+  budget ratification
+- `actions/members/invite-member.action.ts` + claim flow — conversion machinery (10.4)
+- `lib/utils/permissions.ts` — extended, not reimplemented, in 9.2
+- `supabase/migrations/20260404000006_architecture_v2.sql` — pre-v3 housing RLS that
+  12.1 replaces
+- `dal/documents.ts`, `dal/requirements.ts`, `dal/group-context.ts` — DAL patterns
+- Business-data-platform signing schema reference:
+  `C:\Users\pires\Projects\Git Clones\business-data-platform\supabase\migrations\00050_documents_extensions.sql`
+  (lines 223–411: `document_packages`, `document_signatures`, immutability triggers)
+  and `src\dal\documents\document-signatures.ts` (DAL pattern for 14.3)
