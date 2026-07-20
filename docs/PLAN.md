@@ -674,9 +674,34 @@ agendas are not built) · budgets as structured data (Phase 6 treats a budget as
 document; line-items/expenses per SPEC.md Part 8 are parked) · announcements · full
 events calendar (attendance requirements stand alone for now) · full SPEC.md
 elections module (nominations, eligibility rules — Phase 5 polls cover the votes
-themselves) · rush · house/rooms/chores UI · dues invoicing/payment processing ·
+themselves) · rush · house/rooms UI · chores (direction decided — see the
+chores note below) · dues invoicing/payment processing ·
 white-label onboarding, subdomains, billing · QuickBooks. All specced in
 `docs/SPEC.md`; none block v1.
+
+**Parked — chores (direction decided 2026-07-20; build later).** Chores are
+NOT a new subsystem and NOT part of `issues`. A chore is an obligation pushed
+DOWN onto residents — assigned, due-dated, checked off, optionally
+house-manager-verified — i.e. exactly a `requirements` row with `kind='task'`.
+So chores live in the requirements engine, reusing its completion tracking,
+verification, notifications, due-soon cron, and ICS feed (SPEC's parked
+`chores`/`chore_assignments` pair is duplicate completion-tracking — do not
+build it). Supporting pieces already approved: the assignment pool is the
+`house_residents` subgroup (auto-synced from `room_assignments` via
+`membership_type='automatic'`), and missing a chore closes the loop through a
+negative `housing_point_adjustments` entry (worse next room-draw position).
+**The one genuinely missing capability is recurrence + rotation** — and it is
+NOT chore-specific (weekly meeting attendance, weekly study hours, monthly
+inspections want the same thing), so build it into the requirements engine:
+a recurring template that stamps out task instances on a cadence, with an
+assignment strategy of "everyone in the audience" or "rotate through the
+audience". That generator likely needs ONE small definition/rotation-config
+table — which comes back to the user for explicit approval (columns + RLS) per
+the no-new-tables rule when chores are unparked; instances themselves are
+requirement assignments, not new rows. Caveat to handle then: house-duty
+volume (residents × weeks × chores) lands in the same table that feeds the
+national-reporting CSV — separate "house duties" from "national requirements"
+by filtering on the recurring template, not a schema split.
 
 **Parked — activities / interaction log.** A unified activity log tracking
 member interactions, officer notes, advisor check-ins, and housing-corp
@@ -1213,6 +1238,27 @@ that only apply to some kinds are nullable (`facility_id`, `room_id`).
 Members can raise maintenance problems, safety concerns, equipment/tech
 problems, or general operational issues through one pipeline: reported by a
 member, assigned to a person, optionally escalated to another group.
+
+**DECISION (2026-07-20): issues do NOT merge with requirements ("tasks"), and
+`issues` is NOT renamed.** Challenged and settled. Requirements are
+obligations pushed DOWN onto members (audience-expanded, term-scoped,
+completion feeds national reporting/CSV export); issues travel UP (a member
+reports a problem, it arrives unassigned, gets triaged to one owner, floats
+free of terms, carries priority/kind/photos/room + cross-group escalation).
+Opposite direction, opposite lifecycle, and merging would force an escalation
+branch into requirements' most sensitive RLS. The `issues` name is already
+correct — chores are NOT a kind of issue (see the chores note in §11), so
+there is nothing broader to rename it to.
+- **Sanctioned integration seam (build later, not a merge):** "issue → spawn
+  requirement" — an officer turns an issue into a real task requirement
+  targeted at a subgroup (due date, verification), linked back to the issue,
+  which auto-resolves on completion. Exactly the shipped comment→requirement
+  pattern; works BECAUSE the tables stay separate. A future "my work"
+  dashboard section can UNION assigned issues + pending requirements for
+  display only.
+- **Cleanup owed:** the legacy `tasks: true` feature flag in `OrgFeatures`
+  (and the dev groups' data) is dead and invites exactly this confusion —
+  delete it in the next cleanup pass.
 
 **13.1 Migration `issues.sql`** (generalizes SPEC Part 11 house_issues):
 - `issues`: `group_id` (reporting group),
