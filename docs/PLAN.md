@@ -6,6 +6,26 @@ this document wins.
 
 ## Progress
 
+- **Phases 9 + 10 COMPLETE (2026-07-20), reviewed before commit.** Task 9.2:
+  `ctx.moduleRoles` + `canManageModule` (client `canManage`, server
+  `canManageFromContext`) — module gates reach the UI. Tasks 10.2–10.5:
+  recruitment module live (prospect pipeline board, events tab + check-in,
+  feedback, secret bid votes via the polls engine incl. per-group/national
+  threshold config + legacy override (migration 20260720000001:
+  parent_organizations.settings, prospects.is_legacy), one-click conversion →
+  member + candidate-class subgroup + claim invite), dashboard redesigned
+  (attention feed, requirements ring, member segments), export/import scripts
+  extended for 4.3. An 8-angle code review (all findings verified) caught and
+  fixed pre-commit: a privilege escalation (convertProspect had no
+  recruitment gate over its service-role writes), single bid votes created
+  unpublished/un-votable, non-atomic conversion with swallowed errors +
+  duplicate-person/duplicate-membership risks, dashboard regressions (role
+  badge + officers list restored), 4 inline-Supabase page queries + missing
+  info text, an ~180-query batch bid-vote path, and a double-click double-poll
+  race. Deliberate: legacy threshold falls back to standard when unconfigured;
+  literal revalidatePaths kept (pre-existing app-wide convention +
+  router.refresh). In-app walkthrough of the full rush cycle still pending
+  (accepts exercised at RLS/test level).
 - **Login flow + platform-admin controls (user-directed 2026-07-19):** root
   `/` is now the post-login lander — single org goes straight in (dashboard
   or group picker), multiple orgs render an organization picker

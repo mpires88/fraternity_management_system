@@ -11,6 +11,39 @@ export type DashboardData = {
   }[]
 }
 
+export type OpenPollItem = { id: string; title: string; closes_at: string | null }
+
+/** Open, published polls in this group where the person is a participant and hasn't voted. */
+export async function getMyOpenPollsDal(
+  supabase: DbClient,
+  groupId: string,
+  personId: string
+): Promise<OpenPollItem[]> {
+  const { data: polls } = await supabase
+    .from('polls')
+    .select('id, title, closes_at, poll_participants!inner(person_id)')
+    .eq('group_id', groupId)
+    .eq('lifecycle', 'published')
+    .eq('status', 'open')
+    .eq('poll_participants.person_id', personId)
+
+  if (!polls || polls.length === 0) return []
+
+  const { data: votes } = await supabase
+    .from('votes')
+    .select('poll_id')
+    .in(
+      'poll_id',
+      polls.map((p) => p.id)
+    )
+    .eq('person_id', personId)
+
+  const voted = new Set((votes ?? []).map((v) => v.poll_id))
+  return polls
+    .filter((p) => !voted.has(p.id))
+    .map(({ id, title, closes_at }) => ({ id, title, closes_at }))
+}
+
 export async function getDashboardData(
   supabase: DbClient,
   groupId: string

@@ -1564,6 +1564,7 @@ export type Database = {
           org_type: string
           primary_color: string | null
           secondary_color: string | null
+          settings: Json
           slug: string
           status: string | null
           submitted_by: string | null
@@ -1579,6 +1580,7 @@ export type Database = {
           org_type: string
           primary_color?: string | null
           secondary_color?: string | null
+          settings?: Json
           slug: string
           status?: string | null
           submitted_by?: string | null
@@ -1594,6 +1596,7 @@ export type Database = {
           org_type?: string
           primary_color?: string | null
           secondary_color?: string | null
+          settings?: Json
           slug?: string
           status?: string | null
           submitted_by?: string | null
@@ -2179,6 +2182,7 @@ export type Database = {
           full_name: string
           group_id: string
           id: string
+          is_legacy: boolean
           phone: string | null
           poll_id: string | null
           school_year: string | null
@@ -2194,6 +2198,7 @@ export type Database = {
           full_name: string
           group_id: string
           id?: string
+          is_legacy?: boolean
           phone?: string | null
           poll_id?: string | null
           school_year?: string | null
@@ -2209,6 +2214,7 @@ export type Database = {
           full_name?: string
           group_id?: string
           id?: string
+          is_legacy?: boolean
           phone?: string | null
           poll_id?: string | null
           school_year?: string | null
@@ -3209,6 +3215,7 @@ export type Database = {
         Args: { p_group_id: string; p_person_id: string }
         Returns: boolean
       }
+      is_platform_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

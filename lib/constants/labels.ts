@@ -99,6 +99,32 @@ export function getSubgroupTypeLabel(
   return terminology?.[type] ?? getLabel(SUBGROUP_TYPE_LABELS, type)
 }
 
+// ── Prospect Status (recruitment pipeline) ───────────────────────────────────
+
+export const PROSPECT_STATUS_LABELS: Record<string, string> = {
+  prospect: 'Prospect',
+  offered: 'Offered',
+  accepted: 'Accepted',
+  declined: 'Declined',
+  withdrawn: 'Withdrawn',
+}
+
+export const PROSPECT_STATUS_COLORS: Record<string, string> = {
+  prospect: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  offered: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+  accepted: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+  declined: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+  withdrawn: 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800/50 dark:text-zinc-400',
+}
+
+export const SCHOOL_YEAR_OPTIONS = [
+  'Freshman',
+  'Sophomore',
+  'Junior',
+  'Senior',
+  'Graduate',
+] as const
+
 // ── Term Status ──────────────────────────────────────────────────────────────
 
 export const TERM_STATUS_LABELS: Record<string, string> = {
