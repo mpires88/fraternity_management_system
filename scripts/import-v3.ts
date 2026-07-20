@@ -55,6 +55,13 @@ interface ExportData {
   pledgeClasses?: any[]
   groupMemberships: any[]
   groupRelationships: any[]
+  systemPositionRoles?: any[]
+  positions?: any[]
+  facilities?: any[]
+  rooms?: any[]
+  subgroups?: any[]
+  positionAssignments?: any[]
+  subgroupMembers?: any[]
 }
 
 async function upsertBatch(table: string, rows: any[], conflict = 'id') {
@@ -132,6 +139,7 @@ async function main() {
     'status_definitions',
     data.statusDefinitions.filter((s) => !s.group_id)
   )
+  await upsertBatch('system_position_roles', data.systemPositionRoles ?? [])
 
   // 3. Org hierarchy
   console.log('\nInserting org hierarchy...')
@@ -155,6 +163,16 @@ async function main() {
     data.statusDefinitions.filter((s) => s.group_id)
   )
   await upsertBatch('term_definitions', data.termDefinitions)
+  await upsertBatch('positions', data.positions ?? [])
+  await upsertBatch('facilities', data.facilities ?? [])
+  await upsertBatch('rooms', data.rooms ?? [])
+  await upsertBatch(
+    'subgroups',
+    (data.subgroups ?? []).map((s: any) => {
+      const { pledge_class_id: _, ...rest } = s
+      return rest
+    })
+  )
 
   // 5. Persons (id = auth user id)
   console.log('\nInserting persons...')
@@ -232,6 +250,8 @@ async function main() {
   await upsertBatch('organization_admins', data.organizationAdmins)
   await upsertBatch('group_memberships', data.groupMemberships)
   await upsertBatch('group_relationships', data.groupRelationships)
+  await upsertBatch('position_assignments', data.positionAssignments ?? [])
+  await upsertBatch('subgroup_members', data.subgroupMembers ?? [])
 
   console.log('\n--- Import complete! ---')
   console.log(`Target: ${url}`)

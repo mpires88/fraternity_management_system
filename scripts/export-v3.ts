@@ -49,6 +49,13 @@ async function main() {
   const terms = await fetchAll('terms')
   const groupMemberships = await fetchAll('group_memberships')
   const groupRelationships = await fetchAll('group_relationships')
+  const systemPositionRoles = await fetchAll('system_position_roles')
+  const positions = await fetchAll('positions')
+  const facilities = await fetchAll('facilities')
+  const rooms = await fetchAll('rooms')
+  const subgroups = await fetchAll('subgroups')
+  const positionAssignments = await fetchAll('position_assignments')
+  const subgroupMembers = await fetchAll('subgroup_members')
 
   // Also export auth users (email + id mapping, no passwords)
   console.log('\n  Fetching auth users...')
@@ -87,6 +94,13 @@ async function main() {
     terms,
     groupMemberships,
     groupRelationships,
+    systemPositionRoles,
+    positions,
+    facilities,
+    rooms,
+    subgroups,
+    positionAssignments,
+    subgroupMembers,
   }
 
   const outPath = 'scripts/export-v3-data.json'
