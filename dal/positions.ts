@@ -1,5 +1,39 @@
 import type { DbClient } from '@/dal/types'
 
+export type SystemRoleFlags = {
+  is_rush_chair: boolean
+  is_treasurer: boolean
+  is_house_manager: boolean
+}
+
+/**
+ * Returns the system_position_roles flags for a person's active position
+ * assignments in a group. Used to resolve module-level permissions (9.2).
+ */
+export async function getActiveSystemRolesForPersonDal(
+  supabase: DbClient,
+  personId: string,
+  groupId: string
+): Promise<SystemRoleFlags[]> {
+  const { data } = await supabase
+    .from('position_assignments')
+    .select('positions!inner(system_position_roles(is_rush_chair, is_treasurer, is_house_manager))')
+    .eq('person_id', personId)
+    .eq('group_id', groupId)
+    .is('term_end', null)
+
+  if (!data) return []
+
+  return data
+    .map((row) => {
+      const pos = row.positions as unknown as {
+        system_position_roles: SystemRoleFlags | null
+      }
+      return pos?.system_position_roles ?? null
+    })
+    .filter((r): r is SystemRoleFlags => r !== null)
+}
+
 export type PositionRow = {
   id: string
   title: string

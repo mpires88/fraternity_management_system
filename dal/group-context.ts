@@ -1,8 +1,17 @@
 import { cookies } from 'next/headers'
 import { cache } from 'react'
+import { getActiveSystemRolesForPersonDal } from '@/dal/positions'
 import type { DbClient } from '@/dal/types'
 import type { ActiveRole, ParentOrgInfo } from '@/lib/context/org-context'
-import type { Org, OrgMembership, Person, RoleType, StatusDefinition } from '@/lib/types/db'
+import type {
+  ModuleRoles,
+  Org,
+  OrgMembership,
+  Person,
+  RoleType,
+  StatusDefinition,
+} from '@/lib/types/db'
+import { resolveModuleRoles } from '@/lib/utils/permissions'
 
 export type Group = {
   id: string
@@ -25,6 +34,7 @@ export type GroupContextData = {
   person: Person
   roles: ActiveRole[]
   allGroups: Array<{ group: Group; parentSlug: string | null; orgSlug: string }>
+  moduleRoles: ModuleRoles
   isPlatformAdmin: boolean
 }
 
@@ -205,6 +215,17 @@ async function loadGroupContext(
     }
   }
 
+  // Module roles: rush chair, treasurer, house manager — resolved from
+  // active position assignments in this group (Phase 9.2). Platform admins
+  // with full access get all module roles; view-as member gets none.
+  let moduleRoles: ModuleRoles
+  if (isAdmin && viewAs !== 'member') {
+    moduleRoles = { rush: true, treasurer: true, houseManager: true }
+  } else {
+    const systemRoleFlags = await getActiveSystemRolesForPersonDal(supabase, person.id, group.id)
+    moduleRoles = resolveModuleRoles(systemRoleFlags)
+  }
+
   const seenGroups = new Set<string>()
   const allGroups = (allMembershipRows ?? [])
     .filter((row) => {
@@ -231,6 +252,7 @@ async function loadGroupContext(
     person: person as unknown as Person,
     roles,
     allGroups,
+    moduleRoles,
     isPlatformAdmin: !!adminRes.data,
   }
 }

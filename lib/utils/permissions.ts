@@ -1,4 +1,4 @@
-import type { EffectivePermissions } from '@/lib/types/db'
+import type { EffectivePermissions, ModuleRoles } from '@/lib/types/db'
 
 /**
  * Permission fields shared by role types and status overrides.
@@ -100,6 +100,39 @@ export function getEffectivePermissions(
       statusOverrides.override_can_view_documents
     ),
   }
+}
+
+/**
+ * Resolves module-level management roles from a person's active position
+ * assignments. Each assignment links to a position whose system_position_role
+ * carries boolean flags. Any true flag grants the module role.
+ */
+export function resolveModuleRoles(
+  systemRoleFlags: Array<{
+    is_rush_chair: boolean
+    is_treasurer: boolean
+    is_house_manager: boolean
+  }>
+): ModuleRoles {
+  const roles: ModuleRoles = { rush: false, treasurer: false, houseManager: false }
+  for (const flags of systemRoleFlags) {
+    if (flags.is_rush_chair) roles.rush = true
+    if (flags.is_treasurer) roles.treasurer = true
+    if (flags.is_house_manager) roles.houseManager = true
+  }
+  return roles
+}
+
+/**
+ * Whether the user can manage a given module: full admin access OR holds
+ * a position with the module's system role flag.
+ */
+export function canManageModule(
+  module: keyof ModuleRoles,
+  accessLevel: string,
+  moduleRoles: ModuleRoles
+): boolean {
+  return accessLevel === 'full' || moduleRoles[module]
 }
 
 /**

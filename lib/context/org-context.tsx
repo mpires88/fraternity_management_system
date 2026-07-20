@@ -5,13 +5,14 @@ import { createContext, useCallback, useContext } from 'react'
 import type { Group } from '@/dal/group-context'
 import type {
   EffectivePermissions,
+  ModuleRoles,
   Org,
   OrgMembership,
   Person,
   RoleType,
   StatusDefinition,
 } from '@/lib/types/db'
-import { getEffectivePermissions, mergePermissions } from '@/lib/utils/permissions'
+import { canManageModule, getEffectivePermissions, mergePermissions } from '@/lib/utils/permissions'
 
 export type ParentOrgInfo = {
   id: string
@@ -41,6 +42,8 @@ export type OrgContextValue = {
   membershipType: RoleType
   permissions: EffectivePermissions
   allGroups: Array<{ group: Group; parentSlug: string | null; orgSlug: string }>
+  moduleRoles: ModuleRoles
+  canManage: (module: keyof ModuleRoles) => boolean
   switchGroup: (groupSlug: string, orgSlug?: string, parentSlug?: string) => void
   isPlatformAdmin: boolean
 }
@@ -54,6 +57,7 @@ export function OrgProvider({
   value: Omit<
     OrgContextValue,
     | 'permissions'
+    | 'canManage'
     | 'switchGroup'
     | 'membershipType'
     | 'roleType'
@@ -68,6 +72,12 @@ export function OrgProvider({
   const permissions = mergePermissions(permSets)
 
   const primary = value.roles[0]
+
+  const canManage = useCallback(
+    (module: keyof ModuleRoles) =>
+      canManageModule(module, permissions.access_level, value.moduleRoles),
+    [permissions.access_level, value.moduleRoles]
+  )
 
   const switchGroup = useCallback(
     (groupSlug: string, orgSlug?: string, parentSlug?: string) => {
@@ -90,6 +100,7 @@ export function OrgProvider({
         statusDefinition: primary.statusDefinition,
         membershipType: primary.roleType,
         permissions,
+        canManage,
         switchGroup,
       }}
     >

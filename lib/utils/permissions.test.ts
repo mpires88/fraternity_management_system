@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getEffectivePermissions } from './permissions'
+import { canManageModule, getEffectivePermissions, resolveModuleRoles } from './permissions'
 
 const memberRole = {
   access_level: 'full',
@@ -113,5 +113,63 @@ describe('getEffectivePermissions', () => {
     expect(perms.can_hold_office).toBe(false)
     expect(perms.can_view_financials).toBe(true) // advisor can see financials
     expect(perms.access_level).toBe('limited')
+  })
+})
+
+describe('resolveModuleRoles', () => {
+  it('returns all false when no position assignments', () => {
+    const roles = resolveModuleRoles([])
+    expect(roles).toEqual({ rush: false, treasurer: false, houseManager: false })
+  })
+
+  it('sets rush when a position has is_rush_chair', () => {
+    const roles = resolveModuleRoles([
+      { is_rush_chair: true, is_treasurer: false, is_house_manager: false },
+    ])
+    expect(roles.rush).toBe(true)
+    expect(roles.treasurer).toBe(false)
+    expect(roles.houseManager).toBe(false)
+  })
+
+  it('merges flags across multiple positions', () => {
+    const roles = resolveModuleRoles([
+      { is_rush_chair: true, is_treasurer: false, is_house_manager: false },
+      { is_rush_chair: false, is_treasurer: true, is_house_manager: false },
+    ])
+    expect(roles.rush).toBe(true)
+    expect(roles.treasurer).toBe(true)
+    expect(roles.houseManager).toBe(false)
+  })
+
+  it('handles positions with no flags set', () => {
+    const roles = resolveModuleRoles([
+      { is_rush_chair: false, is_treasurer: false, is_house_manager: false },
+      { is_rush_chair: false, is_treasurer: false, is_house_manager: true },
+    ])
+    expect(roles.rush).toBe(false)
+    expect(roles.treasurer).toBe(false)
+    expect(roles.houseManager).toBe(true)
+  })
+})
+
+describe('canManageModule', () => {
+  const noModuleRoles = { rush: false, treasurer: false, houseManager: false }
+
+  it('grants access to full admins regardless of module roles', () => {
+    expect(canManageModule('rush', 'full', noModuleRoles)).toBe(true)
+    expect(canManageModule('treasurer', 'full', noModuleRoles)).toBe(true)
+    expect(canManageModule('houseManager', 'full', noModuleRoles)).toBe(true)
+  })
+
+  it('grants access when the user holds the module role', () => {
+    const rushChair = { rush: true, treasurer: false, houseManager: false }
+    expect(canManageModule('rush', 'limited', rushChair)).toBe(true)
+    expect(canManageModule('treasurer', 'limited', rushChair)).toBe(false)
+  })
+
+  it('denies access to non-admin without the module role', () => {
+    expect(canManageModule('rush', 'limited', noModuleRoles)).toBe(false)
+    expect(canManageModule('rush', 'read_only', noModuleRoles)).toBe(false)
+    expect(canManageModule('rush', 'none', noModuleRoles)).toBe(false)
   })
 })

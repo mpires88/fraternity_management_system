@@ -12,6 +12,7 @@ export type ParentOrganization = {
   org_type: string
   logo_url: string | null
   website: string | null
+  settings: Record<string, unknown>
 }
 
 export type Org = {
@@ -181,6 +182,12 @@ export type Subgroup = {
   is_private: boolean
   is_locked: boolean
   can_rename: boolean
+}
+
+export type ModuleRoles = {
+  rush: boolean
+  treasurer: boolean
+  houseManager: boolean
 }
 
 /** Effective permissions after applying status overrides to role type */
