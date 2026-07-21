@@ -703,6 +703,32 @@ volume (residents × weeks × chores) lands in the same table that feeds the
 national-reporting CSV — separate "house duties" from "national requirements"
 by filtering on the recurring template, not a schema split.
 
+**Meeting / committee action items (direction decided 2026-07-20; belongs to
+the parked meetings module).** Scenario: a social chair asks a committee member
+to do something before the next meeting. This is a `requirements` row with
+`kind='task'` assigned to that one person (via `assign_to='custom'` /
+`custom_person_ids`, or `assign_to='subgroups'` targeting the committee — a
+committee IS a subgroup), due by the next meeting. It matches the task profile
+on every axis (pushed down, assigned→done, creator ≠ owner); N=1 is a
+legitimate use of the engine, not an abuse. **This is the same
+source→requirement composition as `comment → requirement` (shipped) and
+`issue → requirement` (planned): the requirements engine is the universal
+"someone owes something, tracked to done" substrate, and meetings/issues/
+comments/chores are SOURCES that feed it. That is the SPEC "unified task
+engine" — realized as composition, not a mega-table.** Long-term home is the
+meetings module (action items are born from minutes: owner + due date), where
+each action item is a task requirement linked to the meeting that spawned it.
+- **Two gaps this exposes (both fixable WITHOUT a new table; discuss before
+  building):** (1) *Creation rights* — creating a requirement needs full admin
+  today, but a committee head shouldn't. Anchor: `subgroups.head_position_id`
+  already names the committee head — let a subgroup head assign requirements
+  within their own committee (an RLS/permission extension, generalizes to any
+  head). (2) *Coordination vs. compliance* — an informal action item must NOT
+  land in the Pursuit-of-Excellence export next to "pay dues," and probably
+  wants its own lane in "My Requirements." That is a category flag/column on
+  `requirements` (a column, not a table) that touches the reporting export, so
+  it needs explicit sign-off. Same distinction the chores note raises.
+
 **Parked — activities / interaction log.** A unified activity log tracking
 member interactions, officer notes, advisor check-ins, and housing-corp
 communications. Modeled on the `activities` system in `business-data-platform`
@@ -1255,7 +1281,9 @@ there is nothing broader to rename it to.
   which auto-resolves on completion. Exactly the shipped comment→requirement
   pattern; works BECAUSE the tables stay separate. A future "my work"
   dashboard section can UNION assigned issues + pending requirements for
-  display only.
+  display only. (One instance of the source→requirement pattern — see the
+  meeting/committee action-items note in §11 for the full set and the
+  "requirements engine as universal task substrate" framing.)
 - **Cleanup owed:** the legacy `tasks: true` feature flag in `OrgFeatures`
   (and the dev groups' data) is dead and invites exactly this confusion —
   delete it in the next cleanup pass.
