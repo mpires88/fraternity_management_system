@@ -14,6 +14,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { InfoHint } from '@/components/ui/info-hint'
 import {
   Table,
   TableBody,
@@ -121,7 +122,13 @@ export function ManageRequirements({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-foreground">Manage Requirements</h2>
+          <div className="relative flex items-center gap-2">
+            <h2 className="text-xl font-semibold text-foreground">Manage Requirements</h2>
+            <InfoHint
+              label="About managing requirements"
+              text="Create what members owe this term — tasks, dues payments, event attendance, or hour quotas. Target everyone or a specific role, position, or subgroup (position-targeted requirements follow the office, so they transfer automatically when officers turn over). Turn on verification to require officer sign-off. Clone last term's set to avoid retyping, and export completion as a CSV for national reporting."
+            />
+          </div>
           <p className="text-sm text-muted-foreground mt-1">
             {termName} &middot; {active.length} active requirement{active.length !== 1 ? 's' : ''}
           </p>
@@ -484,6 +491,10 @@ function RequirementDialog({
                   <option value="attendance">Attendance</option>
                   <option value="quota">Quota</option>
                 </select>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Task = a to-do or form · Payment = dues the treasurer records · Attendance = show
+                  up to an event · Quota = accumulate units (e.g. service hours).
+                </p>
               </div>
             )}
 
@@ -570,6 +581,12 @@ function RequirementDialog({
                 Requires officer verification
               </label>
             </div>
+            {isCreate && (
+              <p className="-mt-2 text-xs text-muted-foreground">
+                When on, a member marking this done goes to &ldquo;submitted&rdquo; and waits for an
+                officer to confirm before it counts as complete.
+              </p>
+            )}
 
             {isCreate && (
               <>
@@ -587,6 +604,11 @@ function RequirementDialog({
                     <option value="positions">By position</option>
                     <option value="subgroups">By subgroup</option>
                   </select>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Who owes this. Position targeting follows the office, not the person — e.g. a
+                    &ldquo;file the 990-N&rdquo; task stays with whoever is Treasurer across
+                    turnover. Subgroups cover committees and candidate classes.
+                  </p>
                 </div>
 
                 {form.assign_to === 'role_types' && roleTypes.length > 0 && (
