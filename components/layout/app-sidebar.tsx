@@ -10,6 +10,7 @@ import {
   GitBranch,
   Home,
   LayoutDashboard,
+  Lock,
   LogOut,
   Receipt,
   Settings,
@@ -31,7 +32,7 @@ import { useOrg } from '@/lib/context/org-context'
 import { createClient } from '@/lib/supabase/client'
 import { isEnabled } from '@/lib/utils/features'
 
-type NavItem = { label: string; href: string; icon: React.ReactNode }
+type NavItem = { label: string; href: string; icon: React.ReactNode; locked?: boolean }
 type NavGroup = { label: string; icon: React.ReactNode; items: NavItem[] }
 
 export function AppSidebar() {
@@ -44,8 +45,8 @@ export function AppSidebar() {
     ? `/${parentOrg.slug}/${org.slug}/${group.slug}`
     : `/${org.slug}/${org.slug}/${group.slug}`
 
-  // "org" from useOrg() is the current group (legacy naming) — module flags
-  // live on the group's features jsonb
+  // Feature flags live on the GROUP (chapter, housing corp, and alumni chapter
+  // each enable different modules). Disabled modules still render, with a lock.
   const recruitmentLabel =
     (group.terminology as Record<string, string> | null)?.recruitment ?? 'Recruitment'
 
@@ -54,29 +55,39 @@ export function AppSidebar() {
       label: 'Members',
       icon: <Users size={16} />,
       items: [
-        ...(isEnabled(org, 'members')
-          ? [{ label: 'Roster', href: `${base}/members`, icon: <Users size={15} /> }]
-          : []),
-        ...(isEnabled(org, 'subgroups')
-          ? [{ label: 'Subgroups', href: `${base}/subgroups`, icon: <GitBranch size={15} /> }]
-          : []),
+        {
+          label: 'Roster',
+          href: `${base}/members`,
+          icon: <Users size={15} />,
+          locked: !isEnabled(group, 'members'),
+        },
+        {
+          label: 'Subgroups',
+          href: `${base}/subgroups`,
+          icon: <GitBranch size={15} />,
+          locked: !isEnabled(group, 'subgroups'),
+        },
       ],
     },
     {
       label: 'Money',
       icon: <Wallet size={16} />,
-      items: isEnabled(org, 'budget')
-        ? [
-            { label: 'Budget', href: `${base}/budget`, icon: <Wallet size={15} /> },
-            {
-              label: 'Reimbursements',
-              href: `${base}/reimbursements`,
-              icon: <Receipt size={15} />,
-            },
-          ]
-        : [],
+      items: [
+        {
+          label: 'Budget',
+          href: `${base}/budget`,
+          icon: <Wallet size={15} />,
+          locked: !isEnabled(group, 'budget'),
+        },
+        {
+          label: 'Reimbursements',
+          href: `${base}/reimbursements`,
+          icon: <Receipt size={15} />,
+          locked: !isEnabled(group, 'budget'),
+        },
+      ],
     },
-  ].filter((g) => g.items.length > 0)
+  ]
 
   async function handleSignOut() {
     const supabase = createClient()
@@ -164,23 +175,21 @@ export function AppSidebar() {
           pathname={pathname}
         />
 
-        {isEnabled(org, 'events') && (
-          <NavLink
-            href={`${base}/events`}
-            icon={<Calendar size={16} />}
-            label="Events"
-            pathname={pathname}
-          />
-        )}
+        <NavLink
+          href={`${base}/events`}
+          icon={<Calendar size={16} />}
+          label="Events"
+          pathname={pathname}
+          locked={!isEnabled(group, 'events')}
+        />
 
-        {isEnabled(org, 'recruitment') && (
-          <NavLink
-            href={`${base}/recruitment`}
-            icon={<UserPlus size={16} />}
-            label={recruitmentLabel}
-            pathname={pathname}
-          />
-        )}
+        <NavLink
+          href={`${base}/recruitment`}
+          icon={<UserPlus size={16} />}
+          label={recruitmentLabel}
+          pathname={pathname}
+          locked={!isEnabled(group, 'recruitment')}
+        />
 
         <NavLink
           href={`${base}/polls`}
@@ -196,23 +205,21 @@ export function AppSidebar() {
           pathname={pathname}
         />
 
-        {isEnabled(org, 'house') && (
-          <NavLink
-            href={`${base}/housing`}
-            icon={<Home size={16} />}
-            label="Housing"
-            pathname={pathname}
-          />
-        )}
+        <NavLink
+          href={`${base}/housing`}
+          icon={<Home size={16} />}
+          label="Housing"
+          pathname={pathname}
+          locked={!isEnabled(group, 'house')}
+        />
 
-        {isEnabled(org, 'issues') && (
-          <NavLink
-            href={`${base}/issues`}
-            icon={<Wrench size={16} />}
-            label="Issues"
-            pathname={pathname}
-          />
-        )}
+        <NavLink
+          href={`${base}/issues`}
+          icon={<Wrench size={16} />}
+          label="Issues"
+          pathname={pathname}
+          locked={!isEnabled(group, 'issues')}
+        />
 
         {/* Grouped sections */}
         {groups.map((group) => (
@@ -292,13 +299,29 @@ function NavLink({
   label,
   pathname,
   nested = false,
+  locked = false,
 }: {
   href: string
   icon: React.ReactNode
   label: string
   pathname: string
   nested?: boolean
+  locked?: boolean
 }) {
+  if (locked) {
+    return (
+      <div
+        title={`${label} is turned off — an admin can enable it in Settings › Features`}
+        className={`flex items-center gap-2.5 px-3 py-1.5 rounded-md text-sm text-muted-foreground/45 cursor-default select-none ${
+          nested ? 'pl-9' : ''
+        }`}
+      >
+        {!nested && icon}
+        <span className="flex-1 truncate">{label}</span>
+        <Lock size={12} className="shrink-0 opacity-80" aria-label="Locked" />
+      </div>
+    )
+  }
   const active = pathname.startsWith(href)
   return (
     <Link
@@ -316,7 +339,7 @@ function NavLink({
 }
 
 function NavSection({ group, pathname }: { group: NavGroup; pathname: string }) {
-  const hasActive = group.items.some((item) => pathname.startsWith(item.href))
+  const hasActive = group.items.some((item) => !item.locked && pathname.startsWith(item.href))
   const [open, setOpen] = useState(hasActive)
 
   return (
@@ -343,6 +366,7 @@ function NavSection({ group, pathname }: { group: NavGroup; pathname: string }) 
               label={item.label}
               pathname={pathname}
               nested
+              locked={item.locked}
             />
           ))}
         </div>

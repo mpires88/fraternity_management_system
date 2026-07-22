@@ -83,10 +83,10 @@ export async function getAdminSettings(
   supabase: DbClient,
   groupId: string
 ): Promise<AdminSettingsData | null> {
-  // Look up the organization via the group
+  // Look up the group (features live here — per-group, not per-org) + its org
   const { data: group } = await supabase
     .from('groups')
-    .select('organization_id')
+    .select('organization_id, features')
     .eq('id', groupId)
     .single()
 
@@ -119,7 +119,8 @@ export async function getAdminSettings(
   return {
     org: {
       ...orgRes.data,
-      features: (orgRes.data.features ?? {}) as Record<string, boolean>,
+      // Features are group-scoped — the sidebar reads the group's flags
+      features: (group.features ?? {}) as Record<string, boolean>,
     },
     roleTypes: (affRes.data ?? []) as AdminSettingsData['roleTypes'],
     statusDefinitions: (statusRes.data ?? []) as AdminSettingsData['statusDefinitions'],
@@ -144,12 +145,19 @@ export async function updateOrgDetailsDal(
 
   if (!group) throw new UserFacingError('Group not found')
 
-  const { error } = await supabase
-    .from('organizations')
-    .update({ name: input.name, features: input.features })
-    .eq('id', group.organization_id)
+  // Features are per-group (chapter vs housing corp vs alumni differ, and the
+  // sidebar reads the group's flags); the name stays on the organization.
+  const { error: featError } = await supabase
+    .from('groups')
+    .update({ features: input.features })
+    .eq('id', groupId)
+  if (featError) throw new UserFacingError(featError.message)
 
-  if (error) throw new UserFacingError(error.message)
+  const { error: nameError } = await supabase
+    .from('organizations')
+    .update({ name: input.name })
+    .eq('id', group.organization_id)
+  if (nameError) throw new UserFacingError(nameError.message)
 }
 
 export async function upsertRoleTypeDal(

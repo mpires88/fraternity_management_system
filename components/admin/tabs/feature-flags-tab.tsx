@@ -6,20 +6,32 @@ import { updateOrgDetails } from '@/actions/admin/update-settings.action'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import type { AdminSettingsData } from '@/dal/admin'
 
+// Keys MUST match the sidebar's feature gates (components/layout/app-sidebar).
+// Dashboard, Requirements, Polls, and Documents are always on and not listed.
 const ALL_FEATURES = [
-  { key: 'members', label: 'Members', description: 'Member directory and roster' },
-  { key: 'announcements', label: 'Announcements', description: 'Post updates to the chapter' },
-  { key: 'documents', label: 'Documents', description: 'Document storage and sharing' },
-  { key: 'meetings', label: 'Meetings', description: 'Meeting scheduling and minutes' },
-  { key: 'events', label: 'Events', description: 'Event calendar and attendance' },
-  { key: 'budget', label: 'Budget', description: 'Budget proposals and expense tracking' },
-  { key: 'dues', label: 'Dues', description: 'Dues tracking and invoicing' },
-  { key: 'elections', label: 'Elections', description: 'Officer elections and voting' },
-  { key: 'voting', label: 'Voting', description: 'Standalone voting and polls' },
-  { key: 'house', label: 'House', description: 'Rooms, chores, and house issues' },
-  { key: 'rush', label: 'Rush', description: 'Prospect tracking and bid management' },
-  { key: 'tasks', label: 'Tasks', description: 'Task assignment and tracking' },
-  { key: 'subgroups', label: 'Subgroups', description: 'Committees and groups' },
+  { key: 'members', label: 'Members', description: 'Roster and member directory' },
+  {
+    key: 'subgroups',
+    label: 'Subgroups',
+    description: 'Committees, candidate classes, and family lines',
+  },
+  { key: 'events', label: 'Events', description: 'Group event calendar' },
+  {
+    key: 'recruitment',
+    label: 'Recruitment',
+    description: 'Prospect pipeline, rush events, and bid votes',
+  },
+  {
+    key: 'budget',
+    label: 'Budget & Reimbursements',
+    description: 'Budget proposals and member reimbursements',
+  },
+  { key: 'house', label: 'Housing', description: 'Rooms, occupancy, and the housing lottery' },
+  {
+    key: 'issues',
+    label: 'Issues',
+    description: 'Report and triage maintenance and other problems',
+  },
 ]
 
 export function FeatureFlagsTab({ settings }: { settings: AdminSettingsData }) {
@@ -51,7 +63,10 @@ export function FeatureFlagsTab({ settings }: { settings: AdminSettingsData }) {
     <Card>
       <CardHeader>
         <CardTitle>Feature Flags</CardTitle>
-        <CardDescription>Enable or disable features for this organization.</CardDescription>
+        <CardDescription>
+          Turn modules on or off for this group. Each group (chapter, housing corp, alumni) has its
+          own set. Enabled modules appear in the sidebar; disabled ones show with a lock.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-1">
         {ALL_FEATURES.map((f) => (
