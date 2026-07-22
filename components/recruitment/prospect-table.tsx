@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { convertProspect, createBidVote } from '@/actions/recruitment.action'
+import { MemberAvatar } from '@/components/shared/member-avatar'
 import type { ProspectWithCounts } from '@/dal/recruitment'
 import { PROSPECT_STATUS_COLORS } from '@/lib/constants/labels'
 
@@ -11,6 +12,7 @@ type Props = {
   prospects: ProspectWithCounts[]
   canManage: boolean
   basePath: string
+  photoUrls: Record<string, string>
   onStatusChange: (id: string, status: string) => void
   onDelete: (id: string) => void
   isPending: boolean
@@ -24,6 +26,7 @@ export function ProspectTable({
   prospects,
   canManage,
   basePath,
+  photoUrls,
   onStatusChange,
   onDelete,
   isPending,
@@ -112,18 +115,25 @@ export function ProspectTable({
                 className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
               >
                 <td className="px-4 py-3">
-                  <Link
-                    href={`${basePath}/recruitment/${p.id}`}
-                    className="font-medium text-foreground hover:underline"
-                  >
-                    {p.full_name}
-                  </Link>
-                  {p.is_legacy && (
-                    <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
-                      Legacy
-                    </span>
-                  )}
-                  {p.email && <div className="text-xs text-muted-foreground mt-0.5">{p.email}</div>}
+                  <div className="flex items-center gap-2.5">
+                    <MemberAvatar src={photoUrls[p.id] ?? null} fullName={p.full_name} size="sm" />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`${basePath}/recruitment/${p.id}`}
+                          className="font-medium text-foreground hover:underline"
+                        >
+                          {p.full_name}
+                        </Link>
+                        {p.is_legacy && (
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
+                            Legacy
+                          </span>
+                        )}
+                      </div>
+                      {p.email && <div className="text-xs text-muted-foreground">{p.email}</div>}
+                    </div>
+                  </div>
                 </td>
                 <td className="px-4 py-3">
                   <span

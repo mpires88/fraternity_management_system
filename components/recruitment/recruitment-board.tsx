@@ -26,6 +26,7 @@ type Props = {
   termId: string
   canManage: boolean
   basePath: string
+  photoUrls: Record<string, string>
   roleTypes: Array<{ id: string; name: string }>
   candidateSubgroups: Array<{ id: string; name: string }>
   statuses: Array<{ id: string; name: string; slug: string }>
@@ -39,6 +40,7 @@ export function RecruitmentBoard({
   termId,
   canManage,
   basePath,
+  photoUrls,
   roleTypes,
   candidateSubgroups,
   statuses,
@@ -199,6 +201,7 @@ export function RecruitmentBoard({
           prospects={filtered}
           canManage={canManage}
           basePath={basePath}
+          photoUrls={photoUrls}
           onStatusChange={handleStatusChange}
           onDelete={handleDelete}
           isPending={isPending}

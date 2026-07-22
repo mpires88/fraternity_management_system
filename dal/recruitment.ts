@@ -15,6 +15,7 @@ export type ProspectRow = {
   status: string
   is_legacy: boolean
   poll_id: string | null
+  photo_path: string | null
   converted_person_id: string | null
   added_by: string
   created_at: string

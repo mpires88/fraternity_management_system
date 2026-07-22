@@ -3,6 +3,7 @@ import { RecruitmentBoard } from '@/components/recruitment/recruitment-board'
 import { PageHeader } from '@/components/ui/page-header'
 import { getEventsForGroupDal } from '@/dal/events'
 import { getGroupContext } from '@/dal/group-context'
+import { resolveProspectPhotoUrlsDal } from '@/dal/prospect-photos'
 import {
   type ConversionLookups,
   getActiveTermDal,
@@ -52,6 +53,16 @@ export default async function RecruitmentPage({
 
   const basePath = `/${parentSlug}/${orgSlug}/${groupSlug}`
 
+  // Batch-resolve headshot signed URLs (private bucket), keyed by prospect id
+  const urlByPath = await resolveProspectPhotoUrlsDal(
+    supabase,
+    prospects.map((p) => p.photo_path)
+  )
+  const photoUrls: Record<string, string> = {}
+  for (const p of prospects) {
+    if (p.photo_path && urlByPath[p.photo_path]) photoUrls[p.id] = urlByPath[p.photo_path]
+  }
+
   return (
     <div className="p-8 space-y-8">
       <PageHeader
@@ -65,6 +76,7 @@ export default async function RecruitmentPage({
         termId={activeTerm.id}
         canManage={canManage}
         basePath={basePath}
+        photoUrls={photoUrls}
         roleTypes={lookups.roleTypes}
         candidateSubgroups={lookups.candidateSubgroups}
         statuses={lookups.statuses}
