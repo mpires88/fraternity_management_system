@@ -596,6 +596,17 @@ task-assignment status pending→submitted/complete.
   positions, housing), create the Fall term, invite 2–3 officers first, then the
   chapter. Accept: an officer creates the semester's real requirements; a brother logs
   in on their phone and sees their checklist.
+- **4.4 File storage → direct AWS S3 (user decision 2026-07-21).** The app stores
+  files in Supabase Storage today (member avatars → `profile-photos`, receipts,
+  issue photos, prospect photos → `prospect-photos`). Production target is a direct
+  AWS S3 bucket. Two paths: (a) point Supabase Storage's backend at the S3 bucket
+  (infra config, zero app code — keeps the one storage API); or (b) integrate the
+  AWS SDK with presigned PUT (upload) / GET (display) URLs. Each file store keeps an
+  opaque path/key column, so path (b) is localized per feature — e.g. prospect
+  photos: only `components/recruitment/prospect-photo-upload.tsx` + the resolvers in
+  `dal/prospect-photos.ts` change (column/action/UI stay). Prereqs for (b): bucket
+  name + region + `AWS_*` credentials as env vars, and `@aws-sdk/client-s3` +
+  presigner deps. Decide (a) vs (b) at deploy; (a) is simpler and app-wide.
 
 ## 10. Phases 5–6 — post-v1, ported from the reference repo
 
