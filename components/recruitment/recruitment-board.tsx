@@ -134,9 +134,10 @@ export function RecruitmentBoard({
           </button>
         </div>
 
-        {canManage && activeTab === 'pipeline' && (
+        {activeTab === 'pipeline' && (
           <div className="flex items-center gap-2">
-            {undecided.length > 0 && (
+            {/* Bid night is a manager action; adding a prospect is open to any member */}
+            {canManage && undecided.length > 0 && (
               <button
                 type="button"
                 onClick={handleOpenBidNight}

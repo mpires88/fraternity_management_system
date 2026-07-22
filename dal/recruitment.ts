@@ -87,6 +87,23 @@ export async function getProspectCoresDal(
   return (data ?? []) as ProspectCore[]
 }
 
+/**
+ * The prospect whose bid vote is this poll, if any. Returns null for polls that
+ * aren't bid votes (e.g. a budget ratification) — lets the generic poll-close
+ * path decide whether a prospect status flip applies.
+ */
+export async function getProspectByPollIdDal(
+  supabase: DbClient,
+  pollId: string
+): Promise<ProspectCore | null> {
+  const { data } = await supabase
+    .from('prospects')
+    .select('id, full_name, is_legacy, poll_id, status, email')
+    .eq('poll_id', pollId)
+    .maybeSingle()
+  return (data as ProspectCore) ?? null
+}
+
 /** The group's active term, if any. */
 export async function getActiveTermDal(
   supabase: DbClient,

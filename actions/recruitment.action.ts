@@ -1,5 +1,6 @@
 'use server'
 
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import type { Actor } from '@/actions/utils/action-helpers'
 import {
   createOrgAuthenticatedAction,
@@ -37,6 +38,7 @@ import {
   updateProspectDal,
 } from '@/dal/recruitment'
 import type { DbClient } from '@/dal/types'
+import type { Database } from '@/lib/supabase/types'
 import {
   addFeedbackSchema,
   convertProspectSchema,
@@ -57,6 +59,22 @@ async function assertRecruitmentManager(supabase: DbClient, groupId: string): Pr
   if (!((data as string[] | null) ?? []).includes(groupId)) {
     throw new UserFacingError('Only recruitment managers can do this')
   }
+}
+
+/**
+ * Service-role client for bid-vote poll creation. The polls / poll_options /
+ * poll_participants insert policies all require full group admin, but a bid
+ * vote is run by a recruitment manager who may not be a full admin — so the
+ * ballot is created through the service role AFTER assertRecruitmentManager
+ * has verified the rush gate (exactly the convertProspect pattern). RLS cannot
+ * protect a service-role write; the app-level gate is the boundary.
+ */
+function serviceRoleClient(): DbClient {
+  return createAdminClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
 }
 
 // ── Prospect queries ────────────────────────────────────────────────────────
@@ -255,7 +273,11 @@ async function createBidVoteForProspect(
   memberIds: string[],
   termId?: string
 ): Promise<string> {
-  const pollId = await createPollDal(supabase, groupId, actor.personId, {
+  // Poll/options/participants inserts are admin-gated in RLS; a rush manager
+  // may not be a full admin, so create the ballot through the service role.
+  // Callers MUST have run assertRecruitmentManager first.
+  const admin = serviceRoleClient()
+  const pollId = await createPollDal(admin, groupId, actor.personId, {
     title: `Bid Vote: ${prospect.full_name}`,
     description: prospect.is_legacy
       ? `Legacy bid vote — requires ${Math.round(threshold * 100)}% approval`
@@ -271,8 +293,10 @@ async function createBidVoteForProspect(
     ],
   })
 
-  await addParticipantsDal(supabase, pollId, memberIds)
-  await publishPollDal(supabase, pollId)
+  await addParticipantsDal(admin, pollId, memberIds)
+  await publishPollDal(admin, pollId)
+  // The prospect link goes through the scoped client so the prospects audit
+  // trigger records the acting rush manager, not the service role.
   await linkPollToProspectDal(supabase, prospect.id, pollId)
   return pollId
 }
@@ -288,6 +312,9 @@ export const createBidVote = createOrgAuthenticatedAction<
   { prospectId: string; termId?: string },
   string
 >(async (supabase, actor, groupId, input) => {
+  // Creates the ballot via the service role — the rush gate MUST be app-enforced
+  await assertRecruitmentManager(supabase, groupId)
+
   const [prospect] = await getProspectCoresDal(supabase, [input.prospectId])
   if (!prospect) throw new Error('Prospect not found')
   if (prospect.poll_id) throw new Error('Bid vote already exists for this prospect')
@@ -310,6 +337,9 @@ export const createBatchBidVotes = createOrgAuthenticatedAction<
   { prospectIds: string[]; termId?: string },
   string[]
 >(async (supabase, actor, groupId, input) => {
+  // Creates ballots via the service role — the rush gate MUST be app-enforced
+  await assertRecruitmentManager(supabase, groupId)
+
   const prospects = (await getProspectCoresDal(supabase, input.prospectIds)).filter(
     (p) => !p.poll_id
   )

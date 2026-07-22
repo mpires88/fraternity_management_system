@@ -46,7 +46,7 @@ export function ProspectTable({
   if (prospects.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground text-sm">
-        No prospects yet. {canManage && 'Click "Add Prospect" to get started.'}
+        No prospects yet. Click &quot;Add Prospect&quot; to get started.
       </div>
     )
   }

@@ -57,7 +57,7 @@ export default async function RecruitmentPage({
       <PageHeader
         title={label}
         description={`${activeTerm.name} — ${prospects.length} prospects`}
-        info="Track prospects from first meeting to bid: anyone can add feedback and check prospects in at events; recruitment managers move them through the pipeline, run secret bid votes, and convert accepted bids into members."
+        info="Track prospects from first meeting to bid: any member can add a prospect, leave feedback, and check prospects in at events; recruitment managers move them through the pipeline, run secret bid votes, and convert accepted bids into members."
       />
       <RecruitmentBoard
         prospects={prospects}
