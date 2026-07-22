@@ -2184,6 +2184,7 @@ export type Database = {
           id: string
           is_legacy: boolean
           phone: string | null
+          photo_path: string | null
           poll_id: string | null
           school_year: string | null
           status: string
@@ -2200,6 +2201,7 @@ export type Database = {
           id?: string
           is_legacy?: boolean
           phone?: string | null
+          photo_path?: string | null
           poll_id?: string | null
           school_year?: string | null
           status?: string
@@ -2216,6 +2218,7 @@ export type Database = {
           id?: string
           is_legacy?: boolean
           phone?: string | null
+          photo_path?: string | null
           poll_id?: string | null
           school_year?: string | null
           status?: string
