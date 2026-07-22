@@ -3,7 +3,8 @@ import { redirect } from 'next/navigation'
 import { ProspectDetailView } from '@/components/recruitment/prospect-detail-view'
 import { PageHeader } from '@/components/ui/page-header'
 import { getGroupContext } from '@/dal/group-context'
-import { getProspectDetailDal } from '@/dal/recruitment'
+import { resolveProspectPhotoUrlDal } from '@/dal/prospect-photos'
+import { getProspectDetailDal, type ProspectDetail } from '@/dal/recruitment'
 import { createClient, getAuthUser } from '@/lib/supabase/server'
 import { canManageFromContext } from '@/lib/utils/resolve-permissions'
 
@@ -24,6 +25,12 @@ export default async function ProspectDetailPage({
   const prospect = await getProspectDetailDal(supabase, id)
   if (!prospect) redirect(`/${parentSlug}/${orgSlug}/${groupSlug}/recruitment`)
 
+  // photo_path rides along on getProspectDetailDal's select('*'); resolve it to
+  // a signed URL (private bucket). The `photo_path` field isn't on the hand-
+  // written ProspectDetail type yet, so read it defensively.
+  const photoPath = (prospect as ProspectDetail & { photo_path?: string | null }).photo_path ?? null
+  const photoUrl = await resolveProspectPhotoUrlDal(supabase, photoPath)
+
   const basePath = `/${parentSlug}/${orgSlug}/${groupSlug}`
 
   return (
@@ -42,7 +49,12 @@ export default async function ProspectDetailPage({
         info="Everything the chapter knows about this prospect: event check-ins, brother feedback, and bid-vote status. Feedback is wiped automatically if a bid is accepted."
       />
 
-      <ProspectDetailView prospect={prospect} canManage={canManage} />
+      <ProspectDetailView
+        prospect={prospect}
+        canManage={canManage}
+        personId={ctx.person.id}
+        photoUrl={photoUrl}
+      />
     </div>
   )
 }

@@ -77,7 +77,7 @@ export function ProfilePhotoUpload({
   )
 }
 
-function resizeImage(file: File, maxSize: number): Promise<Blob> {
+export function resizeImage(file: File, maxSize: number): Promise<Blob> {
   return new Promise((resolve) => {
     const img = new Image()
     img.onload = () => {

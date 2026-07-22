@@ -8,15 +8,19 @@ import {
   setProspectStatus,
   updateProspect,
 } from '@/actions/recruitment.action'
+import { ProspectPhotoUpload } from '@/components/recruitment/prospect-photo-upload'
+import { MemberAvatar } from '@/components/shared/member-avatar'
 import type { ProspectDetail } from '@/dal/recruitment'
 import { PROSPECT_STATUS_COLORS, SCHOOL_YEAR_OPTIONS } from '@/lib/constants/labels'
 
 type Props = {
   prospect: ProspectDetail
   canManage: boolean
+  personId: string
+  photoUrl: string | null
 }
 
-export function ProspectDetailView({ prospect, canManage }: Props) {
+export function ProspectDetailView({ prospect, canManage, personId, photoUrl }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [editing, setEditing] = useState(false)
@@ -258,6 +262,24 @@ export function ProspectDetailView({ prospect, canManage }: Props) {
 
       {/* Right: Sidebar */}
       <div className="space-y-6">
+        {/* Photo */}
+        <div className="rounded-lg border border-border p-4">
+          {canManage ? (
+            <ProspectPhotoUpload
+              prospectId={prospect.id}
+              uploaderPersonId={personId}
+              fullName={prospect.full_name}
+              currentPhotoUrl={photoUrl}
+              hasPhoto={!!photoUrl}
+            />
+          ) : (
+            <div className="flex items-center gap-4">
+              <MemberAvatar src={photoUrl} fullName={prospect.full_name} size="xl" />
+              <p className="text-sm font-medium text-foreground">{prospect.full_name}</p>
+            </div>
+          )}
+        </div>
+
         {/* Status */}
         <div className="rounded-lg border border-border p-4 space-y-3">
           <h3 className="text-sm font-semibold">Status</h3>
