@@ -845,7 +845,7 @@ housing extras, term rollover) are §14 of this document — canonical as of
 
 ---
 
-## 14. Phases 9–15 — approved feature roadmap (ported 2026-07-19; canonical here)
+## 14. Phases 9–16 — approved feature roadmap (ported 2026-07-19; canonical here)
 
 Planned 2026-07-17/19 with the user through a full schema layout pass — every
 table below was individually challenged for necessity, redundancy, and naming
@@ -1467,6 +1467,103 @@ in `drafting`.
 
 ---
 
+### Phase 16 — Platform settings & multi-tenant control panel (user-approved 2026-07-22)
+
+Turns `/platform-admin` from a read-only directory into the operator's control panel,
+and introduces a **three-tier settings hierarchy** that resolves top-down:
+
+```
+effective = group override ?? national override ?? platform default
+```
+
+with a per-key `locked` marker at whichever tier sets it — a higher tier can *force* a
+value (e.g. national forces "candidate", chapter can't override) while leaving other
+keys freely overridable. Same mental model as status-overrides-role in
+`lib/utils/permissions.ts` ("can only restrict").
+
+**Tiers & storage (no data redesign beyond one approved table):**
+- **Platform** → NEW single-row `platform_settings` table (the one approved new table).
+- **National** → reuse `parent_organizations.settings` jsonb.
+- **Group** → reuse `groups.settings` / `groups.features` (already wired).
+
+**Locked-in decisions (2026-07-22):**
+- Platform defaults live in a **single-row `platform_settings` table** (editable in-app,
+  no redeploy). Approved despite the no-new-tables rule.
+- **Integration secrets live in env vars only, never the DB.** The integrations UI shows
+  configured/not + non-secret config (bucket, region, sender) — never a secret value.
+- **Billing is groundwork only** — a `plan_defaults` jsonb placeholder; no billing tables,
+  no payment surface until the user reopens it (§12 liability guardrail: no payment
+  processing).
+
+**16.1 Migration `platform_settings.sql`.**
+Single-row table (enforce one row via a `id boolean PRIMARY KEY DEFAULT true CHECK (id)`
+singleton, pattern-checked): `product_name`, `logo_url null`, `support_email null`,
+`primary_domain null`, `default_features jsonb` (default-on module set for new groups),
+`default_terminology jsonb`, `default_governance jsonb` (default bid threshold, quorum),
+`plan_defaults jsonb null` (billing groundwork), `updated_by`, `updated_at`. Seed the row.
+RLS: select = `authenticated` (defaults are non-secret and flow down); write =
+`is_platform_admin()`. Audit trigger.
+*Accept:* a second insert fails (one-row guard); platform admin updates it; a non-admin
+cannot write; any authenticated user can read.
+
+**16.2 Inheritance resolver (pure lib, unit-tested).**
+`lib/utils/settings.ts`: a settings-key registry (each key's owning-default tier +
+whether lockable) and `resolveSetting(key, { platform, national, group })` +
+`resolveSettings(keys, tiers)` honoring higher-tier `locked`. `dal/platform-settings.ts`:
+`getPlatformSettingsDal` (React `cache()`) and `resolveGroupSettingsDal(supabase, groupId)`
+(loads group + parent org + platform row → effective settings). Wire into `getGroupContext`
+so pages/`useOrg()` read effective settings. Pattern: `lib/utils/permissions.ts` — extend
+the mental model, don't reimplement.
+*Accept:* unit matrix — group override wins; national beats platform; national `locked`
+beats a group override; a missing key falls through to the platform default.
+
+**16.3 Platform-admin management (fills today's SQL-only gap).**
+Actions on the existing `platform_admins` table (invite by email → row matched to the auth
+user on first login, mirroring the claim pattern; revoke = delete). Guards: cannot remove
+the last admin, cannot remove self while sole admin. Add `platform_admins` write RLS
+(`is_platform_admin()`) if absent. UI: `/platform-admin/admins` gains invite + revoke.
+*Accept:* an admin invites a second admin (appears in list); cannot revoke the last
+remaining admin; a revoked admin loses platform access.
+
+**16.4 Tenant onboarding (create national → chapter → provision → invite).**
+`is_platform_admin()`-gated actions: `createNationalOrg` (parent_organizations row +
+branding) and `createChapter` (organizations row under a parent + provision its primary
+`group` with starter role_types/statuses/positions/term, then invite the first admin via
+a claim token). Reuse organizations/groups/group_memberships + the seed machinery — **no
+new tables**. UI: national-orgs create form; chapters onboarding wizard (national →
+chapter details → first-admin email → provision + send invite).
+*Accept:* onboard a new national + chapter end-to-end in dev; the first admin claims the
+invite and lands on the new group's dashboard; the 8.8 persona suite confirms the new
+tenant is isolated from existing ones.
+
+**16.5 National settings surface.**
+Edit surface for `parent_organizations.settings`: terminology defaults, governance policy
+(bid threshold, quorum), default feature set for chapters, branding (existing color/logo
+columns), and per-key lock toggles. Reuse `national_org_templates` (already exists) for
+default requirement/position packs. UI: `/platform-admin/national-orgs/[id]` gains a
+Settings tab; the group `/admin` tab gains "inherited from [national] / overridden here"
+affordances reading 16.2's resolved settings.
+*Accept:* a locked terminology default at the national tier shows in group `/admin` as
+inherited-and-locked (not editable); an unlocked default is overridable per group.
+
+**16.6 Integrations status page.**
+`/platform-admin/integrations`: read-only status for Resend (email), S3 (storage), Sentry
+(errors), QuickBooks — each derived from presence of the relevant env vars via a server
+action returning booleans + non-secret config (bucket/region/sender) + a "set X env var"
+hint when missing. No secret ever enters the client or DB.
+*Accept:* with S3 env set and QuickBooks unset, the page shows S3 ✓ (bucket+region) and
+QuickBooks ✗ with the env hint; no secret value appears in any response.
+
+**16.7 Product/branding settings + billing groundwork.**
+`/platform-admin/settings`: edit `platform_settings` product identity (name, logo, support
+email), the default feature catalog + default-on set, and default terminology/governance
+that flow down. Billing = a read-only placeholder panel over `plan_defaults` (no charging,
+no plan tables) — explicitly groundwork.
+*Accept:* changing the default-on feature set changes what new groups receive at creation
+(16.4); the billing panel renders as groundwork with no payment surface.
+
+---
+
 ### Adopted defaults (flag in PRs; user may veto)
 
 - 8.4 digest email: `COALESCE(personal_email, school_email)`.
@@ -1485,6 +1582,11 @@ in `drafting`.
   no external providers); identity = session auth + IP/user-agent capture; no photo-ID
   verification in v1. Housing contracts compose signing + requirements (payment tracking
   only, per §12 guardrail).
+- 16: platform defaults in a single-row `platform_settings` table (the one approved new
+  table); integration secrets in env vars only (UI shows status + non-secret config, never
+  the secret); billing deferred to a `plan_defaults` jsonb placeholder — no billing tables,
+  no payment surface. Settings resolve group override ?? national ?? platform default, with
+  a higher tier's `locked` value winning.
 
 ### Execution protocol & verification
 
@@ -1495,7 +1597,8 @@ in `drafting`.
 - Every accept criterion exercised in the running app per `docs/DEV.md` (test
   personas; **never email real roster addresses from dev** — rush invite testing on
   test/owner inboxes only; RLS verified as the restricted user, plus the 8.8 suite).
-- Phase-exit E2E checks: 10.5, 11.4, 12.5, 13.3, 14.5 accepts, 15 wizard run.
+- Phase-exit E2E checks: 10.5, 11.4, 12.5, 13.3, 14.5 accepts, 15 wizard run, 16.4
+  onboarding round-trip (new tenant isolated + first-admin claim).
 
 ### Critical files
 
