@@ -117,6 +117,17 @@ export const PROSPECT_STATUS_COLORS: Record<string, string> = {
   withdrawn: 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800/50 dark:text-zinc-400',
 }
 
+/** Plain-language explanation of each pipeline stage, shown in the status guide. */
+export const PROSPECT_STATUS_DESCRIPTIONS: Record<string, string> = {
+  prospect:
+    'Still being recruited. Any member can add them, leave feedback, and check them in at events. No bid has been offered yet.',
+  offered: 'The chapter voted to extend a bid. Waiting on the prospect to accept or decline.',
+  accepted:
+    'Accepted their bid and joined the roster as a new member. Their recruitment feedback is wiped on acceptance.',
+  declined: 'Was offered a bid but turned it down.',
+  withdrawn: 'No longer being considered — they dropped out or the chapter stopped pursuing them.',
+}
+
 export const SCHOOL_YEAR_OPTIONS = [
   'Freshman',
   'Sophomore',

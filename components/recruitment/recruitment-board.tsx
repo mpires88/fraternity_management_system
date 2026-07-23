@@ -11,7 +11,11 @@ import {
 } from '@/actions/recruitment.action'
 import type { EventRow } from '@/dal/events'
 import type { ProspectWithCounts } from '@/dal/recruitment'
-import { PROSPECT_STATUS_COLORS, PROSPECT_STATUS_LABELS } from '@/lib/constants/labels'
+import {
+  PROSPECT_STATUS_COLORS,
+  PROSPECT_STATUS_DESCRIPTIONS,
+  PROSPECT_STATUS_LABELS,
+} from '@/lib/constants/labels'
 import { AddProspectDialog } from './add-prospect-dialog'
 import { EventsPanel } from './events-panel'
 import { ProspectTable } from './prospect-table'
@@ -50,6 +54,7 @@ export function RecruitmentBoard({
   const [activeTab, setActiveTab] = useState<Tab>('pipeline')
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
+  const [showStatusGuide, setShowStatusGuide] = useState(false)
 
   const byStatus = new Map<string, ProspectWithCounts[]>()
   for (const s of STATUS_ORDER) byStatus.set(s, [])
@@ -160,38 +165,79 @@ export function RecruitmentBoard({
         )}
       </div>
 
-      {/* Status chips */}
+      {/* Status chips + guide */}
       {activeTab === 'pipeline' && (
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setStatusFilter(null)}
-            className={`px-2.5 py-1 text-xs font-medium rounded-full transition-colors ${
-              statusFilter === null
-                ? 'bg-foreground text-background'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
-            }`}
-          >
-            All ({prospects.length})
-          </button>
-          {STATUS_ORDER.map((s) => {
-            const count = byStatus.get(s)?.length ?? 0
-            if (count === 0 && s !== 'prospect') return null
-            return (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setStatusFilter(statusFilter === s ? null : s)}
-                className={`px-2.5 py-1 text-xs font-medium rounded-full transition-colors ${
-                  statusFilter === s
-                    ? STATUS_COLORS[s]
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setStatusFilter(null)}
+              className={`px-2.5 py-1 text-xs font-medium rounded-full transition-colors ${
+                statusFilter === null
+                  ? 'bg-foreground text-background'
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              }`}
+            >
+              All ({prospects.length})
+            </button>
+            {STATUS_ORDER.map((s) => {
+              const count = byStatus.get(s)?.length ?? 0
+              if (count === 0 && s !== 'prospect') return null
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setStatusFilter(statusFilter === s ? null : s)}
+                  title={PROSPECT_STATUS_DESCRIPTIONS[s]}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-full transition-colors ${
+                    statusFilter === s
+                      ? STATUS_COLORS[s]
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  }`}
+                >
+                  {STATUS_LABELS[s]} ({count})
+                </button>
+              )
+            })}
+            <button
+              type="button"
+              onClick={() => setShowStatusGuide((v) => !v)}
+              aria-expanded={showStatusGuide}
+              className="ml-auto inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <svg
+                className="w-3.5 h-3.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+                aria-hidden="true"
               >
-                {STATUS_LABELS[s]} ({count})
-              </button>
-            )
-          })}
+                <circle cx="12" cy="12" r="9" />
+                <path strokeLinecap="round" d="M12 11v5M12 8h.01" />
+              </svg>
+              What do these mean?
+            </button>
+          </div>
+
+          {showStatusGuide && (
+            <dl className="rounded-lg border border-border bg-muted/30 p-4 space-y-2.5">
+              {STATUS_ORDER.map((s) => (
+                <div key={s} className="flex flex-col gap-1 sm:flex-row sm:gap-3">
+                  <dt className="shrink-0 sm:w-24">
+                    <span
+                      className={`inline-block text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_COLORS[s]}`}
+                    >
+                      {STATUS_LABELS[s]}
+                    </span>
+                  </dt>
+                  <dd className="text-xs text-muted-foreground sm:pt-0.5">
+                    {PROSPECT_STATUS_DESCRIPTIONS[s]}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          )}
         </div>
       )}
 
