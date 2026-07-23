@@ -6,6 +6,20 @@ export const NOTIFICATION_TYPES = {
   POLL_PUBLISHED: 'poll_published',
   POLL_CLOSED: 'poll_closed',
   DOCUMENT_IN_REVIEW: 'document_in_review',
+  BUDGET_PROPOSAL_SUBMITTED: 'budget_proposal_submitted',
+  BUDGET_RETURNED: 'budget_returned',
+  BUDGET_RATIFIED: 'budget_ratified',
+  REIMBURSEMENT_SUBMITTED: 'reimbursement_submitted',
+  REIMBURSEMENT_TO_TREASURER: 'reimbursement_to_treasurer',
+  REIMBURSEMENT_RESOLVED: 'reimbursement_resolved',
+  ISSUE_REPORTED: 'issue_reported',
+  ISSUE_STATUS_CHANGED: 'issue_status_changed',
+  ISSUE_ASSIGNED: 'issue_assigned',
+  ISSUE_ESCALATED: 'issue_escalated',
+  SIGNATURE_REQUESTED: 'signature_requested',
+  DOCUMENT_SIGNED: 'document_signed',
+  DOCUMENT_FULLY_SIGNED: 'document_fully_signed',
+  SIGNATURE_DECLINED: 'signature_declined',
 } as const
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[keyof typeof NOTIFICATION_TYPES]

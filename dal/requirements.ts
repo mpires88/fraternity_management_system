@@ -527,18 +527,23 @@ export async function createProgressEntryDal(
     loggedBy: string
     approvedBy: string | null
   }
-): Promise<void> {
-  const { error } = await supabase.from('requirement_progress_entries').insert({
-    assignment_id: input.assignmentId,
-    amount: input.amount,
-    occurred_on: input.occurredOn,
-    note: input.note,
-    logged_by: input.loggedBy,
-    approved_by: input.approvedBy,
-  })
+): Promise<string> {
+  const { data, error } = await supabase
+    .from('requirement_progress_entries')
+    .insert({
+      assignment_id: input.assignmentId,
+      amount: input.amount,
+      occurred_on: input.occurredOn,
+      note: input.note,
+      logged_by: input.loggedBy,
+      approved_by: input.approvedBy,
+    })
+    .select('id')
+    .single()
   if (error) throw new UserFacingError(error.message)
 
   await recomputeAssignmentProgress(supabase, input.assignmentId)
+  return data.id
 }
 
 export async function approveProgressEntryDal(
@@ -572,7 +577,7 @@ export async function rejectProgressEntryDal(supabase: DbClient, entryId: string
   await recomputeAssignmentProgress(supabase, entry.assignment_id)
 }
 
-async function recomputeAssignmentProgress(
+export async function recomputeAssignmentProgress(
   supabase: DbClient,
   assignmentId: string
 ): Promise<void> {

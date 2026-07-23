@@ -489,6 +489,168 @@ export type Database = {
           },
         ]
       }
+      document_packages: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string
+          document_id: string
+          group_id: string
+          id: string
+          sealed_at: string | null
+          sealed_by: string | null
+          signing_deadline: string | null
+          signing_order: string
+          signing_status: string
+          superseded_by: string | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by: string
+          document_id: string
+          group_id: string
+          id?: string
+          sealed_at?: string | null
+          sealed_by?: string | null
+          signing_deadline?: string | null
+          signing_order?: string
+          signing_status?: string
+          superseded_by?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          document_id?: string
+          group_id?: string
+          id?: string
+          sealed_at?: string | null
+          sealed_by?: string | null
+          signing_deadline?: string | null
+          signing_order?: string
+          signing_status?: string
+          superseded_by?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_packages_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_packages_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_packages_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_packages_sealed_by_fkey"
+            columns: ["sealed_by"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_packages_superseded_by_fkey"
+            columns: ["superseded_by"]
+            isOneToOne: false
+            referencedRelation: "document_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      document_signatures: {
+        Row: {
+          consent_text: string | null
+          created_at: string
+          document_hash_at_request: string | null
+          document_hash_at_signing: string | null
+          id: string
+          ip_address: unknown
+          package_id: string
+          sign_order: number
+          signed_at: string | null
+          signer_email: string | null
+          signer_name: string | null
+          signer_person_id: string
+          signer_role: string | null
+          status: string
+          updated_at: string
+          user_agent: string | null
+          viewed_at: string | null
+        }
+        Insert: {
+          consent_text?: string | null
+          created_at?: string
+          document_hash_at_request?: string | null
+          document_hash_at_signing?: string | null
+          id?: string
+          ip_address?: unknown
+          package_id: string
+          sign_order?: number
+          signed_at?: string | null
+          signer_email?: string | null
+          signer_name?: string | null
+          signer_person_id: string
+          signer_role?: string | null
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+          viewed_at?: string | null
+        }
+        Update: {
+          consent_text?: string | null
+          created_at?: string
+          document_hash_at_request?: string | null
+          document_hash_at_signing?: string | null
+          id?: string
+          ip_address?: unknown
+          package_id?: string
+          sign_order?: number
+          signed_at?: string | null
+          signer_email?: string | null
+          signer_name?: string | null
+          signer_person_id?: string
+          signer_role?: string | null
+          status?: string
+          updated_at?: string
+          user_agent?: string | null
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_signatures_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "document_packages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_signatures_signer_person_id_fkey"
+            columns: ["signer_person_id"]
+            isOneToOne: false
+            referencedRelation: "persons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           approved_at: string | null
@@ -1511,6 +1673,7 @@ export type Database = {
           created_at: string | null
           features: Json | null
           id: string
+          legal_name: string | null
           logo_url: string | null
           name: string
           org_type: string
@@ -1518,11 +1681,13 @@ export type Database = {
           settings: Json | null
           slug: string
           terminology: Json | null
+          university_id: string | null
         }
         Insert: {
           created_at?: string | null
           features?: Json | null
           id?: string
+          legal_name?: string | null
           logo_url?: string | null
           name: string
           org_type: string
@@ -1530,11 +1695,13 @@ export type Database = {
           settings?: Json | null
           slug: string
           terminology?: Json | null
+          university_id?: string | null
         }
         Update: {
           created_at?: string | null
           features?: Json | null
           id?: string
+          legal_name?: string | null
           logo_url?: string | null
           name?: string
           org_type?: string
@@ -1542,8 +1709,16 @@ export type Database = {
           settings?: Json | null
           slug?: string
           terminology?: Json | null
+          university_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "organizations_university_id_fkey"
+            columns: ["university_id"]
+            isOneToOne: false
+            referencedRelation: "universities"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orgs_parent_organization_id_fkey"
             columns: ["parent_organization_id"]
@@ -1630,6 +1805,7 @@ export type Database = {
           state: string | null
           street_address: string | null
           updated_at: string
+          zip_code: string | null
         }
         Insert: {
           city?: string | null
@@ -1641,6 +1817,7 @@ export type Database = {
           state?: string | null
           street_address?: string | null
           updated_at?: string
+          zip_code?: string | null
         }
         Update: {
           city?: string | null
@@ -1652,6 +1829,7 @@ export type Database = {
           state?: string | null
           street_address?: string | null
           updated_at?: string
+          zip_code?: string | null
         }
         Relationships: [
           {
@@ -3122,6 +3300,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      universities: {
+        Row: {
+          abbreviation: string | null
+          city: string | null
+          country: string
+          created_at: string
+          greek_life_office_email: string | null
+          id: string
+          name: string
+          state: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          abbreviation?: string | null
+          city?: string | null
+          country?: string
+          created_at?: string
+          greek_life_office_email?: string | null
+          id?: string
+          name: string
+          state?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          abbreviation?: string | null
+          city?: string | null
+          country?: string
+          created_at?: string
+          greek_life_office_email?: string | null
+          id?: string
+          name?: string
+          state?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
       }
       votes: {
         Row: {

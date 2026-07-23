@@ -77,6 +77,24 @@ export async function getBudgetedPositionsDal(
   return (data ?? []) as PositionRow[]
 }
 
+/**
+ * Current holders of positions whose system role carries is_treasurer —
+ * the notification audience for budget/reimbursement events. One query,
+ * not a per-member role scan.
+ */
+export async function getTreasurerPersonIdsDal(
+  supabase: DbClient,
+  groupId: string
+): Promise<string[]> {
+  const { data } = await supabase
+    .from('position_assignments')
+    .select('person_id, positions!inner(system_position_roles!inner(is_treasurer))')
+    .eq('group_id', groupId)
+    .is('term_end', null)
+    .eq('positions.system_position_roles.is_treasurer', true)
+  return [...new Set((data ?? []).map((row) => row.person_id))]
+}
+
 /** Current holders (term_end IS NULL) of a group's positions. */
 export async function getActivePositionHoldersDal(
   supabase: DbClient,
