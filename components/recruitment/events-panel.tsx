@@ -2,14 +2,16 @@
 
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
-import { checkInProspect } from '@/actions/recruitment.action'
+import { checkInProspect, updateRecruitmentCalendarHours } from '@/actions/recruitment.action'
 import type { EventRow } from '@/dal/events'
-import type { ProspectWithCounts } from '@/dal/recruitment'
+import type { ProspectWithCounts, RecruitmentCalendarHours } from '@/dal/recruitment'
 
 type Props = {
   events: EventRow[]
   prospects: ProspectWithCounts[]
   canManage: boolean
+  canEditCalendar: boolean
+  calendarHours: RecruitmentCalendarHours
   onAddEvent: (data: {
     title: string
     starts_at: string
@@ -43,7 +45,115 @@ function eventTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 }
 
-export function EventsPanel({ events, prospects, canManage, onAddEvent }: Props) {
+// ── Time-grid geometry (day / week views) ────────────────────────────────────
+
+const HOUR_PX = 44 // vertical pixels per hour
+const MIN_EVENT_PX = 20 // floor so brief events stay legible/clickable
+const DEFAULT_DURATION_MIN = 60 // assumed length when an event has no end time
+
+/** Start/end Date of an event, defaulting the end when `ends_at` is missing. */
+function eventBounds(e: EventRow): { start: Date; end: Date } {
+  const start = new Date(e.starts_at)
+  const end = e.ends_at
+    ? new Date(e.ends_at)
+    : new Date(start.getTime() + DEFAULT_DURATION_MIN * 60000)
+  return { start, end }
+}
+
+/**
+ * The [startHour, endHour] window to render. Starts from the admin-configured
+ * window (default 8am–12am) and only widens to include events that fall outside
+ * it, so a stray early/late event is never hidden.
+ */
+function hourRange(evts: EventRow[], bounds: [number, number]): [number, number] {
+  let [minH, maxH] = bounds
+  for (const e of evts) {
+    const { start, end } = eventBounds(e)
+    minH = Math.min(minH, start.getHours())
+    let endH = end.getHours() + (end.getMinutes() > 0 ? 1 : 0)
+    if (end <= start || endH <= start.getHours()) endH = 24 // crosses midnight → clamp
+    maxH = Math.max(maxH, endH)
+  }
+  return [Math.max(0, minH), Math.min(24, Math.max(maxH, minH + 1))]
+}
+
+/** Hour-of-day label for gutter lines (0–23). */
+function formatHour(h: number): string {
+  const period = h < 12 ? 'AM' : 'PM'
+  const hr = h % 12 === 0 ? 12 : h % 12
+  return `${hr} ${period}`
+}
+
+/** Hour label for the settings picker, where 24 means midnight (12 AM). */
+function hourLabel(h: number): string {
+  if (h === 0 || h === 24) return '12 AM'
+  if (h === 12) return '12 PM'
+  return h < 12 ? `${h} AM` : `${h - 12} PM`
+}
+
+type LaidEvent = { event: EventRow; topPx: number; heightPx: number; lane: number; cols: number }
+
+/**
+ * Position a single day's events on the vertical scale: absolute top/height by
+ * time, and side-by-side lanes for any that overlap (so nothing is hidden).
+ */
+function layoutColumn(events: EventRow[], startHour: number): LaidEvent[] {
+  const items = events
+    .map((e) => {
+      const { start, end } = eventBounds(e)
+      return { e, s: start.getTime(), en: end.getTime() }
+    })
+    .sort((a, b) => a.s - b.s || a.en - b.en)
+
+  const out: LaidEvent[] = []
+  let cluster: (typeof items)[number][] = []
+  let clusterEnd = Number.NEGATIVE_INFINITY
+
+  const flush = () => {
+    const laneEnds: number[] = []
+    const laneOf = new Map<(typeof cluster)[number], number>()
+    for (const it of cluster) {
+      let lane = laneEnds.findIndex((t) => t <= it.s)
+      if (lane === -1) {
+        lane = laneEnds.length
+        laneEnds.push(it.en)
+      } else {
+        laneEnds[lane] = it.en
+      }
+      laneOf.set(it, lane)
+    }
+    const cols = laneEnds.length
+    for (const it of cluster) {
+      const d = new Date(it.e.starts_at)
+      const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate(), startHour).getTime()
+      out.push({
+        event: it.e,
+        topPx: ((it.s - dayStart) / 3600000) * HOUR_PX,
+        heightPx: Math.max(MIN_EVENT_PX, ((it.en - it.s) / 3600000) * HOUR_PX),
+        lane: laneOf.get(it) ?? 0,
+        cols,
+      })
+    }
+    cluster = []
+  }
+
+  for (const it of items) {
+    if (cluster.length && it.s >= clusterEnd) flush()
+    cluster.push(it)
+    clusterEnd = Math.max(clusterEnd, it.en)
+  }
+  if (cluster.length) flush()
+  return out
+}
+
+export function EventsPanel({
+  events,
+  prospects,
+  canManage,
+  canEditCalendar,
+  calendarHours,
+  onAddEvent,
+}: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [showAddEvent, setShowAddEvent] = useState(false)
@@ -60,6 +170,7 @@ export function EventsPanel({ events, prospects, canManage, onAddEvent }: Props)
   const [newEvent, setNewEvent] = useState({
     title: '',
     starts_at: '',
+    ends_at: '',
     description: '',
     location: '',
   })
@@ -72,13 +183,16 @@ export function EventsPanel({ events, prospects, canManage, onAddEvent }: Props)
   function handleAddEvent(e: React.FormEvent) {
     e.preventDefault()
     if (!newEvent.title.trim() || !newEvent.starts_at) return
+    // Reject an end that isn't after the start rather than silently dropping it
+    if (newEvent.ends_at && newEvent.ends_at <= newEvent.starts_at) return
     onAddEvent({
       title: newEvent.title.trim(),
       starts_at: newEvent.starts_at,
+      ends_at: newEvent.ends_at || null,
       description: newEvent.description.trim() || null,
       location: newEvent.location.trim() || null,
     })
-    setNewEvent({ title: '', starts_at: '', description: '', location: '' })
+    setNewEvent({ title: '', starts_at: '', ends_at: '', description: '', location: '' })
     setShowAddEvent(false)
   }
 
@@ -202,7 +316,7 @@ export function EventsPanel({ events, prospects, canManage, onAddEvent }: Props)
             </div>
             <div>
               <label htmlFor="ev-date" className="text-sm font-medium text-muted-foreground">
-                Date & Time *
+                Starts *
               </label>
               <input
                 id="ev-date"
@@ -214,6 +328,22 @@ export function EventsPanel({ events, prospects, canManage, onAddEvent }: Props)
               />
             </div>
             <div>
+              <label htmlFor="ev-end" className="text-sm font-medium text-muted-foreground">
+                Ends
+              </label>
+              <input
+                id="ev-end"
+                type="datetime-local"
+                value={newEvent.ends_at}
+                min={newEvent.starts_at || undefined}
+                onChange={(e) => setNewEvent({ ...newEvent, ends_at: e.target.value })}
+                className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Optional — sets the block length on the calendar (defaults to 1 hour).
+              </p>
+            </div>
+            <div className="col-span-2">
               <label htmlFor="ev-location" className="text-sm font-medium text-muted-foreground">
                 Location
               </label>
@@ -273,6 +403,8 @@ export function EventsPanel({ events, prospects, canManage, onAddEvent }: Props)
           events={events}
           calRef={calRef}
           calView={calView}
+          calendarHours={calendarHours}
+          canEditCalendar={canEditCalendar}
           onView={setCalView}
           onNav={(delta) =>
             setCalRef((d) => {
@@ -373,6 +505,8 @@ function EventCalendar({
   events,
   calRef,
   calView,
+  calendarHours,
+  canEditCalendar,
   onView,
   onNav,
   onToday,
@@ -384,6 +518,8 @@ function EventCalendar({
   events: EventRow[]
   calRef: Date
   calView: CalView
+  calendarHours: RecruitmentCalendarHours
+  canEditCalendar: boolean
   onView: (view: CalView) => void
   onNav: (delta: number) => void
   onToday: () => void
@@ -392,7 +528,28 @@ function EventCalendar({
   onSelect: (id: string) => void
   renderDetail: (event: EventRow) => React.ReactNode
 }) {
+  const router = useRouter()
   const today = new Date()
+  const bounds: [number, number] = [calendarHours.start_hour, calendarHours.end_hour]
+
+  const [showSettings, setShowSettings] = useState(false)
+  const [savingHours, setSavingHours] = useState(false)
+  const [formHours, setFormHours] = useState(calendarHours)
+  const invalidHours = formHours.end_hour <= formHours.start_hour
+
+  async function saveHours() {
+    if (invalidHours) return
+    setSavingHours(true)
+    const res = await updateRecruitmentCalendarHours({
+      start_hour: formHours.start_hour,
+      end_hour: formHours.end_hour,
+    })
+    setSavingHours(false)
+    if (res.success) {
+      setShowSettings(false)
+      router.refresh()
+    }
+  }
 
   // Events falling on a given calendar day, sorted by start time
   const eventsOnDay = (date: Date) =>
@@ -507,8 +664,111 @@ function EventCalendar({
               </svg>
             </button>
           </div>
+          {canEditCalendar && (
+            <button
+              type="button"
+              onClick={() => {
+                setFormHours(calendarHours)
+                setShowSettings((v) => !v)
+              }}
+              aria-label="Calendar hours settings"
+              aria-expanded={showSettings}
+              title="Calendar hours"
+              className="p-1 rounded-md text-muted-foreground hover:bg-muted transition-colors"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
+
+      {canEditCalendar && showSettings && (
+        <div className="rounded-lg border border-border bg-muted/30 p-3">
+          <div className="flex flex-wrap items-end gap-3">
+            <div>
+              <label
+                htmlFor="cal-start"
+                className="mb-1 block text-xs font-medium text-muted-foreground"
+              >
+                Day starts
+              </label>
+              <select
+                id="cal-start"
+                value={formHours.start_hour}
+                onChange={(e) =>
+                  setFormHours((h) => ({ ...h, start_hour: Number(e.target.value) }))
+                }
+                className="rounded-md border border-input bg-background px-2 py-1.5 text-sm"
+              >
+                {Array.from({ length: 24 }, (_, h) => h).map((h) => (
+                  <option key={h} value={h}>
+                    {hourLabel(h)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label
+                htmlFor="cal-end"
+                className="mb-1 block text-xs font-medium text-muted-foreground"
+              >
+                Day ends
+              </label>
+              <select
+                id="cal-end"
+                value={formHours.end_hour}
+                onChange={(e) => setFormHours((h) => ({ ...h, end_hour: Number(e.target.value) }))}
+                className="rounded-md border border-input bg-background px-2 py-1.5 text-sm"
+              >
+                {Array.from({ length: 24 }, (_, i) => i + 1).map((h) => (
+                  <option key={h} value={h}>
+                    {hourLabel(h)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              type="button"
+              onClick={saveHours}
+              disabled={savingHours || invalidHours}
+              className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
+            >
+              {savingHours ? 'Saving…' : 'Save'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowSettings(false)}
+              className="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Sets the visible hours on the Day and Week views for everyone in this chapter.
+            {invalidHours && (
+              <span className="ml-1 text-destructive">End must be after start.</span>
+            )}
+          </p>
+        </div>
+      )}
 
       {calView === 'month' && (
         <MonthGrid
@@ -520,80 +780,62 @@ function EventCalendar({
         />
       )}
 
-      {calView === 'week' && (
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-7 sm:gap-0 sm:overflow-hidden sm:rounded-lg sm:border sm:border-border">
-          {Array.from({ length: 7 }, (_, i) => {
-            const day = new Date(
-              weekStart.getFullYear(),
-              weekStart.getMonth(),
-              weekStart.getDate() + i
-            )
-            const dayEvents = eventsOnDay(day)
-            const isToday = sameDay(day, today)
-            return (
-              <div
-                key={day.toISOString()}
-                className="rounded-lg border border-border p-2 sm:min-h-[160px] sm:rounded-none sm:border-0 sm:border-r sm:last:border-r-0"
-              >
-                <button
-                  type="button"
-                  onClick={() => onPickDay(day)}
-                  className="mb-1.5 flex w-full items-center gap-1.5 text-left"
-                >
-                  <span className="text-xs font-medium text-muted-foreground">{WEEKDAYS[i]}</span>
-                  <span
-                    className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs ${
-                      isToday
-                        ? 'bg-primary font-semibold text-primary-foreground'
-                        : 'text-foreground'
-                    }`}
+      {calView === 'week' &&
+        (() => {
+          const days = Array.from(
+            { length: 7 },
+            (_, i) =>
+              new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + i)
+          )
+          const weekEvents = days.flatMap((d) => eventsOnDay(d))
+          const [startHour, endHour] = hourRange(weekEvents, bounds)
+          return (
+            <TimeGrid
+              startHour={startHour}
+              endHour={endHour}
+              expandedEvent={expandedEvent}
+              onSelect={onSelect}
+              minWidthClass="min-w-[640px]"
+              columns={days.map((day, i) => ({
+                key: day.toISOString(),
+                events: eventsOnDay(day),
+                header: (
+                  <button
+                    type="button"
+                    onClick={() => onPickDay(day)}
+                    className="flex w-full items-center justify-center gap-1.5 py-1.5 hover:bg-muted/60 transition-colors"
                   >
-                    {day.getDate()}
-                  </span>
-                </button>
-                <div className="space-y-0.5">
-                  {dayEvents.length === 0 ? (
-                    <p className="text-[11px] text-muted-foreground">—</p>
-                  ) : (
-                    dayEvents.map((event) => eventPill(event))
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
+                    <span className="text-xs font-medium text-muted-foreground">{WEEKDAYS[i]}</span>
+                    <span
+                      className={`flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs ${
+                        sameDay(day, today)
+                          ? 'bg-primary font-semibold text-primary-foreground'
+                          : 'text-foreground'
+                      }`}
+                    >
+                      {day.getDate()}
+                    </span>
+                  </button>
+                ),
+              }))}
+            />
+          )
+        })()}
 
-      {calView === 'day' && (
-        <div className="rounded-lg border border-border p-2">
-          {eventsOnDay(calRef).length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">No events on this day.</p>
-          ) : (
-            <div className="space-y-1">
-              {eventsOnDay(calRef).map((event) => (
-                <button
-                  key={event.id}
-                  type="button"
-                  onClick={() => onSelect(event.id)}
-                  className={`flex w-full items-baseline gap-3 rounded-md px-3 py-2 text-left transition-colors ${
-                    expandedEvent === event.id ? 'bg-primary/10' : 'hover:bg-muted/40'
-                  }`}
-                >
-                  <span className="w-16 shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
-                    {eventTime(event.starts_at)}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-sm font-medium">{event.title}</span>
-                    {event.location && (
-                      <span className="block text-xs text-muted-foreground">{event.location}</span>
-                    )}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      {calView === 'day' &&
+        (() => {
+          const dayEvents = eventsOnDay(calRef)
+          const [startHour, endHour] = hourRange(dayEvents, bounds)
+          return (
+            <TimeGrid
+              startHour={startHour}
+              endHour={endHour}
+              expandedEvent={expandedEvent}
+              onSelect={onSelect}
+              columns={[{ key: 'day', events: dayEvents }]}
+            />
+          )
+        })()}
 
       {selected && (
         <div className="rounded-lg border border-border p-4">
@@ -707,6 +949,116 @@ function MonthGrid({
             </div>
           )
         })}
+      </div>
+    </div>
+  )
+}
+
+// ── Vertical time grid (day / week views) ────────────────────────────────────
+
+type TimeColumn = { key: string; events: EventRow[]; header?: React.ReactNode }
+
+function TimeGrid({
+  startHour,
+  endHour,
+  columns,
+  expandedEvent,
+  onSelect,
+  minWidthClass,
+}: {
+  startHour: number
+  endHour: number
+  columns: TimeColumn[]
+  expandedEvent: string | null
+  onSelect: (id: string) => void
+  minWidthClass?: string
+}) {
+  const hours = endHour - startHour
+  const totalPx = hours * HOUR_PX
+  const hourList = Array.from({ length: hours + 1 }, (_, i) => startHour + i)
+  const hasHeaders = columns.some((c) => c.header)
+
+  return (
+    <div className="overflow-x-auto rounded-lg border border-border">
+      <div className={minWidthClass ?? ''}>
+        {hasHeaders && (
+          <div className="flex border-b border-border bg-muted/50">
+            <div className="w-14 shrink-0 border-r border-border" />
+            {columns.map((col) => (
+              <div key={col.key} className="flex-1 border-r border-border last:border-r-0">
+                {col.header}
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="flex">
+          {/* Hour labels */}
+          <div
+            className="relative w-14 shrink-0 border-r border-border"
+            style={{ height: totalPx }}
+          >
+            {hourList.slice(0, -1).map((h) => (
+              <div
+                key={h}
+                className="absolute right-1.5 text-[10px] tabular-nums text-muted-foreground"
+                style={{ top: (h - startHour) * HOUR_PX }}
+              >
+                {formatHour(h)}
+              </div>
+            ))}
+          </div>
+          {/* Day columns */}
+          <div className="flex flex-1">
+            {columns.map((col) => {
+              const laid = layoutColumn(col.events, startHour)
+              return (
+                <div
+                  key={col.key}
+                  className="relative flex-1 border-r border-border last:border-r-0"
+                  style={{ height: totalPx }}
+                >
+                  {hourList.map((h) => (
+                    <div
+                      key={h}
+                      className="pointer-events-none absolute inset-x-0 border-t border-border/50"
+                      style={{ top: (h - startHour) * HOUR_PX }}
+                    />
+                  ))}
+                  {laid.map(({ event, topPx, heightPx, lane, cols }) => {
+                    const { start, end } = eventBounds(event)
+                    const isSelected = expandedEvent === event.id
+                    return (
+                      <button
+                        key={event.id}
+                        type="button"
+                        onClick={() => onSelect(event.id)}
+                        title={`${event.title} · ${eventTime(start.toISOString())}–${eventTime(end.toISOString())}`}
+                        style={{
+                          top: topPx,
+                          height: heightPx,
+                          left: `calc(${(lane / cols) * 100}% + 1px)`,
+                          width: `calc(${100 / cols}% - 2px)`,
+                        }}
+                        className={`absolute overflow-hidden rounded px-1 py-0.5 text-left text-[10px] leading-tight ring-1 transition-colors ${
+                          isSelected
+                            ? 'bg-primary text-primary-foreground ring-primary'
+                            : 'bg-primary/10 text-primary ring-primary/20 hover:bg-primary/20'
+                        }`}
+                      >
+                        <span className="block truncate font-medium">{event.title}</span>
+                        {heightPx >= 32 && (
+                          <span className="block truncate opacity-80">
+                            {eventTime(start.toISOString())}–{eventTime(end.toISOString())}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              )
+            })}
+          </div>
+        </div>
       </div>
     </div>
   )

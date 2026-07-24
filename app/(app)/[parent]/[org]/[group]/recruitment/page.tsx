@@ -9,9 +9,13 @@ import {
   getActiveTermDal,
   getConversionLookupsDal,
   getProspectsForTermDal,
+  readRecruitmentCalendarHours,
 } from '@/dal/recruitment'
 import { createClient, getAuthUser } from '@/lib/supabase/server'
-import { canManageFromContext } from '@/lib/utils/resolve-permissions'
+import {
+  canManageFromContext,
+  resolvePermissionsFromContext,
+} from '@/lib/utils/resolve-permissions'
 
 export default async function RecruitmentPage({
   params,
@@ -26,6 +30,10 @@ export default async function RecruitmentPage({
   if (!ctx) redirect('/login')
 
   const canManage = canManageFromContext(ctx, 'rush')
+  // Editing the calendar window writes to groups.settings — RLS-gated to org
+  // admins, so only surface the control to full-access admins.
+  const canEditCalendar = resolvePermissionsFromContext(ctx).access_level === 'full'
+  const calendarHours = readRecruitmentCalendarHours(ctx.group.settings)
   const label = (ctx.group.terminology as Record<string, string>)?.recruitment ?? 'Recruitment'
 
   const activeTerm = await getActiveTermDal(supabase, ctx.group.id)
@@ -75,6 +83,8 @@ export default async function RecruitmentPage({
         events={events}
         termId={activeTerm.id}
         canManage={canManage}
+        canEditCalendar={canEditCalendar}
+        calendarHours={calendarHours}
         basePath={basePath}
         photoUrls={photoUrls}
         roleTypes={lookups.roleTypes}

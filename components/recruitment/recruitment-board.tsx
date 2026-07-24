@@ -10,7 +10,7 @@ import {
   setProspectStatus,
 } from '@/actions/recruitment.action'
 import type { EventRow } from '@/dal/events'
-import type { ProspectWithCounts } from '@/dal/recruitment'
+import type { ProspectWithCounts, RecruitmentCalendarHours } from '@/dal/recruitment'
 import {
   PROSPECT_STATUS_COLORS,
   PROSPECT_STATUS_DESCRIPTIONS,
@@ -29,6 +29,8 @@ type Props = {
   events: EventRow[]
   termId: string
   canManage: boolean
+  canEditCalendar: boolean
+  calendarHours: RecruitmentCalendarHours
   basePath: string
   photoUrls: Record<string, string>
   roleTypes: Array<{ id: string; name: string }>
@@ -43,6 +45,8 @@ export function RecruitmentBoard({
   events,
   termId,
   canManage,
+  canEditCalendar,
+  calendarHours,
   basePath,
   photoUrls,
   roleTypes,
@@ -263,6 +267,8 @@ export function RecruitmentBoard({
           events={events}
           prospects={prospects}
           canManage={canManage}
+          canEditCalendar={canEditCalendar}
+          calendarHours={calendarHours}
           onAddEvent={handleAddEvent}
         />
       )}

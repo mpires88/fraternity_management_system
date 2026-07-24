@@ -29,6 +29,19 @@ export const setProspectStatusSchema = z.object({
 
 export type SetProspectStatusInput = z.infer<typeof setProspectStatusSchema>
 
+/** Per-group calendar window (0–24 hours) for the recruitment day/week views. */
+export const recruitmentCalendarHoursSchema = z
+  .object({
+    start_hour: z.number().int().min(0).max(23),
+    end_hour: z.number().int().min(1).max(24),
+  })
+  .refine((v) => v.end_hour > v.start_hour, {
+    message: 'End hour must be after start hour',
+    path: ['end_hour'],
+  })
+
+export type RecruitmentCalendarHoursInput = z.infer<typeof recruitmentCalendarHoursSchema>
+
 export const createRecruitmentEventSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().nullable().optional(),

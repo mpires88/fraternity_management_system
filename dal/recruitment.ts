@@ -306,6 +306,52 @@ export async function linkPollToProspectDal(
   return { success: true }
 }
 
+// ── Group calendar settings ─────────────────────────────────────────────────
+
+export type RecruitmentCalendarHours = { start_hour: number; end_hour: number }
+
+export const DEFAULT_RECRUITMENT_CALENDAR_HOURS: RecruitmentCalendarHours = {
+  start_hour: 8,
+  end_hour: 24,
+}
+
+/** Read the group's calendar window from groups.settings, falling back to 8am–12am. */
+export function readRecruitmentCalendarHours(
+  settings: Record<string, unknown> | null | undefined
+): RecruitmentCalendarHours {
+  const cal = (settings ?? {})?.recruitment_calendar as
+    | Partial<RecruitmentCalendarHours>
+    | undefined
+  const start = typeof cal?.start_hour === 'number' ? cal.start_hour : null
+  const end = typeof cal?.end_hour === 'number' ? cal.end_hour : null
+  if (start === null || end === null || end <= start) return DEFAULT_RECRUITMENT_CALENDAR_HOURS
+  return { start_hour: start, end_hour: end }
+}
+
+/**
+ * Persist the calendar window into groups.settings (merging, not replacing).
+ * Gated by RLS to organization admins — the groups_update policy is the boundary.
+ */
+export async function updateRecruitmentCalendarHoursDal(
+  supabase: DbClient,
+  groupId: string,
+  startHour: number,
+  endHour: number
+): Promise<MutationResult<void>> {
+  const { data, error: readError } = await supabase
+    .from('groups')
+    .select('settings')
+    .eq('id', groupId)
+    .single()
+  if (readError) return { success: false, error: readError.message }
+
+  const settings = (data?.settings ?? {}) as Record<string, unknown>
+  const next = { ...settings, recruitment_calendar: { start_hour: startHour, end_hour: endHour } }
+  const { error } = await supabase.from('groups').update({ settings: next }).eq('id', groupId)
+  if (error) return { success: false, error: error.message }
+  return { success: true }
+}
+
 // ── Attendance ──────────────────────────────────────────────────────────────
 
 export async function checkInProspectDal(

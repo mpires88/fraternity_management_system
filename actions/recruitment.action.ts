@@ -36,6 +36,7 @@ import {
   removeCheckInDal,
   setProspectStatusDal,
   updateProspectDal,
+  updateRecruitmentCalendarHoursDal,
 } from '@/dal/recruitment'
 import type { DbClient } from '@/dal/types'
 import type { Database } from '@/lib/supabase/types'
@@ -44,6 +45,7 @@ import {
   convertProspectSchema,
   createProspectSchema,
   createRecruitmentEventSchema,
+  recruitmentCalendarHoursSchema,
   setProspectStatusSchema,
   updateEventSchema,
   updateProspectSchema,
@@ -151,6 +153,27 @@ export const getEventAttendance = createOrgQueryAction<
 >(async (supabase, _actor, _groupId, input) => {
   return getEventAttendanceDal(supabase, input.eventId)
 })
+
+// ── Group calendar settings ─────────────────────────────────────────────────
+
+/**
+ * Set the recruitment calendar's visible hour window for the group. Writing to
+ * groups.settings is RLS-gated to organization admins — a non-admin call fails
+ * at the database, which the core engine surfaces as an error.
+ */
+export const updateRecruitmentCalendarHours = createValidatedOrgAction(
+  recruitmentCalendarHoursSchema,
+  async (supabase, _actor, groupId, input) => {
+    const result = await updateRecruitmentCalendarHoursDal(
+      supabase,
+      groupId,
+      input.start_hour,
+      input.end_hour
+    )
+    if (!result.success) throw new Error(result.error)
+  },
+  { revalidatePaths: ['/recruitment'] }
+)
 
 // ── Event mutations ─────────────────────────────────────────────────────────
 
