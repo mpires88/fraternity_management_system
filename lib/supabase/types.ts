@@ -931,6 +931,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "facilities_managed_by_group_id_fkey"
+            columns: ["managed_by_group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "facilities_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
@@ -3436,6 +3443,7 @@ export type Database = {
         Returns: boolean
       }
       is_platform_admin: { Args: never; Returns: boolean }
+      lottery_turn_open: { Args: { p_entrant_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
